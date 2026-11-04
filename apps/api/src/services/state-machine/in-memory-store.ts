@@ -17,6 +17,25 @@ export class InMemoryStateStore implements IStateStore {
     return { ...list[list.length - 1] };
   }
 
+  async getEvidenceEvents(purchaseId: string): Promise<EvidenceEvent[]> {
+    const list = this.events.get(purchaseId);
+    if (!list) return [];
+    return list.map((e) => ({ ...e }));
+  }
+
+  async tamperEvidenceEvent(
+    purchaseId: string,
+    targetSeq: number,
+    tamperedPayload: Record<string, unknown>,
+  ): Promise<boolean> {
+    const list = this.events.get(purchaseId);
+    if (!list) return false;
+    const target = list.find((e) => e.seq === targetSeq);
+    if (!target) return false;
+    target.payload = { ...tamperedPayload };
+    return true;
+  }
+
   async applyAtomicTransition(
     purchaseId: string,
     _nextState: PurchaseRecord["state"],

@@ -15,12 +15,18 @@ import { mapActionToEvidenceType } from "./mapper.js";
 export interface IStateStore {
   getPurchase(purchaseId: string): Promise<PurchaseRecord | null>;
   getLastEvidenceEvent(purchaseId: string): Promise<EvidenceEvent | null>;
+  getEvidenceEvents(purchaseId: string): Promise<EvidenceEvent[]>;
   applyAtomicTransition(
     purchaseId: string,
     nextState: PurchaseRecord["state"],
     patch: Partial<PurchaseRecord>,
     event: EvidenceEvent,
   ): Promise<PurchaseRecord>;
+  tamperEvidenceEvent?(
+    purchaseId: string,
+    targetSeq: number,
+    tamperedPayload: Record<string, unknown>,
+  ): Promise<boolean>;
 }
 
 export class PurchaseStateMachineService {

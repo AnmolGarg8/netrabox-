@@ -1,4 +1,4 @@
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, asc, and } from "drizzle-orm";
 import { type EvidenceEvent } from "@netrabox/core";
 import { purchases, evidenceEvents } from "@netrabox/core/schemas";
 import { db } from "@netrabox/core/db";
@@ -22,6 +22,30 @@ export class DrizzleStateStore implements IStateStore {
 
     if (!rows || rows.length === 0) return null;
     return rows[0] as unknown as EvidenceEvent;
+  }
+
+  async getEvidenceEvents(purchaseId: string): Promise<EvidenceEvent[]> {
+    const rows = await db
+      .select()
+      .from(evidenceEvents)
+      .where(eq(evidenceEvents.purchaseId, purchaseId))
+      .orderBy(asc(evidenceEvents.seq));
+
+    return rows as unknown as EvidenceEvent[];
+  }
+
+  async tamperEvidenceEvent(
+    purchaseId: string,
+    targetSeq: number,
+    tamperedPayload: Record<string, unknown>,
+  ): Promise<boolean> {
+    const updated = await db
+      .update(evidenceEvents)
+      .set({ payload: tamperedPayload })
+      .where(and(eq(evidenceEvents.purchaseId, purchaseId), eq(evidenceEvents.seq, targetSeq)))
+      .returning();
+
+    return updated.length > 0;
   }
 
   async applyAtomicTransition(
