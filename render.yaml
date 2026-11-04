@@ -1,0 +1,44 @@
+services:
+  - type: web
+    name: netrabox-api
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: pnpm install --frozen-lockfile && pnpm --filter @netrabox/core build && pnpm --filter @netrabox/api build
+    startCommand: pnpm --filter @netrabox/api start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: netrabox-db
+          property: connectionString
+      - key: PAYPAL_ENV
+        value: sandbox
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: PAYPAL_WEBHOOK_ID
+        sync: false
+      - key: DISPUTES_MODE
+        value: internal
+      - key: DEMO_MODE
+        value: "true"
+      - key: LLM_PROVIDER
+        value: google
+      - key: LLM_MODEL
+        value: gemini-1.5-flash
+      - key: LLM_API_KEY
+        sync: false
+      - key: SIGNING_PRIVATE_KEY
+        sync: false
+
+databases:
+  - name: netrabox-db
+    databaseName: netrabox
+    user: netrabox
+    plan: free
+    region: oregon
