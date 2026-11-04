@@ -48,9 +48,19 @@ export const TribunalVerdictSchema = z.object({
 export type TribunalVerdict = z.infer<typeof TribunalVerdictSchema>;
 
 export const OpenDisputeInputSchema = z.object({
+  purchaseId: z.string().optional(),
   reason: z.string().min(5),
-  claimantActor: z.enum(["user", "agent"]),
+  claimantActor: z.enum(["user", "agent"]).default("user"),
   disputedAmountMinor: z.number().int().positive(),
 });
 
 export type OpenDisputeInput = z.infer<typeof OpenDisputeInputSchema>;
+
+export const AdvocateBriefSchema = z.object({
+  role: z.enum(["buyer_advocate", "merchant_advocate"]),
+  argument: z.string().min(10),
+  citedEvidenceIds: z.array(z.string()).min(1),
+  faultAssessment: z.string().min(5),
+});
+
+export type AdvocateBrief = z.infer<typeof AdvocateBriefSchema>;

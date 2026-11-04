@@ -8,12 +8,17 @@ import { DrizzleStateStore } from "./services/state-machine/drizzle-store.js";
 import { webhookRoutes } from "./routes/webhooks.js";
 import { purchaseRoutes } from "./routes/purchases.js";
 import { evidenceRoutes } from "./routes/evidence.js";
+import { disputeRoutes } from "./routes/disputes.js";
 import { EvidenceService } from "./services/evidence/service.js";
+import { TribunalRunner } from "./services/tribunal/runner.js";
+import { MockLLMAdapter, GeminiLLMAdapter, type LLMAdapter } from "@netrabox/core";
 
 export interface ServerOptions {
   store?: IStateStore;
   paypalClient?: PayPalClient;
   evidenceService?: EvidenceService;
+  tribunalRunner?: TribunalRunner;
+  llm?: LLMAdapter;
   signingPrivateKeyHex?: string;
   signingPublicKeyHex?: string;
   publicBaseUrl?: string;
@@ -66,6 +71,24 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
   const evidenceService =
     options.evidenceService ||
     new EvidenceService(store, signingPrivateKeyHex, signingPublicKeyHex);
+
+  const llm =
+    options.llm ||
+    (process.env.LLM_PROVIDER === "google" && process.env.LLM_API_KEY
+      ? new GeminiLLMAdapter(process.env.LLM_API_KEY, process.env.LLM_MODEL)
+      : new MockLLMAdapter());
+
+  const tribunalRunner =
+    options.tribunalRunner ||
+    new TribunalRunner({
+      store,
+      stateMachine,
+      evidenceService,
+      paypalClient,
+      llm,
+      signingPrivateKeyHex,
+    });
+
   const publicBaseUrl =
     options.publicBaseUrl || process.env.PUBLIC_BASE_URL || "http://localhost:4000";
   const dashboardUrl = options.dashboardUrl || process.env.DASHBOARD_URL || "http://localhost:3000";
@@ -99,6 +122,13 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
       api.register(evidenceRoutes, {
         evidenceService,
         demoMode,
+      });
+
+      // Dispute & Tribunal routes
+      api.register(disputeRoutes, {
+        tribunalRunner,
+        stateMachine,
+        signingPrivateKeyHex,
       });
 
       // Webhooks

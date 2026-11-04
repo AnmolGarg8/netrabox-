@@ -44,6 +44,11 @@ export const PURCHASE_TRANSITIONS: TransitionRule[] = [
   { from: "DISPUTED", action: "RESOLVE_REFUND_PARTIAL", to: "RESOLVED_REFUNDED_PARTIAL" },
   { from: "DISPUTED", action: "RESOLVE_REJECT", to: "RESOLVED_REJECTED" },
   { from: "DISPUTED", action: "ESCALATE", to: "NEEDS_HUMAN_REVIEW" },
+  { from: "NEEDS_HUMAN_REVIEW", action: "RESOLVE_CAPTURE", to: "RESOLVED_CAPTURED" },
+  { from: "NEEDS_HUMAN_REVIEW", action: "RESOLVE_VOID", to: "RESOLVED_VOIDED" },
+  { from: "NEEDS_HUMAN_REVIEW", action: "RESOLVE_REFUND_FULL", to: "RESOLVED_REFUNDED_FULL" },
+  { from: "NEEDS_HUMAN_REVIEW", action: "RESOLVE_REFUND_PARTIAL", to: "RESOLVED_REFUNDED_PARTIAL" },
+  { from: "NEEDS_HUMAN_REVIEW", action: "RESOLVE_REJECT", to: "RESOLVED_REJECTED" },
 ];
 
 export class StateTransitionError extends Error {

@@ -50,6 +50,12 @@ export class MockLLMAdapter implements LLMAdapter {
     schema: z.ZodType<T>,
     _systemPrompt?: string,
   ): Promise<T> {
+    if (this.customHandler) {
+      const res = await this.customHandler([{ role: "user", content: prompt }]);
+      const parsed = typeof res.content === "string" ? JSON.parse(res.content) : res.content;
+      return schema.parse(parsed);
+    }
+
     // If prompt asks to extract constraints from user prompt
     if (
       prompt.includes("extract constraints") ||
@@ -69,6 +75,47 @@ export class MockLLMAdapter implements LLMAdapter {
       if (parsed.success) {
         return parsed.data;
       }
+    }
+
+    if (prompt.includes("Buyer Advocate") || prompt.includes("buyer_advocate")) {
+      const mockBrief = {
+        role: "buyer_advocate",
+        argument: "Buyer was delivered incorrect goods or overcharged.",
+        citedEvidenceIds: [],
+        faultAssessment: "Merchant or agent fault",
+      };
+      const parsed = schema.safeParse(mockBrief);
+      if (parsed.success) return parsed.data;
+    }
+
+    if (prompt.includes("Merchant Advocate") || prompt.includes("merchant_advocate")) {
+      const mockBrief = {
+        role: "merchant_advocate",
+        argument: "Merchant fulfilled order accurately according to received specifications.",
+        citedEvidenceIds: [],
+        faultAssessment: "Merchant fulfilled terms",
+      };
+      const parsed = schema.safeParse(mockBrief);
+      if (parsed.success) return parsed.data;
+    }
+
+    if (
+      prompt.includes("Chief Judge") ||
+      prompt.includes("Tribunal Verdict") ||
+      prompt.includes("DISPUTE CASE") ||
+      prompt.includes("judicial verdict")
+    ) {
+      const mockVerdict = {
+        classification: "AGENT_EXCEEDED_INSTRUCTIONS",
+        liabilitySplit: { buyer: 0, agentProvider: 100, merchant: 0 },
+        refundAmountMinor: 34999,
+        confidence: 0.95,
+        citedEvidenceIds: [],
+        reasoning: "Agent exceeded user instructions based on evidence ledger.",
+        recommendedAction: "REFUND_FULL",
+      };
+      const parsed = schema.safeParse(mockVerdict);
+      if (parsed.success) return parsed.data;
     }
 
     // Fallback: parse minimal defaults from schema if possible
