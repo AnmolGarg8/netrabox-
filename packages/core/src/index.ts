@@ -12,3 +12,4 @@ export * from "./llm/gemini.js";
 export * from "./intent-guard/schemas.js";
 export * from "./intent-guard/validator.js";
 export * from "./shop/merchants.js";
+export * from "./tribunal/index.js";

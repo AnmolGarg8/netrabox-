@@ -38,6 +38,9 @@ importers:
       '@fastify/sensible':
         specifier: ^6.0.1
         version: 6.0.7
+      '@netrabox/bench':
+        specifier: workspace:*
+        version: link:../../packages/bench
       '@netrabox/core':
         specifier: workspace:*
         version: link:../../packages/core

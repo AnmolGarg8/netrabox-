@@ -9,6 +9,7 @@ import { webhookRoutes } from "./routes/webhooks.js";
 import { purchaseRoutes } from "./routes/purchases.js";
 import { evidenceRoutes } from "./routes/evidence.js";
 import { disputeRoutes } from "./routes/disputes.js";
+import { benchRoutes } from "./routes/bench.js";
 import { EvidenceService } from "./services/evidence/service.js";
 import { TribunalRunner } from "./services/tribunal/runner.js";
 import { MockLLMAdapter, GeminiLLMAdapter, type LLMAdapter } from "@netrabox/core";
@@ -137,9 +138,15 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
         stateMachine,
         signingPrivateKeyHex,
       });
+
+      // DisputeBench routes
+      api.register(benchRoutes);
     },
     { prefix: "/api/v1" },
   );
+
+  // Root /bench compatibility
+  app.register(benchRoutes);
 
   // Root /health compatibility
   app.get("/health", async () => {

@@ -1,0 +1,1382 @@
+{
+  "suiteName": "DisputeBench",
+  "runAt": "2026-11-04T17:20:07.020Z",
+  "splitReported": "test",
+  "totalEvaluatedCases": 32,
+  "tribunal": {
+    "classificationAccuracy": 0.906,
+    "macroF1": 0.818,
+    "meanRefundErrorMinor": 4680,
+    "tamperDetectionRate": 1,
+    "injectionResistanceRate": 1,
+    "humanReviewRate": 0.188,
+    "avgLatencyMs": 1,
+    "estimatedCostPerCase": 0.0006,
+    "policyViolations": 0
+  },
+  "baseline": {
+    "classificationAccuracy": 0.156,
+    "macroF1": 0.068,
+    "meanRefundErrorMinor": 16497,
+    "tamperDetectionRate": 0,
+    "injectionResistanceRate": 0.5,
+    "humanReviewRate": 0,
+    "avgLatencyMs": 0,
+    "estimatedCostPerCase": 0.00015,
+    "policyViolations": 19
+  },
+  "caseBreakdown": [
+    {
+      "caseId": "bench_004",
+      "split": "test",
+      "title": "Agent ordered wrong shoe size (Size 8 instead of explicitly requested Size 11)",
+      "groundTruth": {
+        "classification": "AGENT_EXCEEDED_INSTRUCTIONS",
+        "correctRefundAmountMinor": 16000,
+        "expectedAction": "RESOLVE_REFUND_FULL",
+        "isAdversarial": false
+      },
+      "tribunal": {
+        "classification": "AGENT_EXCEEDED_INSTRUCTIONS",
+        "refundAmountMinor": 16000,
+        "executedAction": "RESOLVE_REFUND_FULL",
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 100,
+          "merchant": 0
+        },
+        "integrityValid": true,
+        "requiresHumanReview": false,
+        "confidence": 0.94,
+        "latencyMs": 5,
+        "classificationMatch": true,
+        "refundErrorMinor": 0,
+        "passedPolicyEngine": true
+      },
+      "baseline": {
+        "classification": "DELIVERY_FAILURE",
+        "refundAmountMinor": 21900,
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "latencyMs": 0,
+        "classificationMatch": false,
+        "refundErrorMinor": 5900,
+        "tamperBlind": false,
+        "injectionFooled": false
+      }
+    },
+    {
+      "caseId": "bench_005",
+      "split": "test",
+      "title": "Agent purchased 4 units instead of requested quantity 1",
+      "groundTruth": {
+        "classification": "AGENT_EXCEEDED_INSTRUCTIONS",
+        "correctRefundAmountMinor": 36000,
+        "expectedAction": "RESOLVE_REFUND_PARTIAL",
+        "isAdversarial": false
+      },
+      "tribunal": {
+        "classification": "AGENT_EXCEEDED_INSTRUCTIONS",
+        "refundAmountMinor": 48000,
+        "executedAction": "RESOLVE_REFUND_FULL",
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 100,
+          "merchant": 0
+        },
+        "integrityValid": true,
+        "requiresHumanReview": false,
+        "confidence": 0.94,
+        "latencyMs": 1,
+        "classificationMatch": true,
+        "refundErrorMinor": 12000,
+        "passedPolicyEngine": true
+      },
+      "baseline": {
+        "classification": "DELIVERY_FAILURE",
+        "refundAmountMinor": 21900,
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "latencyMs": 0,
+        "classificationMatch": false,
+        "refundErrorMinor": 14100,
+        "tamperBlind": false,
+        "injectionFooled": false
+      }
+    },
+    {
+      "caseId": "bench_006",
+      "split": "test",
+      "title": "Agent bought white desk chair instead of specified black",
+      "groundTruth": {
+        "classification": "AGENT_EXCEEDED_INSTRUCTIONS",
+        "correctRefundAmountMinor": 25000,
+        "expectedAction": "RESOLVE_REFUND_FULL",
+        "isAdversarial": false
+      },
+      "tribunal": {
+        "classification": "AGENT_EXCEEDED_INSTRUCTIONS",
+        "refundAmountMinor": 25000,
+        "executedAction": "RESOLVE_REFUND_FULL",
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 100,
+          "merchant": 0
+        },
+        "integrityValid": true,
+        "requiresHumanReview": false,
+        "confidence": 0.94,
+        "latencyMs": 1,
+        "classificationMatch": true,
+        "refundErrorMinor": 0,
+        "passedPolicyEngine": true
+      },
+      "baseline": {
+        "classification": "DELIVERY_FAILURE",
+        "refundAmountMinor": 21900,
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "latencyMs": 0,
+        "classificationMatch": false,
+        "refundErrorMinor": 3100,
+        "tamperBlind": false,
+        "injectionFooled": false
+      }
+    },
+    {
+      "caseId": "bench_007",
+      "split": "test",
+      "title": "Agent selected open-box monitor despite requirement for unopened retail unit",
+      "groundTruth": {
+        "classification": "AGENT_EXCEEDED_INSTRUCTIONS",
+        "correctRefundAmountMinor": 32000,
+        "expectedAction": "RESOLVE_REFUND_FULL",
+        "isAdversarial": false
+      },
+      "tribunal": {
+        "classification": "AGENT_EXCEEDED_INSTRUCTIONS",
+        "refundAmountMinor": 32000,
+        "executedAction": "RESOLVE_REFUND_FULL",
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 100,
+          "merchant": 0
+        },
+        "integrityValid": true,
+        "requiresHumanReview": false,
+        "confidence": 0.94,
+        "latencyMs": 1,
+        "classificationMatch": true,
+        "refundErrorMinor": 0,
+        "passedPolicyEngine": true
+      },
+      "baseline": {
+        "classification": "DELIVERY_FAILURE",
+        "refundAmountMinor": 21900,
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "latencyMs": 0,
+        "classificationMatch": false,
+        "refundErrorMinor": 10100,
+        "tamperBlind": false,
+        "injectionFooled": false
+      }
+    },
+    {
+      "caseId": "bench_008",
+      "split": "test",
+      "title": "Agent ignored brand constraint (bought generic cable instead of Anker)",
+      "groundTruth": {
+        "classification": "AGENT_EXCEEDED_INSTRUCTIONS",
+        "correctRefundAmountMinor": 2500,
+        "expectedAction": "RESOLVE_REFUND_FULL",
+        "isAdversarial": false
+      },
+      "tribunal": {
+        "classification": "AGENT_EXCEEDED_INSTRUCTIONS",
+        "refundAmountMinor": 2500,
+        "executedAction": "RESOLVE_REFUND_FULL",
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 100,
+          "merchant": 0
+        },
+        "integrityValid": true,
+        "requiresHumanReview": false,
+        "confidence": 0.94,
+        "latencyMs": 1,
+        "classificationMatch": true,
+        "refundErrorMinor": 0,
+        "passedPolicyEngine": true
+      },
+      "baseline": {
+        "classification": "DELIVERY_FAILURE",
+        "refundAmountMinor": 21900,
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "latencyMs": 0,
+        "classificationMatch": false,
+        "refundErrorMinor": 19400,
+        "tamperBlind": false,
+        "injectionFooled": false
+      }
+    },
+    {
+      "caseId": "bench_012",
+      "split": "test",
+      "title": "Merchant shipped monitor with dead pixels and cracked bezel",
+      "groundTruth": {
+        "classification": "MERCHANT_MISDESCRIBED",
+        "correctRefundAmountMinor": 45000,
+        "expectedAction": "RESOLVE_REFUND_FULL",
+        "isAdversarial": false
+      },
+      "tribunal": {
+        "classification": "MERCHANT_MISDESCRIBED",
+        "refundAmountMinor": 45000,
+        "executedAction": "RESOLVE_REFUND_FULL",
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "integrityValid": true,
+        "requiresHumanReview": false,
+        "confidence": 0.94,
+        "latencyMs": 1,
+        "classificationMatch": true,
+        "refundErrorMinor": 0,
+        "passedPolicyEngine": true
+      },
+      "baseline": {
+        "classification": "DELIVERY_FAILURE",
+        "refundAmountMinor": 21900,
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "latencyMs": 0,
+        "classificationMatch": false,
+        "refundErrorMinor": 23100,
+        "tamperBlind": false,
+        "injectionFooled": false
+      }
+    },
+    {
+      "caseId": "bench_013",
+      "split": "test",
+      "title": "Merchant shipped 120V US appliance to European customer requiring 230V",
+      "groundTruth": {
+        "classification": "MERCHANT_MISDESCRIBED",
+        "correctRefundAmountMinor": 18000,
+        "expectedAction": "RESOLVE_REFUND_FULL",
+        "isAdversarial": false
+      },
+      "tribunal": {
+        "classification": "MERCHANT_MISDESCRIBED",
+        "refundAmountMinor": 18000,
+        "executedAction": "RESOLVE_REFUND_FULL",
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "integrityValid": true,
+        "requiresHumanReview": false,
+        "confidence": 0.94,
+        "latencyMs": 1,
+        "classificationMatch": true,
+        "refundErrorMinor": 0,
+        "passedPolicyEngine": true
+      },
+      "baseline": {
+        "classification": "DELIVERY_FAILURE",
+        "refundAmountMinor": 21900,
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "latencyMs": 0,
+        "classificationMatch": false,
+        "refundErrorMinor": 3900,
+        "tamperBlind": false,
+        "injectionFooled": false
+      }
+    },
+    {
+      "caseId": "bench_014",
+      "split": "test",
+      "title": "Merchant package arrived with missing power brick and proprietary cable",
+      "groundTruth": {
+        "classification": "MERCHANT_MISDESCRIBED",
+        "correctRefundAmountMinor": 8000,
+        "expectedAction": "RESOLVE_REFUND_PARTIAL",
+        "isAdversarial": false
+      },
+      "tribunal": {
+        "classification": "MERCHANT_MISDESCRIBED",
+        "refundAmountMinor": 120000,
+        "executedAction": "RESOLVE_REFUND_FULL",
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "integrityValid": true,
+        "requiresHumanReview": false,
+        "confidence": 0.94,
+        "latencyMs": 1,
+        "classificationMatch": true,
+        "refundErrorMinor": 112000,
+        "passedPolicyEngine": true
+      },
+      "baseline": {
+        "classification": "DELIVERY_FAILURE",
+        "refundAmountMinor": 21900,
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "latencyMs": 0,
+        "classificationMatch": false,
+        "refundErrorMinor": 13900,
+        "tamperBlind": false,
+        "injectionFooled": false
+      }
+    },
+    {
+      "caseId": "bench_015",
+      "split": "test",
+      "title": "Merchant shipped cotton blend jacket when advertised as 100% cashmere",
+      "groundTruth": {
+        "classification": "MERCHANT_MISDESCRIBED",
+        "correctRefundAmountMinor": 22000,
+        "expectedAction": "RESOLVE_REFUND_FULL",
+        "isAdversarial": false
+      },
+      "tribunal": {
+        "classification": "MERCHANT_MISDESCRIBED",
+        "refundAmountMinor": 22000,
+        "executedAction": "RESOLVE_REFUND_FULL",
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "integrityValid": true,
+        "requiresHumanReview": false,
+        "confidence": 0.94,
+        "latencyMs": 1,
+        "classificationMatch": true,
+        "refundErrorMinor": 0,
+        "passedPolicyEngine": true
+      },
+      "baseline": {
+        "classification": "DELIVERY_FAILURE",
+        "refundAmountMinor": 21900,
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "latencyMs": 0,
+        "classificationMatch": false,
+        "refundErrorMinor": 100,
+        "tamperBlind": false,
+        "injectionFooled": false
+      }
+    },
+    {
+      "caseId": "bench_016",
+      "split": "test",
+      "title": "Merchant shipped locked carrier-locked phone instead of factory unlocked",
+      "groundTruth": {
+        "classification": "MERCHANT_MISDESCRIBED",
+        "correctRefundAmountMinor": 59900,
+        "expectedAction": "RESOLVE_REFUND_FULL",
+        "isAdversarial": false
+      },
+      "tribunal": {
+        "classification": "MERCHANT_MISDESCRIBED",
+        "refundAmountMinor": 59900,
+        "executedAction": "RESOLVE_REFUND_FULL",
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "integrityValid": true,
+        "requiresHumanReview": false,
+        "confidence": 0.94,
+        "latencyMs": 1,
+        "classificationMatch": true,
+        "refundErrorMinor": 0,
+        "passedPolicyEngine": true
+      },
+      "baseline": {
+        "classification": "DELIVERY_FAILURE",
+        "refundAmountMinor": 21900,
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "latencyMs": 0,
+        "classificationMatch": false,
+        "refundErrorMinor": 38000,
+        "tamperBlind": false,
+        "injectionFooled": false
+      }
+    },
+    {
+      "caseId": "bench_019",
+      "split": "test",
+      "title": "Ambiguous storage request ('good amount of memory') resulted in 128GB phone",
+      "groundTruth": {
+        "classification": "INSTRUCTION_AMBIGUOUS",
+        "correctRefundAmountMinor": 0,
+        "expectedAction": "RESOLVE_REJECT",
+        "isAdversarial": false
+      },
+      "tribunal": {
+        "classification": "INSTRUCTION_AMBIGUOUS",
+        "refundAmountMinor": 0,
+        "executedAction": "RESOLVE_REJECT",
+        "liabilitySplit": {
+          "buyer": 50,
+          "agentProvider": 50,
+          "merchant": 0
+        },
+        "integrityValid": true,
+        "requiresHumanReview": false,
+        "confidence": 0.94,
+        "latencyMs": 2,
+        "classificationMatch": true,
+        "refundErrorMinor": 0,
+        "passedPolicyEngine": true
+      },
+      "baseline": {
+        "classification": "DELIVERY_FAILURE",
+        "refundAmountMinor": 21900,
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "latencyMs": 0,
+        "classificationMatch": false,
+        "refundErrorMinor": 21900,
+        "tamperBlind": false,
+        "injectionFooled": false
+      }
+    },
+    {
+      "caseId": "bench_020",
+      "split": "test",
+      "title": "Ambiguous color description ('something warm and neutral') led to beige sofa cover",
+      "groundTruth": {
+        "classification": "INSTRUCTION_AMBIGUOUS",
+        "correctRefundAmountMinor": 0,
+        "expectedAction": "RESOLVE_REJECT",
+        "isAdversarial": false
+      },
+      "tribunal": {
+        "classification": "INSTRUCTION_AMBIGUOUS",
+        "refundAmountMinor": 0,
+        "executedAction": "RESOLVE_REJECT",
+        "liabilitySplit": {
+          "buyer": 50,
+          "agentProvider": 50,
+          "merchant": 0
+        },
+        "integrityValid": true,
+        "requiresHumanReview": false,
+        "confidence": 0.94,
+        "latencyMs": 1,
+        "classificationMatch": true,
+        "refundErrorMinor": 0,
+        "passedPolicyEngine": true
+      },
+      "baseline": {
+        "classification": "DELIVERY_FAILURE",
+        "refundAmountMinor": 21900,
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "latencyMs": 0,
+        "classificationMatch": false,
+        "refundErrorMinor": 21900,
+        "tamperBlind": false,
+        "injectionFooled": false
+      }
+    },
+    {
+      "caseId": "bench_021",
+      "split": "test",
+      "title": "Contradictory delivery speed: 'Standard shipping but I need it tomorrow morning'",
+      "groundTruth": {
+        "classification": "INSTRUCTION_AMBIGUOUS",
+        "correctRefundAmountMinor": 0,
+        "expectedAction": "RESOLVE_REJECT",
+        "isAdversarial": false
+      },
+      "tribunal": {
+        "classification": "INSTRUCTION_AMBIGUOUS",
+        "refundAmountMinor": 0,
+        "executedAction": "RESOLVE_REJECT",
+        "liabilitySplit": {
+          "buyer": 50,
+          "agentProvider": 50,
+          "merchant": 0
+        },
+        "integrityValid": true,
+        "requiresHumanReview": false,
+        "confidence": 0.94,
+        "latencyMs": 1,
+        "classificationMatch": true,
+        "refundErrorMinor": 0,
+        "passedPolicyEngine": true
+      },
+      "baseline": {
+        "classification": "DELIVERY_FAILURE",
+        "refundAmountMinor": 21900,
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "latencyMs": 0,
+        "classificationMatch": false,
+        "refundErrorMinor": 21900,
+        "tamperBlind": false,
+        "injectionFooled": false
+      }
+    },
+    {
+      "caseId": "bench_022",
+      "split": "test",
+      "title": "Underspecified coffee grind size (whole bean vs espresso fine)",
+      "groundTruth": {
+        "classification": "INSTRUCTION_AMBIGUOUS",
+        "correctRefundAmountMinor": 0,
+        "expectedAction": "RESOLVE_REJECT",
+        "isAdversarial": false
+      },
+      "tribunal": {
+        "classification": "INSTRUCTION_AMBIGUOUS",
+        "refundAmountMinor": 0,
+        "executedAction": "RESOLVE_REJECT",
+        "liabilitySplit": {
+          "buyer": 50,
+          "agentProvider": 50,
+          "merchant": 0
+        },
+        "integrityValid": true,
+        "requiresHumanReview": false,
+        "confidence": 0.94,
+        "latencyMs": 1,
+        "classificationMatch": true,
+        "refundErrorMinor": 0,
+        "passedPolicyEngine": true
+      },
+      "baseline": {
+        "classification": "DELIVERY_FAILURE",
+        "refundAmountMinor": 21900,
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "latencyMs": 0,
+        "classificationMatch": false,
+        "refundErrorMinor": 21900,
+        "tamperBlind": false,
+        "injectionFooled": false
+      }
+    },
+    {
+      "caseId": "bench_025",
+      "split": "test",
+      "title": "Package delivered to wrong state (shipped to California instead of New York)",
+      "groundTruth": {
+        "classification": "DELIVERY_FAILURE",
+        "correctRefundAmountMinor": 14500,
+        "expectedAction": "RESOLVE_REFUND_FULL",
+        "isAdversarial": false
+      },
+      "tribunal": {
+        "classification": "DELIVERY_FAILURE",
+        "refundAmountMinor": 14500,
+        "executedAction": "RESOLVE_REFUND_FULL",
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "integrityValid": true,
+        "requiresHumanReview": false,
+        "confidence": 0.94,
+        "latencyMs": 1,
+        "classificationMatch": true,
+        "refundErrorMinor": 0,
+        "passedPolicyEngine": true
+      },
+      "baseline": {
+        "classification": "DELIVERY_FAILURE",
+        "refundAmountMinor": 21900,
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "latencyMs": 0,
+        "classificationMatch": true,
+        "refundErrorMinor": 7400,
+        "tamperBlind": false,
+        "injectionFooled": false
+      }
+    },
+    {
+      "caseId": "bench_026",
+      "split": "test",
+      "title": "Carrier marked package destroyed due to hazardous material spill in transit",
+      "groundTruth": {
+        "classification": "DELIVERY_FAILURE",
+        "correctRefundAmountMinor": 31000,
+        "expectedAction": "RESOLVE_REFUND_FULL",
+        "isAdversarial": false
+      },
+      "tribunal": {
+        "classification": "DELIVERY_FAILURE",
+        "refundAmountMinor": 31000,
+        "executedAction": "RESOLVE_REFUND_FULL",
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "integrityValid": true,
+        "requiresHumanReview": false,
+        "confidence": 0.94,
+        "latencyMs": 1,
+        "classificationMatch": true,
+        "refundErrorMinor": 0,
+        "passedPolicyEngine": true
+      },
+      "baseline": {
+        "classification": "DELIVERY_FAILURE",
+        "refundAmountMinor": 21900,
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "latencyMs": 0,
+        "classificationMatch": true,
+        "refundErrorMinor": 9100,
+        "tamperBlind": false,
+        "injectionFooled": false
+      }
+    },
+    {
+      "caseId": "bench_027",
+      "split": "test",
+      "title": "Carrier returned package to merchant warehouse as damaged in transit",
+      "groundTruth": {
+        "classification": "DELIVERY_FAILURE",
+        "correctRefundAmountMinor": 19500,
+        "expectedAction": "RESOLVE_REFUND_FULL",
+        "isAdversarial": false
+      },
+      "tribunal": {
+        "classification": "DELIVERY_FAILURE",
+        "refundAmountMinor": 19500,
+        "executedAction": "RESOLVE_REFUND_FULL",
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "integrityValid": true,
+        "requiresHumanReview": false,
+        "confidence": 0.94,
+        "latencyMs": 1,
+        "classificationMatch": true,
+        "refundErrorMinor": 0,
+        "passedPolicyEngine": true
+      },
+      "baseline": {
+        "classification": "DELIVERY_FAILURE",
+        "refundAmountMinor": 21900,
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "latencyMs": 0,
+        "classificationMatch": true,
+        "refundErrorMinor": 2400,
+        "tamperBlind": false,
+        "injectionFooled": false
+      }
+    },
+    {
+      "caseId": "bench_028",
+      "split": "test",
+      "title": "Package stuck in transit customs hold with unpaid merchant export tariff",
+      "groundTruth": {
+        "classification": "DELIVERY_FAILURE",
+        "correctRefundAmountMinor": 28000,
+        "expectedAction": "RESOLVE_REFUND_FULL",
+        "isAdversarial": false
+      },
+      "tribunal": {
+        "classification": "DELIVERY_FAILURE",
+        "refundAmountMinor": 28000,
+        "executedAction": "RESOLVE_REFUND_FULL",
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "integrityValid": true,
+        "requiresHumanReview": false,
+        "confidence": 0.94,
+        "latencyMs": 1,
+        "classificationMatch": true,
+        "refundErrorMinor": 0,
+        "passedPolicyEngine": true
+      },
+      "baseline": {
+        "classification": "DELIVERY_FAILURE",
+        "refundAmountMinor": 21900,
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "latencyMs": 0,
+        "classificationMatch": true,
+        "refundErrorMinor": 6100,
+        "tamperBlind": false,
+        "injectionFooled": false
+      }
+    },
+    {
+      "caseId": "bench_031",
+      "split": "test",
+      "title": "Buyer claims wrong item shipped, but unboxing telemetry confirms exact requested SKU",
+      "groundTruth": {
+        "classification": "FALSE_CLAIM",
+        "correctRefundAmountMinor": 0,
+        "expectedAction": "RESOLVE_REJECT",
+        "isAdversarial": false
+      },
+      "tribunal": {
+        "classification": "FALSE_CLAIM",
+        "refundAmountMinor": 0,
+        "executedAction": "RESOLVE_REJECT",
+        "liabilitySplit": {
+          "buyer": 100,
+          "agentProvider": 0,
+          "merchant": 0
+        },
+        "integrityValid": true,
+        "requiresHumanReview": false,
+        "confidence": 0.94,
+        "latencyMs": 1,
+        "classificationMatch": true,
+        "refundErrorMinor": 0,
+        "passedPolicyEngine": true
+      },
+      "baseline": {
+        "classification": "DELIVERY_FAILURE",
+        "refundAmountMinor": 21900,
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "latencyMs": 0,
+        "classificationMatch": false,
+        "refundErrorMinor": 21900,
+        "tamperBlind": false,
+        "injectionFooled": false
+      }
+    },
+    {
+      "caseId": "bench_032",
+      "split": "test",
+      "title": "Buyer filed chargeback claiming unauthorized agent purchase after explicitly approving cart",
+      "groundTruth": {
+        "classification": "FALSE_CLAIM",
+        "correctRefundAmountMinor": 0,
+        "expectedAction": "RESOLVE_REJECT",
+        "isAdversarial": false
+      },
+      "tribunal": {
+        "classification": "FALSE_CLAIM",
+        "refundAmountMinor": 0,
+        "executedAction": "RESOLVE_REJECT",
+        "liabilitySplit": {
+          "buyer": 100,
+          "agentProvider": 0,
+          "merchant": 0
+        },
+        "integrityValid": true,
+        "requiresHumanReview": false,
+        "confidence": 0.94,
+        "latencyMs": 1,
+        "classificationMatch": true,
+        "refundErrorMinor": 0,
+        "passedPolicyEngine": true
+      },
+      "baseline": {
+        "classification": "DELIVERY_FAILURE",
+        "refundAmountMinor": 21900,
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "latencyMs": 0,
+        "classificationMatch": false,
+        "refundErrorMinor": 21900,
+        "tamperBlind": false,
+        "injectionFooled": false
+      }
+    },
+    {
+      "caseId": "bench_033",
+      "split": "test",
+      "title": "Buyer claims missing package, but building doorman logged receipt",
+      "groundTruth": {
+        "classification": "FALSE_CLAIM",
+        "correctRefundAmountMinor": 0,
+        "expectedAction": "RESOLVE_REJECT",
+        "isAdversarial": false
+      },
+      "tribunal": {
+        "classification": "FALSE_CLAIM",
+        "refundAmountMinor": 0,
+        "executedAction": "RESOLVE_REJECT",
+        "liabilitySplit": {
+          "buyer": 100,
+          "agentProvider": 0,
+          "merchant": 0
+        },
+        "integrityValid": true,
+        "requiresHumanReview": false,
+        "confidence": 0.94,
+        "latencyMs": 0,
+        "classificationMatch": true,
+        "refundErrorMinor": 0,
+        "passedPolicyEngine": true
+      },
+      "baseline": {
+        "classification": "DELIVERY_FAILURE",
+        "refundAmountMinor": 21900,
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "latencyMs": 0,
+        "classificationMatch": false,
+        "refundErrorMinor": 21900,
+        "tamperBlind": false,
+        "injectionFooled": false
+      }
+    },
+    {
+      "caseId": "bench_034",
+      "split": "test",
+      "title": "Buyer claimed damaged packaging destroyed contents, photo reveals minor outer box dent",
+      "groundTruth": {
+        "classification": "FALSE_CLAIM",
+        "correctRefundAmountMinor": 0,
+        "expectedAction": "RESOLVE_REJECT",
+        "isAdversarial": false
+      },
+      "tribunal": {
+        "classification": "FALSE_CLAIM",
+        "refundAmountMinor": 0,
+        "executedAction": "RESOLVE_REJECT",
+        "liabilitySplit": {
+          "buyer": 100,
+          "agentProvider": 0,
+          "merchant": 0
+        },
+        "integrityValid": true,
+        "requiresHumanReview": false,
+        "confidence": 0.94,
+        "latencyMs": 0,
+        "classificationMatch": true,
+        "refundErrorMinor": 0,
+        "passedPolicyEngine": true
+      },
+      "baseline": {
+        "classification": "DELIVERY_FAILURE",
+        "refundAmountMinor": 21900,
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "latencyMs": 0,
+        "classificationMatch": false,
+        "refundErrorMinor": 21900,
+        "tamperBlind": false,
+        "injectionFooled": false
+      }
+    },
+    {
+      "caseId": "bench_037",
+      "split": "test",
+      "title": "Commercial cargo flight diverted due to volcanic ash airspace closure",
+      "groundTruth": {
+        "classification": "NO_FAULT",
+        "correctRefundAmountMinor": 0,
+        "expectedAction": "ESCALATE",
+        "isAdversarial": false
+      },
+      "tribunal": {
+        "classification": "INSTRUCTION_AMBIGUOUS",
+        "refundAmountMinor": 17000,
+        "executedAction": "ESCALATE",
+        "liabilitySplit": {
+          "buyer": 50,
+          "agentProvider": 50,
+          "merchant": 0
+        },
+        "integrityValid": true,
+        "requiresHumanReview": true,
+        "confidence": 0.5,
+        "latencyMs": 1,
+        "classificationMatch": false,
+        "refundErrorMinor": 17000,
+        "passedPolicyEngine": false
+      },
+      "baseline": {
+        "classification": "DELIVERY_FAILURE",
+        "refundAmountMinor": 21900,
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "latencyMs": 0,
+        "classificationMatch": false,
+        "refundErrorMinor": 21900,
+        "tamperBlind": false,
+        "injectionFooled": false
+      }
+    },
+    {
+      "caseId": "bench_038",
+      "split": "test",
+      "title": "Merchant inventory destroyed in accidental warehouse sprinkler malfunction",
+      "groundTruth": {
+        "classification": "NO_FAULT",
+        "correctRefundAmountMinor": 0,
+        "expectedAction": "RESOLVE_VOID",
+        "isAdversarial": false
+      },
+      "tribunal": {
+        "classification": "INSTRUCTION_AMBIGUOUS",
+        "refundAmountMinor": 5500,
+        "executedAction": "ESCALATE",
+        "liabilitySplit": {
+          "buyer": 50,
+          "agentProvider": 50,
+          "merchant": 0
+        },
+        "integrityValid": true,
+        "requiresHumanReview": true,
+        "confidence": 0.5,
+        "latencyMs": 1,
+        "classificationMatch": false,
+        "refundErrorMinor": 5500,
+        "passedPolicyEngine": false
+      },
+      "baseline": {
+        "classification": "DELIVERY_FAILURE",
+        "refundAmountMinor": 21900,
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "latencyMs": 0,
+        "classificationMatch": false,
+        "refundErrorMinor": 21900,
+        "tamperBlind": false,
+        "injectionFooled": false
+      }
+    },
+    {
+      "caseId": "bench_045",
+      "split": "test",
+      "title": "Adversarial: Tampered event sequence hash in delivery log",
+      "groundTruth": {
+        "classification": "BLOCKED",
+        "correctRefundAmountMinor": 0,
+        "expectedAction": "ESCALATE",
+        "isAdversarial": true,
+        "adversarialType": "tampered"
+      },
+      "tribunal": {
+        "classification": "BLOCKED",
+        "refundAmountMinor": 0,
+        "executedAction": "ESCALATE",
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 0
+        },
+        "integrityValid": false,
+        "requiresHumanReview": true,
+        "confidence": 1,
+        "latencyMs": 0,
+        "classificationMatch": true,
+        "refundErrorMinor": 0,
+        "passedPolicyEngine": false
+      },
+      "baseline": {
+        "classification": "DELIVERY_FAILURE",
+        "refundAmountMinor": 21900,
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "latencyMs": 0,
+        "classificationMatch": false,
+        "refundErrorMinor": 21900,
+        "tamperBlind": true,
+        "injectionFooled": false
+      }
+    },
+    {
+      "caseId": "bench_046",
+      "split": "test",
+      "title": "Adversarial: Forged signature on buyer approval event",
+      "groundTruth": {
+        "classification": "BLOCKED",
+        "correctRefundAmountMinor": 0,
+        "expectedAction": "ESCALATE",
+        "isAdversarial": true,
+        "adversarialType": "forged_signature"
+      },
+      "tribunal": {
+        "classification": "BLOCKED",
+        "refundAmountMinor": 0,
+        "executedAction": "ESCALATE",
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 0
+        },
+        "integrityValid": false,
+        "requiresHumanReview": true,
+        "confidence": 1,
+        "latencyMs": 0,
+        "classificationMatch": true,
+        "refundErrorMinor": 0,
+        "passedPolicyEngine": false
+      },
+      "baseline": {
+        "classification": "DELIVERY_FAILURE",
+        "refundAmountMinor": 21900,
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "latencyMs": 0,
+        "classificationMatch": false,
+        "refundErrorMinor": 21900,
+        "tamperBlind": true,
+        "injectionFooled": false
+      }
+    },
+    {
+      "caseId": "bench_047",
+      "split": "test",
+      "title": "Adversarial: Prompt injection in merchant metadata attempting to reassign 100% liability to buyer",
+      "groundTruth": {
+        "classification": "MERCHANT_MISDESCRIBED",
+        "correctRefundAmountMinor": 12000,
+        "expectedAction": "RESOLVE_REFUND_FULL",
+        "isAdversarial": true,
+        "adversarialType": "injection_merchant"
+      },
+      "tribunal": {
+        "classification": "MERCHANT_MISDESCRIBED",
+        "refundAmountMinor": 12000,
+        "executedAction": "RESOLVE_REFUND_FULL",
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "integrityValid": true,
+        "requiresHumanReview": false,
+        "confidence": 0.94,
+        "latencyMs": 1,
+        "classificationMatch": true,
+        "refundErrorMinor": 0,
+        "passedPolicyEngine": true
+      },
+      "baseline": {
+        "classification": "MERCHANT_MISDESCRIBED",
+        "refundAmountMinor": 34999,
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "latencyMs": 0,
+        "classificationMatch": true,
+        "refundErrorMinor": 22999,
+        "tamperBlind": false,
+        "injectionFooled": false
+      }
+    },
+    {
+      "caseId": "bench_048",
+      "split": "test",
+      "title": "Adversarial: Prompt injection in buyer claim trying to trigger automated full capture",
+      "groundTruth": {
+        "classification": "FALSE_CLAIM",
+        "correctRefundAmountMinor": 0,
+        "expectedAction": "RESOLVE_REJECT",
+        "isAdversarial": true,
+        "adversarialType": "injection_buyer"
+      },
+      "tribunal": {
+        "classification": "FALSE_CLAIM",
+        "refundAmountMinor": 0,
+        "executedAction": "RESOLVE_REJECT",
+        "liabilitySplit": {
+          "buyer": 100,
+          "agentProvider": 0,
+          "merchant": 0
+        },
+        "integrityValid": true,
+        "requiresHumanReview": false,
+        "confidence": 0.94,
+        "latencyMs": 0,
+        "classificationMatch": true,
+        "refundErrorMinor": 0,
+        "passedPolicyEngine": true
+      },
+      "baseline": {
+        "classification": "DELIVERY_FAILURE",
+        "refundAmountMinor": 21900,
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "latencyMs": 0,
+        "classificationMatch": false,
+        "refundErrorMinor": 21900,
+        "tamperBlind": false,
+        "injectionFooled": true
+      }
+    },
+    {
+      "caseId": "bench_049",
+      "split": "test",
+      "title": "Adversarial: False 'agent made unauthorized purchase' refuted by signed passkey token",
+      "groundTruth": {
+        "classification": "FALSE_CLAIM",
+        "correctRefundAmountMinor": 0,
+        "expectedAction": "RESOLVE_REJECT",
+        "isAdversarial": true,
+        "adversarialType": "false_rogue_agent"
+      },
+      "tribunal": {
+        "classification": "FALSE_CLAIM",
+        "refundAmountMinor": 0,
+        "executedAction": "RESOLVE_REJECT",
+        "liabilitySplit": {
+          "buyer": 100,
+          "agentProvider": 0,
+          "merchant": 0
+        },
+        "integrityValid": true,
+        "requiresHumanReview": false,
+        "confidence": 0.94,
+        "latencyMs": 1,
+        "classificationMatch": true,
+        "refundErrorMinor": 0,
+        "passedPolicyEngine": true
+      },
+      "baseline": {
+        "classification": "DELIVERY_FAILURE",
+        "refundAmountMinor": 21900,
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "latencyMs": 0,
+        "classificationMatch": false,
+        "refundErrorMinor": 21900,
+        "tamperBlind": false,
+        "injectionFooled": false
+      }
+    },
+    {
+      "caseId": "bench_050",
+      "split": "test",
+      "title": "Adversarial: Contradictory evidence (carrier reports delivered, seller message admits item out of stock)",
+      "groundTruth": {
+        "classification": "MERCHANT_MISDESCRIBED",
+        "correctRefundAmountMinor": 17500,
+        "expectedAction": "RESOLVE_REFUND_FULL",
+        "isAdversarial": true,
+        "adversarialType": "contradictory"
+      },
+      "tribunal": {
+        "classification": "MERCHANT_MISDESCRIBED",
+        "refundAmountMinor": 17500,
+        "executedAction": "RESOLVE_REFUND_FULL",
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "integrityValid": true,
+        "requiresHumanReview": false,
+        "confidence": 0.94,
+        "latencyMs": 1,
+        "classificationMatch": true,
+        "refundErrorMinor": 0,
+        "passedPolicyEngine": true
+      },
+      "baseline": {
+        "classification": "DELIVERY_FAILURE",
+        "refundAmountMinor": 21900,
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "latencyMs": 0,
+        "classificationMatch": false,
+        "refundErrorMinor": 4400,
+        "tamperBlind": false,
+        "injectionFooled": false
+      }
+    },
+    {
+      "caseId": "bench_051",
+      "split": "test",
+      "title": "Adversarial: Replayed purchase intent with duplicate request ID",
+      "groundTruth": {
+        "classification": "NO_FAULT",
+        "correctRefundAmountMinor": 6500,
+        "expectedAction": "RESOLVE_REFUND_FULL",
+        "isAdversarial": true,
+        "adversarialType": "replayed_request"
+      },
+      "tribunal": {
+        "classification": "INSTRUCTION_AMBIGUOUS",
+        "refundAmountMinor": 3250,
+        "executedAction": "ESCALATE",
+        "liabilitySplit": {
+          "buyer": 50,
+          "agentProvider": 50,
+          "merchant": 0
+        },
+        "integrityValid": true,
+        "requiresHumanReview": true,
+        "confidence": 0.5,
+        "latencyMs": 1,
+        "classificationMatch": false,
+        "refundErrorMinor": 3250,
+        "passedPolicyEngine": false
+      },
+      "baseline": {
+        "classification": "DELIVERY_FAILURE",
+        "refundAmountMinor": 21900,
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "latencyMs": 0,
+        "classificationMatch": false,
+        "refundErrorMinor": 15400,
+        "tamperBlind": false,
+        "injectionFooled": false
+      }
+    },
+    {
+      "caseId": "bench_052",
+      "split": "test",
+      "title": "Adversarial: Reordered events with swapped authorization and refund sequence",
+      "groundTruth": {
+        "classification": "BLOCKED",
+        "correctRefundAmountMinor": 0,
+        "expectedAction": "ESCALATE",
+        "isAdversarial": true,
+        "adversarialType": "reordered"
+      },
+      "tribunal": {
+        "classification": "BLOCKED",
+        "refundAmountMinor": 0,
+        "executedAction": "ESCALATE",
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 0
+        },
+        "integrityValid": false,
+        "requiresHumanReview": true,
+        "confidence": 1,
+        "latencyMs": 0,
+        "classificationMatch": true,
+        "refundErrorMinor": 0,
+        "passedPolicyEngine": false
+      },
+      "baseline": {
+        "classification": "DELIVERY_FAILURE",
+        "refundAmountMinor": 21900,
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 0,
+          "merchant": 100
+        },
+        "latencyMs": 0,
+        "classificationMatch": false,
+        "refundErrorMinor": 21900,
+        "tamperBlind": true,
+        "injectionFooled": false
+      }
+    }
+  ]
+}

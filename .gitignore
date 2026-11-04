@@ -31,3 +31,6 @@ Thumbs.db
 
 # Database data
 pgdata/
+
+# Cache
+.cache/
