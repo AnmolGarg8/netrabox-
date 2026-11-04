@@ -1,7 +1,7 @@
 # NetraBox
 
 > **Flight recorder and dispute tribunal for AI-agent purchases**  
-> Built for the *"Build What's Next with PayPal and AI"* Hackathon.
+> Built for the _"Build What's Next with PayPal and AI"_ Hackathon.
 
 NetraBox cryptographically captures every decision of an AI purchasing agent into an append-only, Ed25519-signed, SHA-256 hash-chained ledger. If a dispute arises, an autonomous multi-agent tribunal (Buyer Advocate, Merchant Advocate, Chief Judge) reviews the evidence, and a deterministic policy engine executes resolution actions directly on PayPal Sandbox rails (`CAPTURE`, `PARTIAL CAPTURE`, `VOID`, or `REFUND`).
 
@@ -33,5 +33,6 @@ netrabox/
 ---
 
 ## Quick Reference
+
 - **Tech Stack**: TypeScript, Fastify, Next.js, Drizzle ORM, PostgreSQL, PayPal Orders v2 API, Google Gemini.
 - **Rules**: Zero floating-point money (integer minor units only), AI proposes while deterministic policy engine executes, zero prompt injection tolerance.
