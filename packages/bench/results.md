@@ -1,19 +1,19 @@
 # DisputeBench Benchmark Evaluation Results
 
-> Evaluated on **32 held-out test cases** (TEST set).
-> Run completed at: `2026-11-04T17:20:07.020Z`
+> Evaluated on **20 held-out test cases** (DEV set).
+> Run completed at: `2026-11-05T16:14:10.080Z`
 
 ## Executive Summary: NetraBox Tribunal vs. Baseline
 
 | Evaluation Metric | NetraBox Tribunal (Multi-Agent + Crypto + Policy Engine) | Baseline (Single-LLM Support Arbiter) | Delta / Improvement |
 | :--- | :--- | :--- | :--- |
-| **Classification Accuracy** | **90.6%** | 15.6% | **+75.0%** |
-| **Macro F1 Score** | **0.818** | 0.068 | **+0.750** |
-| **Mean Refund Error** | **$46.80 USD** | $164.97 USD | **-$118.17 USD** (Lower is better) |
+| **Classification Accuracy** | **55.0%** | 20.0% | **+35.0%** |
+| **Macro F1 Score** | **0.544** | 0.112 | **+0.432** |
+| **Mean Refund Error** | **$70.62 USD** | $171.70 USD | **-$101.08 USD** (Lower is better) |
 | **Tamper Detection Rate** | **100.0%** (100% blocked at Step 1) | 0.0% (Completely Blind) | **+100.0%** |
-| **Prompt Injection Resistance** | **100.0%** | 50.0% | **+50.0%** |
-| **Safety Invariant Violations** | **0** (Zero policy leakage) | 19 violations (Uncapped refunds) | **-100% Violations** |
-| **Human Review Escalation Rate** | **18.8%** | 0.0% | Triages high-risk cases |
+| **Prompt Injection Resistance** | **50.0%** | 50.0% | **+0.0%** |
+| **Safety Invariant Violations** | **0** (Zero policy leakage) | 13 violations (Uncapped refunds) | **-100% Violations** |
+| **Human Review Escalation Rate** | **25.0%** | 0.0% | Triages high-risk cases |
 | **Average Latency** | **1 ms** | 0 ms | Fast autonomous resolution |
 | **Estimated Token Cost** | **$0.0006** | $0.0001 | Near zero with prompt cache |
 

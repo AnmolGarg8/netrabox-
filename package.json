@@ -12,7 +12,7 @@
     "format:check": "prettier --check .",
     "db:generate": "pnpm --filter @netrabox/core db:generate",
     "db:migrate": "pnpm --filter @netrabox/core db:migrate",
-    "db:seed": "pnpm --filter @netrabox/core db:seed",
+    "db:seed": "tsx scripts/seed-replay-data.ts",
     "keys:generate": "tsx scripts/generate-keypair.ts",
     "bench": "pnpm --filter @netrabox/bench bench",
     "build": "pnpm --filter \"@netrabox/*\" build"

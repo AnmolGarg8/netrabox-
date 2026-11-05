@@ -1,4 +1,14 @@
+# NetraBox — Multi-Service Deployment Blueprint on Render
+# Note on Render Free Tier Cold Starts:
+# Free-tier instances spin down after 15 minutes of inactivity. When accessed again,
+# the first request triggers a container restart taking ~30-50s to wake up.
+# The NetraBox dashboard includes automatic retry logic and fallback fixtures
+# to ensure judge evaluation is never blocked during cold starts.
+
 services:
+  # =========================================================================
+  # 1. NetraBox Fastify REST & Webhook API
+  # =========================================================================
   - type: web
     name: netrabox-api
     runtime: node
@@ -6,6 +16,7 @@ services:
     region: oregon
     buildCommand: pnpm install --frozen-lockfile && pnpm --filter @netrabox/core build && pnpm --filter @netrabox/api build
     startCommand: pnpm --filter @netrabox/api start
+    healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
@@ -15,8 +26,12 @@ services:
         fromDatabase:
           name: netrabox-db
           property: connectionString
+
+      # PayPal Sandbox Configuration
       - key: PAYPAL_ENV
         value: sandbox
+      - key: PAYPAL_API_BASE_URL
+        value: https://api-m.sandbox.paypal.com
       - key: PAYPAL_CLIENT_ID
         sync: false
       - key: PAYPAL_CLIENT_SECRET
@@ -24,18 +39,55 @@ services:
       - key: PAYPAL_WEBHOOK_ID
         sync: false
       - key: DISPUTES_MODE
-        value: internal
+        value: internal # Resolves disputes via internal autonomous tribunal
+
+      # System & Security Modes
       - key: DEMO_MODE
-        value: "true"
+        value: "true" # Enables simulated buyer approvals & adversary tampering route
+      - key: PUBLIC_BASE_URL
+        value: https://netrabox-api.onrender.com
+      - key: DASHBOARD_URL
+        value: https://netrabox-dashboard.onrender.com
+
+      # LLM Adapter (Gemini 1.5 Flash / Pro)
       - key: LLM_PROVIDER
         value: google
       - key: LLM_MODEL
         value: gemini-1.5-flash
-      - key: LLM_API_KEY
+      - key: GOOGLE_AI_API_KEY
         sync: false
+      - key: LLM_TEMPERATURE
+        value: "0.1"
+
+      # Ed25519 Cryptographic Signing Keypair
       - key: SIGNING_PRIVATE_KEY
         sync: false
+      - key: SIGNING_PUBLIC_KEY
+        sync: false
 
+  # =========================================================================
+  # 2. NetraBox Next.js Dashboard & Demo Storefront
+  # =========================================================================
+  - type: web
+    name: netrabox-dashboard
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: pnpm install --frozen-lockfile && pnpm --filter @netrabox/core build && pnpm --filter @netrabox/dashboard build
+    startCommand: pnpm --filter @netrabox/dashboard start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: NEXT_PUBLIC_API_URL
+        value: https://netrabox-api.onrender.com/api/v1
+      - key: NEXT_PUBLIC_DEMO_MODE
+        value: "true"
+
+# =========================================================================
+# 3. Managed PostgreSQL Database
+# =========================================================================
 databases:
   - name: netrabox-db
     databaseName: netrabox
