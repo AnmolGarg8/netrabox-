@@ -1,7 +1,7 @@
 # NetraBox — Cryptographic Evidence Schema Specification
 
 > **Immutable Flight Ledger Event Schema**  
-> Built for the *"Build What's Next with PayPal and AI"* Hackathon.
+> Built for the _"Build What's Next with PayPal and AI"_ Hackathon.
 
 Every action, decision, approval, delivery confirmation, and dispute step in NetraBox is recorded as a structured, hash-chained, and digitally signed evidence event. This document details the canonical envelope, specific event payloads, and cryptographic verification math.
 
@@ -53,9 +53,12 @@ export interface EvidenceEvent {
 ## 2. Supported Event Types & Payload Schemas
 
 ### 2.1 `INSTRUCTION_RECEIVED`
+
 Records the original user prompt, budget, and purchasing constraints.
+
 - **Actor**: `user`
 - **Payload Schema**:
+
 ```json
 {
   "prompt": "Buy Sony WH-1000XM5 wireless headphones, brand new under $360",
@@ -68,9 +71,12 @@ Records the original user prompt, budget, and purchasing constraints.
 ```
 
 ### 2.2 `INTENT_CHECK_RESULT`
+
 Logged by the Intent Guard after evaluating proposed items against user constraints and scanning for prompt injections.
+
 - **Actor**: `system`
 - **Payload Schema**:
+
 ```json
 {
   "status": "PASS", // "PASS" | "WARN" | "BLOCK"
@@ -86,9 +92,12 @@ Logged by the Intent Guard after evaluating proposed items against user constrai
 ```
 
 ### 2.3 `OFFERS_COLLECTED`
+
 Records candidate merchant product listings scanned by the buyer agent.
+
 - **Actor**: `agent`
 - **Payload Schema**:
+
 ```json
 {
   "searchQuery": "Sony WH-1000XM5",
@@ -105,9 +114,12 @@ Records candidate merchant product listings scanned by the buyer agent.
 ```
 
 ### 2.4 `AGENT_REASONING`
+
 Captures the internal decision chain of the shopping agent before cart assembly.
+
 - **Actor**: `agent`
 - **Payload Schema**:
+
 ```json
 {
   "model": "gemini-1.5-flash",
@@ -118,9 +130,12 @@ Captures the internal decision chain of the shopping agent before cart assembly.
 ```
 
 ### 2.5 `CART_PROPOSED`
+
 Details the exact basket submitted for authorization.
+
 - **Actor**: `agent`
 - **Payload Schema**:
+
 ```json
 {
   "merchantId": "m_sound_hub",
@@ -141,9 +156,12 @@ Details the exact basket submitted for authorization.
 ```
 
 ### 2.6 `USER_APPROVAL`
+
 Captures buyer interaction with the PayPal authorization consent dialogue.
+
 - **Actor**: `user`
 - **Payload Schema**:
+
 ```json
 {
   "approved": true,
@@ -154,9 +172,12 @@ Captures buyer interaction with the PayPal authorization consent dialogue.
 ```
 
 ### 2.7 `PAYPAL_AUTHORIZED`
+
 Emitted when PayPal confirms funds reservation under Orders v2 `intent: "AUTHORIZE"`.
+
 - **Actor**: `system`
 - **Payload Schema**:
+
 ```json
 {
   "intent": "AUTHORIZE",
@@ -169,9 +190,12 @@ Emitted when PayPal confirms funds reservation under Orders v2 `intent: "AUTHORI
 ```
 
 ### 2.8 `DELIVERY_EVENT`
+
 Recorded when merchant carrier telemetry confirms package transit or delivery.
+
 - **Actor**: `merchant`
 - **Payload Schema**:
+
 ```json
 {
   "status": "DELIVERED",
@@ -187,9 +211,12 @@ Recorded when merchant carrier telemetry confirms package transit or delivery.
 ```
 
 ### 2.9 `DISPUTED`
+
 Logged when an aggrieved party initiates a dispute claim.
+
 - **Actor**: `user` | `merchant`
 - **Payload Schema**:
+
 ```json
 {
   "reason": "Merchant shipped wrong item size (received Size 7 instead of Size 10).",
@@ -199,9 +226,12 @@ Logged when an aggrieved party initiates a dispute claim.
 ```
 
 ### 2.10 `TRIBUNAL_STEP`
+
 Records individual stages of the multi-agent tribunal court proceedings.
+
 - **Actor**: `tribunal`
 - **Payload Schema**:
+
 ```json
 {
   "stage": "JUDICIAL_VERDICT",
@@ -224,9 +254,12 @@ Records individual stages of the multi-agent tribunal court proceedings.
 ```
 
 ### 2.11 `ACTION_EXECUTED`
+
 Logged after the deterministic Policy Engine approves and executes a PayPal financial action.
+
 - **Actor**: `system`
 - **Payload Schema**:
+
 ```json
 {
   "action": "REFUND", // "CAPTURE" | "PARTIAL_CAPTURE" | "VOID" | "REFUND"
@@ -245,7 +278,12 @@ Logged after the deterministic Policy Engine approves and executes a PayPal fina
 Verification validates the integrity of a purchase's evidence chain through sequential evaluation:
 
 ```typescript
-import { canonicalJson, computeEventHash, verifyHashSignature, GENESIS_PREV_HASH } from "@netrabox/core";
+import {
+  canonicalJson,
+  computeEventHash,
+  verifyHashSignature,
+  GENESIS_PREV_HASH,
+} from "@netrabox/core";
 
 export function verifyEvidenceChain(events: EvidenceEvent[], publicKeys: Record<string, string>) {
   if (events.length === 0) return { valid: true, totalEvents: 0 };

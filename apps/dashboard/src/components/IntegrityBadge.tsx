@@ -119,7 +119,9 @@ export function IntegrityBadge({
             disabled={verifying}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${verifying ? "animate-spin text-indigo-400" : ""}`} />
+            <RefreshCw
+              className={`w-3.5 h-3.5 ${verifying ? "animate-spin text-indigo-400" : ""}`}
+            />
             Verify Now
           </button>
 

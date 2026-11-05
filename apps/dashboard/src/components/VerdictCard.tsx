@@ -65,7 +65,9 @@ export function VerdictCard({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-6">
         <div>
-          <span className="text-xs font-semibold text-slate-400 block mb-2">Judicial Reasoning</span>
+          <span className="text-xs font-semibold text-slate-400 block mb-2">
+            Judicial Reasoning
+          </span>
           <p className="text-xs text-slate-300 leading-relaxed bg-slate-950/50 p-4 rounded-xl border border-slate-800/80">
             {reasoning}
           </p>
@@ -127,9 +129,7 @@ export function VerdictCard({
           </div>
           <div>
             <span className="font-semibold text-white">Policy Engine Enforced:</span>{" "}
-            <span className="text-slate-300 font-mono">
-              {executedAction || recommendedAction}
-            </span>
+            <span className="text-slate-300 font-mono">{executedAction || recommendedAction}</span>
           </div>
         </div>
 

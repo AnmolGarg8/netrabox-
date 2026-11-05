@@ -1,7 +1,7 @@
 # NetraBox 👁️
 
 > **The Flight Recorder & Dispute Tribunal for Autonomous AI-Agent Purchases**  
-> Built for the *"Build What's Next with PayPal and AI"* Hackathon.
+> Built for the _"Build What's Next with PayPal and AI"_ Hackathon.
 
 [![CI Status](https://github.com/netrabox/netrabox/actions/workflows/ci.yml/badge.svg)](https://github.com/netrabox/netrabox/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
@@ -28,16 +28,16 @@ Traditional credit card chargebacks and PayPal consumer claims take 30 to 60 day
 
 ## 2. What NetraBox Does
 
-**NetraBox** (from the Sanskrit *Netra*, meaning *eye*) provides the missing flight recorder and autonomous judicial tribunal for agentic commerce:
+**NetraBox** (from the Sanskrit _Netra_, meaning _eye_) provides the missing flight recorder and autonomous judicial tribunal for agentic commerce:
 
 - 🛡️ **Intent Guard**: Scans user prompts and prospective merchant catalogs, extracting hard constraints (budget ceilings, brand, attributes). Untrusted merchant text is quarantined in XML-delimited blocks to neutralize prompt injection attacks before orders reach payment rails.
 - 📦 **Cryptographic Flight Recorder**: Captures every decision, prompt, offer, cart mutation, and delivery update into an append-only, SHA-256 hash-chained, Ed25519 digitally signed ledger.
 - 💳 **PayPal Orders v2 Authorization Hold**: NetraBox never captures money upfront. It issues PayPal Orders v2 with `intent: "AUTHORIZE"`, reserving buyer funds until delivery telemetry confirms fulfillment.
 - ⚖️ **Multi-Agent Dispute Tribunal**: If an item is disputed, an autonomous courtroom convenes:
-  1. *Step 1*: Deterministic integrity check verifies the hash chain is unbroken. Any tampering halts the tribunal instantly with 0 LLM tokens called.
-  2. *Step 2*: Adversarial **Buyer Advocate** and **Merchant Advocate** agents debate fault citing exact cryptographic event sequence IDs.
-  3. *Step 3*: An autonomous **Chief Judge** (Gemini 1.5) determines fault classification and liability split (Buyer / Agent Provider / Merchant).
-  4. *Step 4*: A 100% pure-code **Deterministic Policy Engine** verifies financial invariants ($0 \le \text{refund} \le \text{captured}$) and executes the programmatic money action on PayPal Sandbox rails (`CAPTURE`, `PARTIAL_CAPTURE`, `VOID`, or `REFUND`).
+  1. _Step 1_: Deterministic integrity check verifies the hash chain is unbroken. Any tampering halts the tribunal instantly with 0 LLM tokens called.
+  2. _Step 2_: Adversarial **Buyer Advocate** and **Merchant Advocate** agents debate fault citing exact cryptographic event sequence IDs.
+  3. _Step 3_: An autonomous **Chief Judge** (Gemini 1.5) determines fault classification and liability split (Buyer / Agent Provider / Merchant).
+  4. _Step 4_: A 100% pure-code **Deterministic Policy Engine** verifies financial invariants ($0 \le \text{refund} \le \text{captured}$) and executes the programmatic money action on PayPal Sandbox rails (`CAPTURE`, `PARTIAL_CAPTURE`, `VOID`, or `REFUND`).
 
 ---
 
@@ -56,7 +56,7 @@ flowchart TD
         EvidenceService["Evidence Ledger Service\n(SHA-256 Chaining + Ed25519 Signatures)"]
         StateMachine["Atomic State Machine\n(Transaction Table)"]
         PolicyEngine["Deterministic Policy Engine\n(Pure Code Financial Validator)"]
-        
+
         subgraph Tribunal["Autonomous Multi-Agent Tribunal"]
             IntegrityCheck["1. Deterministic Integrity Check"]
             Advocates["2. Buyer & Merchant Advocates\n(Delimited Telemetry Citation)"]
@@ -99,17 +99,18 @@ flowchart TD
 
 NetraBox integrates deeply with the official PayPal REST APIs (`https://api-m.sandbox.paypal.com`):
 
-| PayPal API Endpoint | HTTP Method | Technical Rationale & Role in NetraBox |
-| :--- | :--- | :--- |
-| **`/v1/oauth2/token`** | `POST` | Live OAuth 2.0 client credentials authentication. Tokens are cached in-memory and refreshed automatically before expiration. |
-| **`/v2/checkout/orders`** | `POST` | Initiates buyer purchase with `intent: "AUTHORIZE"`. **Never captures money upfront.** Returns the PayPal approval URL for buyer consent. |
-| **`/v2/checkout/orders/{id}/authorize`** | `POST` | Called after buyer completes approval. Places an authorized hold on the buyer's PayPal account, creating an `authorization_id`. |
-| **`/v2/payments/authorizations/{id}/capture`** | `POST` | Executes final settlement to merchant upon confirmed on-time delivery. Supports partial capture (`final_capture: false`) for staged deliveries. |
-| **`/v2/payments/authorizations/{id}/void`** | `POST` | Immediately cancels the hold if Intent Guard detects an adversarial attack, if the merchant goes out of stock, or if the order is canceled before fulfillment. |
-| **`/v2/payments/captures/{id}/refund`** | `POST` | Programmatically executes full or partial refunds post-capture when the Autonomous Tribunal rules in favor of the buyer. |
-| **`/v1/notifications/verify-webhook-signature`** | `POST` | Cryptographically validates incoming PayPal webhooks against PayPal public certificates, preventing webhook spoofing attacks. |
+| PayPal API Endpoint                              | HTTP Method | Technical Rationale & Role in NetraBox                                                                                                                         |
+| :----------------------------------------------- | :---------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`/v1/oauth2/token`**                           | `POST`      | Live OAuth 2.0 client credentials authentication. Tokens are cached in-memory and refreshed automatically before expiration.                                   |
+| **`/v2/checkout/orders`**                        | `POST`      | Initiates buyer purchase with `intent: "AUTHORIZE"`. **Never captures money upfront.** Returns the PayPal approval URL for buyer consent.                      |
+| **`/v2/checkout/orders/{id}/authorize`**         | `POST`      | Called after buyer completes approval. Places an authorized hold on the buyer's PayPal account, creating an `authorization_id`.                                |
+| **`/v2/payments/authorizations/{id}/capture`**   | `POST`      | Executes final settlement to merchant upon confirmed on-time delivery. Supports partial capture (`final_capture: false`) for staged deliveries.                |
+| **`/v2/payments/authorizations/{id}/void`**      | `POST`      | Immediately cancels the hold if Intent Guard detects an adversarial attack, if the merchant goes out of stock, or if the order is canceled before fulfillment. |
+| **`/v2/payments/captures/{id}/refund`**          | `POST`      | Programmatically executes full or partial refunds post-capture when the Autonomous Tribunal rules in favor of the buyer.                                       |
+| **`/v1/notifications/verify-webhook-signature`** | `POST`      | Cryptographically validates incoming PayPal webhooks against PayPal public certificates, preventing webhook spoofing attacks.                                  |
 
 ### Idempotency Guarantee
+
 Every mutating call transmits a unique `PayPal-Request-Id` header calculated as:
 $$\text{PayPal-Request-Id} = \text{sha256}(\text{purchaseId} \mathbin{\Vert} \text{action} \mathbin{\Vert} \text{salt})$$
 This eliminates double-captures and race conditions, ensuring safe retries on network failures.
@@ -172,16 +173,16 @@ We evaluated NetraBox against **DisputeBench**, an automated suite of 52 synthet
 
 ### NetraBox Tribunal vs. Single-LLM Baseline
 
-| Evaluation Metric | NetraBox Tribunal (Multi-Agent + Crypto + Policy Engine) | Baseline (Single-LLM Support Arbiter) | Improvement / Delta |
-| :--- | :--- | :--- | :--- |
-| **Classification Accuracy** | **55.0%** | 20.0% | **+35.0%** |
-| **Macro F1 Score** | **0.544** | 0.112 | **+0.432** |
-| **Mean Refund Amount Error** | **\$70.62 USD** | \$171.70 USD | **-\$101.08 USD** *(Lower is better)* |
-| **Tamper Detection Rate** | **100.0%** *(Halted at Step 1)* | 0.0% *(Completely Blind)* | **+100.0%** |
-| **Prompt Injection Resistance** | **100.0%** *(Delimited quarantine)* | 50.0% *(Fooled by catalog text)* | **+50.0%** |
-| **Monetary Conservation Violations** | **0** *(Zero policy leakage)* | 13 violations *(Uncapped refunds)* | **-100% Violations** |
-| **Human Review Escalation Rate** | **25.0%** *(Triages high-risk cases)* | 0.0% *(Blindly guessed)* | Safe fallback |
-| **Average Decision Latency** | **4 ms** *(Cached/Simulated)* | 0 ms | Sub-second resolution |
+| Evaluation Metric                    | NetraBox Tribunal (Multi-Agent + Crypto + Policy Engine) | Baseline (Single-LLM Support Arbiter) | Improvement / Delta                   |
+| :----------------------------------- | :------------------------------------------------------- | :------------------------------------ | :------------------------------------ |
+| **Classification Accuracy**          | **55.0%**                                                | 20.0%                                 | **+35.0%**                            |
+| **Macro F1 Score**                   | **0.544**                                                | 0.112                                 | **+0.432**                            |
+| **Mean Refund Amount Error**         | **\$70.62 USD**                                          | \$171.70 USD                          | **-\$101.08 USD** _(Lower is better)_ |
+| **Tamper Detection Rate**            | **100.0%** _(Halted at Step 1)_                          | 0.0% _(Completely Blind)_             | **+100.0%**                           |
+| **Prompt Injection Resistance**      | **100.0%** _(Delimited quarantine)_                      | 50.0% _(Fooled by catalog text)_      | **+50.0%**                            |
+| **Monetary Conservation Violations** | **0** _(Zero policy leakage)_                            | 13 violations _(Uncapped refunds)_    | **-100% Violations**                  |
+| **Human Review Escalation Rate**     | **25.0%** _(Triages high-risk cases)_                    | 0.0% _(Blindly guessed)_              | Safe fallback                         |
+| **Average Decision Latency**         | **4 ms** _(Cached/Simulated)_                            | 0 ms                                  | Sub-second resolution                 |
 
 > Detailed methodology, test splits, and ground-truth definitions are documented in [docs/disclosure.md](./docs/disclosure.md) and [packages/bench/results.md](./packages/bench/results.md).
 
@@ -192,6 +193,7 @@ We evaluated NetraBox against **DisputeBench**, an automated suite of 52 synthet
 A judge can install, migrate, seed, and run the entire platform locally in under 10 minutes:
 
 ### Prerequisites
+
 - **Node.js**: v20+ LTS (`node -v`)
 - **pnpm**: v9+ (`npm install -g pnpm`)
 - **Docker & Docker Compose** (optional for Postgres; in-memory fallback works out of the box)
@@ -232,14 +234,15 @@ Open your browser to **`http://localhost:3000`**.
 
 ## 8. Hosted Demo URL & Judge Access Paths
 
-- **Hosted Dashboard**: `https://netrabox-dashboard.onrender.com` *(Placeholder)*
-- **Hosted API Health**: `https://netrabox-api.onrender.com/health` *(Placeholder)*
+- **Hosted Dashboard**: `https://netrabox-dashboard.onrender.com` _(Placeholder)_
+- **Hosted API Health**: `https://netrabox-api.onrender.com/health` _(Placeholder)_
 
 > ℹ️ **Render Free-Tier Notice**: Free-tier web services spin down after 15 minutes of inactivity. First load may take ~30–50s to wake up.
 
 ### Judge Evaluation Paths
 
 #### Path A: Live Interactive Sandbox Flow
+
 1. Navigate to **`/shop`** in the dashboard.
 2. Select **Scenario 1 (Honest Commerce Flow)** or **Scenario 2 (Sloppy Merchant Wrong Size)**.
 3. Click **"Run Autonomous Buyer Agent"**.
@@ -248,6 +251,7 @@ Open your browser to **`http://localhost:3000`**.
 6. Click **"Enter Courtroom"** to watch the multi-agent tribunal debate and execute the programmatic refund on PayPal rails.
 
 #### Path B: Instant Telemetry Replay Mode (Zero Setup Required)
+
 1. Navigate to **`/replay`** in the top navigation.
 2. Select between 5 pre-recorded authentic sandbox sessions:
    - `pur_demo_01`: On-time delivery with full capture.
@@ -262,11 +266,13 @@ Open your browser to **`http://localhost:3000`**.
 ## 9. Security, Cryptography & Limitations
 
 ### Security Architecture
+
 - **Cryptographic Independence**: Every event hash is computed as $\text{sha256}(\text{prevHash} \mathbin{\Vert} \text{CanonicalJSON}(\text{payload}))$ and signed with an Ed25519 private key.
 - **One-Click Adversarial Tamper Testing**: On any purchase detail page (`/purchases/:id`), clicking **"Simulate DB Tamper"** modifies a single byte in the database. Verifying immediately fails at the exact broken sequence number, proving zero tolerance for modified history.
 - **Strict Money Representation**: Floating-point math is completely forbidden. All financial values are modeled in integer minor units (USD cents).
 
 ### Known Limitations & Hackathon Scope Boundaries
+
 - **Single Currency**: NetraBox operates exclusively in USD integer cents ($1.00 = 100$). Multi-currency FX conversion is deferred to production roadmap.
 - **Shipping Telemetry**: Physical carrier webhooks are simulated with carrier tracking payloads for sandbox reproducibility.
 - **Dispute Resolution Mode**: Programmatic internal settlement (`DISPUTES_MODE=internal`) is implemented via PayPal Void/Capture/Refund rails. PayPal's native customer disputes API (`Disputes v1`) requires manual customer service portal interaction and is intentionally excluded per hackathon scope.
@@ -275,15 +281,15 @@ Open your browser to **`http://localhost:3000`**.
 
 ## 10. Repository Documentation Index
 
-| Document | Purpose |
-| :--- | :--- |
-| 📄 **[SPEC.md](./SPEC.md)** | Full architectural specification and state machine transition matrix. |
-| 📜 **[LICENSE](./LICENSE)** | Official MIT License. |
-| 🔍 **[docs/disclosure.md](./docs/disclosure.md)** | Real PayPal sandbox vs. simulated workflows, benchmark label disclosures, and AI tool usage (Google Antigravity, Claude, Gemini). |
-| ⏱️ **[docs/demo-script.md](./docs/demo-script.md)** | Timed 3-minute video presentation script with speaker transcript and screen cues. |
-| 📐 **[docs/architecture.md](./docs/architecture.md)** | Comprehensive system blueprint, state machine tables, and security threat model. |
-| 🔐 **[docs/evidence-schema.md](./docs/evidence-schema.md)** | Detailed specification of all 11 evidence event types and cryptographic formulas. |
-| ✅ **[docs/submission-checklist.md](./docs/submission-checklist.md)** | Final submission verification audit. |
+| Document                                                              | Purpose                                                                                                                           |
+| :-------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------- |
+| 📄 **[SPEC.md](./SPEC.md)**                                           | Full architectural specification and state machine transition matrix.                                                             |
+| 📜 **[LICENSE](./LICENSE)**                                           | Official MIT License.                                                                                                             |
+| 🔍 **[docs/disclosure.md](./docs/disclosure.md)**                     | Real PayPal sandbox vs. simulated workflows, benchmark label disclosures, and AI tool usage (Google Antigravity, Claude, Gemini). |
+| ⏱️ **[docs/demo-script.md](./docs/demo-script.md)**                   | Timed 3-minute video presentation script with speaker transcript and screen cues.                                                 |
+| 📐 **[docs/architecture.md](./docs/architecture.md)**                 | Comprehensive system blueprint, state machine tables, and security threat model.                                                  |
+| 🔐 **[docs/evidence-schema.md](./docs/evidence-schema.md)**           | Detailed specification of all 11 evidence event types and cryptographic formulas.                                                 |
+| ✅ **[docs/submission-checklist.md](./docs/submission-checklist.md)** | Final submission verification audit.                                                                                              |
 
 ---
 

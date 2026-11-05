@@ -2,12 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { formatMoney } from "../../../lib/format";
-import {
-  RefreshCw,
-  CheckCircle2,
-  XCircle,
-  Play,
-} from "lucide-react";
+import { RefreshCw, CheckCircle2, XCircle, Play } from "lucide-react";
 
 interface BenchSummaryData {
   suiteName: string;
@@ -321,10 +316,13 @@ export default function BenchPage() {
             <span className="text-3xl font-extrabold text-emerald-400 font-mono">
               {(t.classificationAccuracy * 100).toFixed(1)}%
             </span>
-            <span className="text-xs text-slate-500">vs {(b.classificationAccuracy * 100).toFixed(1)}%</span>
+            <span className="text-xs text-slate-500">
+              vs {(b.classificationAccuracy * 100).toFixed(1)}%
+            </span>
           </div>
           <span className="text-[11px] text-emerald-400/80 mt-1 block">
-            +{( (t.classificationAccuracy - b.classificationAccuracy) * 100).toFixed(1)}% over single-LLM
+            +{((t.classificationAccuracy - b.classificationAccuracy) * 100).toFixed(1)}% over
+            single-LLM
           </span>
         </div>
 
@@ -364,9 +362,7 @@ export default function BenchPage() {
             </span>
             <span className="text-xs text-rose-400">vs {b.policyViolations} leaks</span>
           </div>
-          <span className="text-[11px] text-emerald-400/80 mt-1 block">
-            Zero uncapped refunds
-          </span>
+          <span className="text-[11px] text-emerald-400/80 mt-1 block">Zero uncapped refunds</span>
         </div>
       </div>
 
@@ -401,7 +397,7 @@ export default function BenchPage() {
                   {(b.classificationAccuracy * 100).toFixed(1)}%
                 </td>
                 <td className="px-6 py-4 text-right font-bold text-emerald-400 font-mono">
-                  +{( (t.classificationAccuracy - b.classificationAccuracy) * 100).toFixed(1)}%
+                  +{((t.classificationAccuracy - b.classificationAccuracy) * 100).toFixed(1)}%
                 </td>
               </tr>
 
@@ -449,7 +445,7 @@ export default function BenchPage() {
                   {(b.injectionResistanceRate * 100).toFixed(1)}%
                 </td>
                 <td className="px-6 py-4 text-right font-bold text-emerald-400 font-mono">
-                  +{( (t.injectionResistanceRate - b.injectionResistanceRate) * 100).toFixed(1)}%
+                  +{((t.injectionResistanceRate - b.injectionResistanceRate) * 100).toFixed(1)}%
                 </td>
               </tr>
 
@@ -485,7 +481,10 @@ export default function BenchPage() {
 
           <div className="divide-y divide-slate-800/80">
             {data.caseBreakdown.map((item) => (
-              <div key={item.caseId} className="py-3 flex items-center justify-between gap-4 text-xs">
+              <div
+                key={item.caseId}
+                className="py-3 flex items-center justify-between gap-4 text-xs"
+              >
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-slate-400 text-[10px]">{item.caseId}</span>

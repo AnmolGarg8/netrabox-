@@ -1,7 +1,7 @@
 # NetraBox — Final Submission Checklist
 
 > **Submission Verification Audit**  
-> Built for the *"Build What's Next with PayPal and AI"* Hackathon.
+> Built for the _"Build What's Next with PayPal and AI"_ Hackathon.
 
 This checklist validates that all hackathon requirements, technical specifications, cryptographic invariants, and deployment assets are completely fulfilled and ready for judge evaluation.
 

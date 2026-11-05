@@ -5,18 +5,14 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { fetchDisputeDetail, fetchPurchaseDetail } from "../../../../lib/api";
 import { formatMoney, formatDate, getStateBadgeColor } from "../../../../lib/format";
-import type { MockDisputeItem, MockPurchaseItem, MockEvidenceEventItem } from "../../../../lib/mock-data";
+import type {
+  MockDisputeItem,
+  MockPurchaseItem,
+  MockEvidenceEventItem,
+} from "../../../../lib/mock-data";
 import { VerdictCard } from "../../../../components/VerdictCard";
 import { FlightRecorderTimeline } from "../../../../components/FlightRecorderTimeline";
-import {
-  ArrowLeft,
-  Scale,
-  ShieldCheck,
-  User,
-  Store,
-  CheckCircle2,
-  FileCheck,
-} from "lucide-react";
+import { ArrowLeft, Scale, ShieldCheck, User, Store, CheckCircle2, FileCheck } from "lucide-react";
 
 export default function DisputeDetailPage() {
   const params = useParams();
@@ -115,7 +111,8 @@ export default function DisputeDetailPage() {
               Tribunal Hearing: "{dispute.reason}"
             </h1>
             <p className="text-xs text-slate-400 mt-1">
-              Claimant: <span className="font-mono text-slate-300">{dispute.claimantActor}</span> • Opened:{" "}
+              Claimant: <span className="font-mono text-slate-300">{dispute.claimantActor}</span> •
+              Opened:{" "}
               <span className="font-mono text-slate-300">{formatDate(dispute.createdAt)}</span>
             </p>
           </div>
@@ -136,17 +133,24 @@ export default function DisputeDetailPage() {
             1
           </div>
           <div>
-            <h3 className="text-sm font-bold text-white">Step 1: Deterministic Chain Integrity Gating</h3>
-            <p className="text-xs text-slate-400">Zero LLM tokens called if cryptographic tampering is detected</p>
+            <h3 className="text-sm font-bold text-white">
+              Step 1: Deterministic Chain Integrity Gating
+            </h3>
+            <p className="text-xs text-slate-400">
+              Zero LLM tokens called if cryptographic tampering is detected
+            </p>
           </div>
         </div>
 
         <div className="bg-emerald-950/20 border border-emerald-500/30 rounded-xl p-4 flex items-center gap-3">
           <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
           <div className="text-xs">
-            <span className="font-bold text-emerald-300 block">Chain Integrity Verified (9 Blocks)</span>
+            <span className="font-bold text-emerald-300 block">
+              Chain Integrity Verified (9 Blocks)
+            </span>
             <span className="text-emerald-400/80">
-              All sequence numbers monotonic, SHA-256 hash chains contiguous, and Ed25519 signatures verified. Proceeding to legal advocacy.
+              All sequence numbers monotonic, SHA-256 hash chains contiguous, and Ed25519 signatures
+              verified. Proceeding to legal advocacy.
             </span>
           </div>
         </div>
@@ -159,8 +163,12 @@ export default function DisputeDetailPage() {
             2
           </div>
           <div>
-            <h3 className="text-sm font-bold text-white">Step 2: Autonomous Multi-Agent Advocates</h3>
-            <p className="text-xs text-slate-400">Both agents cite only verified cryptographic evidence event IDs</p>
+            <h3 className="text-sm font-bold text-white">
+              Step 2: Autonomous Multi-Agent Advocates
+            </h3>
+            <p className="text-xs text-slate-400">
+              Both agents cite only verified cryptographic evidence event IDs
+            </p>
           </div>
         </div>
 
@@ -228,8 +236,12 @@ export default function DisputeDetailPage() {
             3
           </div>
           <div>
-            <h3 className="text-sm font-bold text-white">Step 3 &amp; 4: Chief Judge Deliberation &amp; Policy Engine</h3>
-            <p className="text-xs text-slate-400">Structured judicial verdict enforced against mathematical invariants</p>
+            <h3 className="text-sm font-bold text-white">
+              Step 3 &amp; 4: Chief Judge Deliberation &amp; Policy Engine
+            </h3>
+            <p className="text-xs text-slate-400">
+              Structured judicial verdict enforced against mathematical invariants
+            </p>
           </div>
         </div>
 

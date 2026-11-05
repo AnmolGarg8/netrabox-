@@ -165,7 +165,7 @@ export default function ReplayPage() {
           <div className="flex items-center gap-3">
             <span
               className={`px-2.5 py-1 rounded-md text-xs font-mono font-semibold border ${getStateBadgeColor(
-                purchase.state
+                purchase.state,
               )}`}
             >
               Final: {purchase.state}
@@ -307,8 +307,8 @@ export default function ReplayPage() {
                       isCurrent
                         ? "bg-indigo-950/40 border-indigo-500 shadow-lg shadow-indigo-950/50 scale-[1.01]"
                         : isPassed
-                        ? "bg-slate-900/60 border-slate-800 hover:border-slate-700 opacity-90"
-                        : "bg-slate-950/40 border-slate-900 opacity-30 cursor-not-allowed"
+                          ? "bg-slate-900/60 border-slate-800 hover:border-slate-700 opacity-90"
+                          : "bg-slate-950/40 border-slate-900 opacity-30 cursor-not-allowed"
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1.5">
@@ -318,8 +318,8 @@ export default function ReplayPage() {
                             isCurrent
                               ? "bg-indigo-500 text-white"
                               : isPassed
-                              ? "bg-slate-800 text-slate-300"
-                              : "bg-slate-900 text-slate-600"
+                                ? "bg-slate-800 text-slate-300"
+                                : "bg-slate-900 text-slate-600"
                           }`}
                         >
                           #{evt.seq}
@@ -329,8 +329,8 @@ export default function ReplayPage() {
                             isCurrent
                               ? "text-white"
                               : isPassed
-                              ? "text-slate-300"
-                              : "text-slate-600"
+                                ? "text-slate-300"
+                                : "text-slate-600"
                           }`}
                         >
                           {evt.type}

@@ -1,7 +1,7 @@
 # NetraBox — Technical & Evaluative Disclosure
 
 > **Submission Transparency Statement**  
-> Built for the *"Build What's Next with PayPal and AI"* Hackathon.
+> Built for the _"Build What's Next with PayPal and AI"_ Hackathon.
 
 This document explicitly defines the boundaries between real PayPal sandbox integrations and simulated workflows, clarifies the empirical scope of the DisputeBench dataset, and credits the AI tooling utilized during development.
 
@@ -12,6 +12,7 @@ This document explicitly defines the boundaries between real PayPal sandbox inte
 NetraBox operates directly against PayPal's official Sandbox infrastructure (`https://api-m.sandbox.paypal.com`), using live REST APIs with Orders v2 authorization-capture mechanics.
 
 ### Real PayPal Sandbox Capabilities
+
 - **OAuth 2.0 Client Credentials Authentication**:
   - Live Bearer token negotiation against `/v1/oauth2/token` with in-memory caching and automatic refresh before expiration.
 - **Orders v2 with `intent: "AUTHORIZE"`**:
@@ -30,6 +31,7 @@ NetraBox operates directly against PayPal's official Sandbox infrastructure (`ht
   - Every mutating HTTP call sends a deterministic `PayPal-Request-Id` derived from `sha256(purchaseId + action)` to prevent duplicate settlement.
 
 ### What is Simulated / Mocked for Demo & Benchmarking
+
 - **Physical Shipping Carrier Webhooks**:
   - In a production logistics pipeline, carriers (FedEx, UPS, DHL) push delivery scan webhooks. For sandbox reproducibility, shipping delivery events are simulated via synthetic telemetry events (`DELIVERY_EVENT`).
 - **Simulated Merchant Storefronts**:
@@ -37,24 +39,27 @@ NetraBox operates directly against PayPal's official Sandbox infrastructure (`ht
 - **Demo Mode Buyer Approval Shortcut**:
   - In addition to standard PayPal Sandbox redirect logins, a one-click simulated buyer approval modal is available in `DEMO_MODE=true` to allow judges to test complete end-to-end flows in seconds without needing personal PayPal sandbox test accounts.
 - **Disputes Mode (`DISPUTES_MODE=internal`)**:
-  - PayPal's native customer disputes API (`Disputes v1`) requires manual back-and-forth resolution between real human PayPal customer service portals. NetraBox implements an *Autonomous Internal Tribunal* that settles disputes via programmatic Void, Capture, or Refund on PayPal rails.
+  - PayPal's native customer disputes API (`Disputes v1`) requires manual back-and-forth resolution between real human PayPal customer service portals. NetraBox implements an _Autonomous Internal Tribunal_ that settles disputes via programmatic Void, Capture, or Refund on PayPal rails.
 
 ---
 
 ## 2. DisputeBench Dataset & Methodology Disclosure
 
 ### Purpose and Dataset Generation
+
 `DisputeBench` is an automated evaluation suite comprising 52 synthetic dispute cases covering:
+
 1. Legitimate fulfillment (on-time delivery, accurate descriptions)
 2. Merchant faults (wrong item, defect, partial shipment, delayed fulfillment)
 3. Buyer/Agent faults (false claims, ambiguous prompt constraints, rogue buyer behavior)
 4. Adversarial attacks (cryptographic database tampering, reordered hash chains, forged Ed25519 signatures, prompt injection within product catalogs, prompt injection within buyer claims).
 
 ### Meaning of Benchmark Labels
+
 > [!IMPORTANT]
 > **Ground-Truth Labeling Disclosure**:  
-> All 52 benchmark scenarios were authored and labeled by the NetraBox development team based on formal transaction specifications.  
-> 
+> All 52 benchmark scenarios were authored and labeled by the NetraBox development team based on formal transaction specifications.
+>
 > **These results demonstrate internal architectural consistency, adherence to policy bounds, and cryptographic tamper resistance.** They do not claim to represent empirical statistical distributions of live consumer e-commerce fraud rates.
 
 - **Tamper Detection (100%)**: Proves that SHA-256 hash chaining and Ed25519 digital signatures mathematically detect any altered payload before LLM agents are invoked.

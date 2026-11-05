@@ -118,9 +118,7 @@ export function FlightRecorderTimeline({
                     #{event.seq}
                   </span>
 
-                  <span className="font-bold text-xs text-white tracking-tight">
-                    {event.type}
-                  </span>
+                  <span className="font-bold text-xs text-white tracking-tight">{event.type}</span>
 
                   <span
                     className={`flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${actorInfo.bg}`}
@@ -140,7 +138,11 @@ export function FlightRecorderTimeline({
                     className="flex items-center gap-1 text-slate-400 hover:text-white transition text-[11px] font-medium"
                   >
                     {isExpanded ? "Hide" : "Inspect"}
-                    {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                    {isExpanded ? (
+                      <ChevronUp className="w-3 h-3" />
+                    ) : (
+                      <ChevronDown className="w-3 h-3" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -149,7 +151,8 @@ export function FlightRecorderTimeline({
               <div className="text-xs text-slate-300">
                 {Boolean(event.payload.prompt) && (
                   <p className="line-clamp-2">
-                    <span className="text-slate-500">Prompt:</span> &ldquo;{String(event.payload.prompt)}&rdquo;
+                    <span className="text-slate-500">Prompt:</span> &ldquo;
+                    {String(event.payload.prompt)}&rdquo;
                   </p>
                 )}
                 {Boolean(event.payload.reason) && (
@@ -169,7 +172,9 @@ export function FlightRecorderTimeline({
                 {Boolean(event.payload.action) && (
                   <p className="line-clamp-2">
                     <span className="text-slate-500">Action:</span>{" "}
-                    <span className="font-bold text-purple-400">{String(event.payload.action)}</span>
+                    <span className="font-bold text-purple-400">
+                      {String(event.payload.action)}
+                    </span>
                   </p>
                 )}
               </div>

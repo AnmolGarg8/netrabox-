@@ -65,7 +65,9 @@ export function MoneyFlowDiagram({
           </div>
           <div className="pt-2 border-t border-slate-800/60">
             <span className="text-[10px] text-slate-400 block">Total Order</span>
-            <span className="text-sm font-bold text-white">{formatMoney(amountMinor, currency)}</span>
+            <span className="text-sm font-bold text-white">
+              {formatMoney(amountMinor, currency)}
+            </span>
           </div>
         </div>
 

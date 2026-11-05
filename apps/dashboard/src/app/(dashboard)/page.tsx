@@ -5,14 +5,7 @@ import Link from "next/link";
 import { fetchPurchases } from "../../lib/api";
 import { formatMoney, formatDate, getStateBadgeColor } from "../../lib/format";
 import type { MockPurchaseItem } from "../../lib/mock-data";
-import {
-  Scale,
-  ShoppingBag,
-  ArrowRight,
-  RefreshCw,
-  Search,
-  CheckCircle2,
-} from "lucide-react";
+import { Scale, ShoppingBag, ArrowRight, RefreshCw, Search, CheckCircle2 } from "lucide-react";
 
 export default function PurchasesListPage() {
   const [purchases, setPurchases] = useState<MockPurchaseItem[]>([]);
@@ -87,9 +80,7 @@ export default function PurchasesListPage() {
 
           <div>
             <span className="text-[11px] text-slate-500 block font-medium">Payment Protocol</span>
-            <span className="text-lg font-bold text-white mt-0.5 block">
-              PayPal Orders v2
-            </span>
+            <span className="text-lg font-bold text-white mt-0.5 block">PayPal Orders v2</span>
           </div>
 
           <div>
@@ -112,9 +103,12 @@ export default function PurchasesListPage() {
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-xl font-bold text-white tracking-tight">Active &amp; Recorded Purchases</h2>
+            <h2 className="text-xl font-bold text-white tracking-tight">
+              Active &amp; Recorded Purchases
+            </h2>
             <p className="text-xs text-slate-400">
-              Live ledger tracking of AI agent purchasing sessions ({filteredPurchases.length} total)
+              Live ledger tracking of AI agent purchasing sessions ({filteredPurchases.length}{" "}
+              total)
             </p>
           </div>
 
@@ -124,7 +118,9 @@ export default function PurchasesListPage() {
               disabled={loading}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-semibold border border-slate-800 transition shadow-sm"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-indigo-400" : ""}`} />
+              <RefreshCw
+                className={`w-3.5 h-3.5 ${loading ? "animate-spin text-indigo-400" : ""}`}
+              />
               Refresh
             </button>
 
@@ -195,10 +191,7 @@ export default function PurchasesListPage() {
                   const badge = getStateBadgeColor(purchase.state);
 
                   return (
-                    <tr
-                      key={purchase.id}
-                      className="hover:bg-slate-800/40 transition-colors group"
-                    >
+                    <tr key={purchase.id} className="hover:bg-slate-800/40 transition-colors group">
                       <td className="px-6 py-4">
                         <Link
                           href={`/purchases/${purchase.id}`}

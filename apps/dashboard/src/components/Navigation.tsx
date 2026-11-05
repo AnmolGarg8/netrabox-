@@ -2,13 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  ShoppingBag,
-  BarChart3,
-  RotateCcw,
-  ListOrdered,
-  Eye,
-} from "lucide-react";
+import { ShoppingBag, BarChart3, RotateCcw, ListOrdered, Eye } from "lucide-react";
 
 export function Navigation() {
   const pathname = usePathname();

@@ -9,12 +9,7 @@ import type { MockPurchaseItem, MockEvidenceEventItem } from "../../../../lib/mo
 import { IntegrityBadge } from "../../../../components/IntegrityBadge";
 import { MoneyFlowDiagram } from "../../../../components/MoneyFlowDiagram";
 import { FlightRecorderTimeline } from "../../../../components/FlightRecorderTimeline";
-import {
-  ArrowLeft,
-  Scale,
-  RefreshCw,
-  AlertTriangle,
-} from "lucide-react";
+import { ArrowLeft, Scale, RefreshCw, AlertTriangle } from "lucide-react";
 
 export default function PurchaseDetailPage() {
   const params = useParams();

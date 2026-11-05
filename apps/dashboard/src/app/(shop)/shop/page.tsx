@@ -38,7 +38,8 @@ const DEMO_SCENARIOS: DemoScenario[] = [
   {
     id: "honest-purchase",
     title: "1. Honest Commerce Flow",
-    description: "Buyer agent orders Sony WH-1000XM5. Intent Guard verifies brand & budget. PayPal order authorized and captured on delivery.",
+    description:
+      "Buyer agent orders Sony WH-1000XM5. Intent Guard verifies brand & budget. PayPal order authorized and captured on delivery.",
     merchant: HONEST_MERCHANT,
     productSku: "SONY-WH1000XM5",
     deliveryBehavior: "on_time",
@@ -49,7 +50,8 @@ const DEMO_SCENARIOS: DemoScenario[] = [
   {
     id: "wrongsize-delivered",
     title: "2. Sloppy Merchant (Wrong Size)",
-    description: "Merchant ships wrong size. Buyer initiates autonomous dispute. Tribunal classifies MERCHANT_FAULT and executes 100% refund.",
+    description:
+      "Merchant ships wrong size. Buyer initiates autonomous dispute. Tribunal classifies MERCHANT_FAULT and executes 100% refund.",
     merchant: MALICIOUS_MERCHANT,
     productSku: "ROGUE-TECH-02",
     deliveryBehavior: "wrong_size",
@@ -60,7 +62,8 @@ const DEMO_SCENARIOS: DemoScenario[] = [
   {
     id: "injection-attempt",
     title: "3. Adversarial Prompt Injection",
-    description: "Malicious merchant listing injects instructions to override budget limit. Intent Guard catches deviation and blocks order.",
+    description:
+      "Malicious merchant listing injects instructions to override budget limit. Intent Guard catches deviation and blocks order.",
     merchant: MALICIOUS_MERCHANT,
     productSku: "ROGUE-TECH-01",
     deliveryBehavior: "never_delivered",
@@ -71,7 +74,8 @@ const DEMO_SCENARIOS: DemoScenario[] = [
   {
     id: "false-claim",
     title: "4. False Buyer Dispute (Fraud Defense)",
-    description: "Buyer agent claims item never arrived, but signed delivery telemetry proves confirmed delivery. Tribunal denies refund.",
+    description:
+      "Buyer agent claims item never arrived, but signed delivery telemetry proves confirmed delivery. Tribunal denies refund.",
     merchant: HONEST_MERCHANT,
     productSku: "SONY-WH1000XM5",
     deliveryBehavior: "on_time",
@@ -137,8 +141,8 @@ export default function DemoShopPage() {
     await new Promise((r) => setTimeout(r, 600));
     setSteps((prev) =>
       prev.map((s, idx) =>
-        idx === 0 ? { ...s, status: "done" } : idx === 1 ? { ...s, status: "running" } : s
-      )
+        idx === 0 ? { ...s, status: "done" } : idx === 1 ? { ...s, status: "running" } : s,
+      ),
     );
 
     // Step 2: Intent Guard
@@ -150,10 +154,11 @@ export default function DemoShopPage() {
             ? {
                 ...s,
                 status: "failed",
-                detail: "BLOCKED: Prompt injection detected! Catalog payload violated user budget constraints.",
+                detail:
+                  "BLOCKED: Prompt injection detected! Catalog payload violated user budget constraints.",
               }
-            : s
-        )
+            : s,
+        ),
       );
       setIsRunning(false);
       setActivePurchaseId("pur_demo_03");
@@ -162,8 +167,8 @@ export default function DemoShopPage() {
 
     setSteps((prev) =>
       prev.map((s, idx) =>
-        idx === 1 ? { ...s, status: "done" } : idx === 2 ? { ...s, status: "running" } : s
-      )
+        idx === 1 ? { ...s, status: "done" } : idx === 2 ? { ...s, status: "running" } : s,
+      ),
     );
 
     // Step 3: PayPal Authorization Simulation
@@ -177,16 +182,16 @@ export default function DemoShopPage() {
     // Mark Step 3 done
     setSteps((prev) =>
       prev.map((s, idx) =>
-        idx === 2 ? { ...s, status: "done" } : idx === 3 ? { ...s, status: "running" } : s
-      )
+        idx === 2 ? { ...s, status: "done" } : idx === 3 ? { ...s, status: "running" } : s,
+      ),
     );
 
     // Step 4: Fulfillment
     await new Promise((r) => setTimeout(r, 800));
     setSteps((prev) =>
       prev.map((s, idx) =>
-        idx === 3 ? { ...s, status: "done" } : idx === 4 ? { ...s, status: "running" } : s
-      )
+        idx === 3 ? { ...s, status: "done" } : idx === 4 ? { ...s, status: "running" } : s,
+      ),
     );
 
     // Step 5: Resolution
@@ -199,10 +204,11 @@ export default function DemoShopPage() {
             ? {
                 ...s,
                 status: "done",
-                detail: "Order confirmed delivered on-time. PayPal capture executed. Status: CAPTURED.",
+                detail:
+                  "Order confirmed delivered on-time. PayPal capture executed. Status: CAPTURED.",
               }
-            : s
-        )
+            : s,
+        ),
       );
       setActivePurchaseId("pur_demo_01");
     } else if (selectedScenarioId === "wrongsize-delivered") {
@@ -212,10 +218,11 @@ export default function DemoShopPage() {
             ? {
                 ...s,
                 status: "done",
-                detail: "Wrong item delivered. Autonomous dispute opened. Tribunal awarded 100% refund.",
+                detail:
+                  "Wrong item delivered. Autonomous dispute opened. Tribunal awarded 100% refund.",
               }
-            : s
-        )
+            : s,
+        ),
       );
       setActivePurchaseId("pur_demo_02");
       setActiveDisputeId("disp_demo_02");
@@ -226,10 +233,11 @@ export default function DemoShopPage() {
             ? {
                 ...s,
                 status: "done",
-                detail: "Buyer claim rejected: valid cryptographic delivery signature found. Merchant protected.",
+                detail:
+                  "Buyer claim rejected: valid cryptographic delivery signature found. Merchant protected.",
               }
-            : s
-        )
+            : s,
+        ),
       );
       setActivePurchaseId("pur_demo_01");
       setActiveDisputeId("disp_demo_01");
@@ -251,7 +259,8 @@ export default function DemoShopPage() {
               Autonomous Commerce & Tribunal Simulator
             </h1>
             <p className="text-xs text-slate-400 mt-0.5">
-              Run simulated end-to-end agent purchases, adversarial attacks, and PayPal dispute executions.
+              Run simulated end-to-end agent purchases, adversarial attacks, and PayPal dispute
+              executions.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -289,7 +298,9 @@ export default function DemoShopPage() {
                 >
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${sc.badgeColor}`}>
+                      <span
+                        className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${sc.badgeColor}`}
+                      >
                         {sc.badge}
                       </span>
                     </div>
@@ -330,7 +341,8 @@ export default function DemoShopPage() {
                     <AlertTriangle className="w-4 h-4" /> Adversarial Listing Active
                   </div>
                   <p className="text-amber-300/80">
-                    Catalog text contains hidden prompt injection instructions aimed at overriding buyer budget.
+                    Catalog text contains hidden prompt injection instructions aimed at overriding
+                    buyer budget.
                   </p>
                 </div>
               )}
@@ -356,7 +368,9 @@ export default function DemoShopPage() {
 
               {/* Trigger button */}
               <button
-                onClick={() => runScenario({ ...selectedScenario, deliveryBehavior: selectedBehavior })}
+                onClick={() =>
+                  runScenario({ ...selectedScenario, deliveryBehavior: selectedBehavior })
+                }
                 disabled={isRunning}
                 className="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 transition"
               >
@@ -384,13 +398,15 @@ export default function DemoShopPage() {
                   Live Execution Telemetry
                 </h3>
                 <span className="text-xs font-mono text-slate-400">
-                  {steps.filter((s) => s.status === "done").length} / {steps.length || 5} steps completed
+                  {steps.filter((s) => s.status === "done").length} / {steps.length || 5} steps
+                  completed
                 </span>
               </div>
 
               {steps.length === 0 ? (
                 <div className="py-16 text-center text-slate-500 text-xs font-mono border-2 border-dashed border-slate-800 rounded-xl">
-                  Select a scenario and click &ldquo;Run Autonomous Buyer Agent&rdquo; to watch the flight recorder in action.
+                  Select a scenario and click &ldquo;Run Autonomous Buyer Agent&rdquo; to watch the
+                  flight recorder in action.
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -401,10 +417,10 @@ export default function DemoShopPage() {
                         step.status === "running"
                           ? "bg-indigo-950/40 border-indigo-500 shadow-md shadow-indigo-950/50"
                           : step.status === "done"
-                          ? "bg-slate-950/80 border-slate-800"
-                          : step.status === "failed"
-                          ? "bg-red-950/30 border-red-500/50"
-                          : "bg-slate-950/40 border-slate-900 opacity-40"
+                            ? "bg-slate-950/80 border-slate-800"
+                            : step.status === "failed"
+                              ? "bg-red-950/30 border-red-500/50"
+                              : "bg-slate-950/40 border-slate-900 opacity-40"
                       }`}
                     >
                       <div className="flex items-center justify-between mb-1">
@@ -415,9 +431,7 @@ export default function DemoShopPage() {
                           {step.status === "done" && (
                             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                           )}
-                          {step.status === "failed" && (
-                            <XCircle className="w-4 h-4 text-red-400" />
-                          )}
+                          {step.status === "failed" && <XCircle className="w-4 h-4 text-red-400" />}
                           {step.status === "pending" && (
                             <span className="w-4 h-4 rounded-full border border-slate-700 flex items-center justify-center text-[10px] text-slate-500">
                               {step.seq}
@@ -448,7 +462,8 @@ export default function DemoShopPage() {
                 <div className="mt-4 pt-4 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-indigo-950/20 p-4 rounded-xl border border-indigo-500/30">
                   <div className="space-y-0.5">
                     <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Flight Recording Persisted
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Flight Recording
+                      Persisted
                     </span>
                     <p className="text-[11px] text-slate-400 font-mono">
                       Chain signed with Ed25519 • PayPal Orders v2 synced
