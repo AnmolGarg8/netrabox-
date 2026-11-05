@@ -11,6 +11,7 @@ export default defineConfig({
       "@netrabox/core/db": path.resolve(__dirname, "packages/core/src/db/client.ts"),
       "@netrabox/core": path.resolve(__dirname, "packages/core/src/index.ts"),
       "@netrabox/sdk": path.resolve(__dirname, "packages/sdk/src/index.ts"),
+      "@netrabox/bench": path.resolve(__dirname, "packages/bench/src/index.ts"),
     },
   },
   test: {

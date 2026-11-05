@@ -28,6 +28,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build packages
+        run: pnpm --filter "@netrabox/core" build && pnpm --filter "@netrabox/sdk" build && pnpm --filter "@netrabox/bench" build && pnpm --filter "@netrabox/api" build
+
       - name: Check code formatting
         run: pnpm format:check
 

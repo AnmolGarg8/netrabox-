@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { type LLMAdapter, canTransition } from "@netrabox/core";
+import { type LLMAdapter, canTransition, type EvidenceActor } from "@netrabox/core";
 import type { IStateStore, PurchaseStateMachineService } from "../state-machine/machine.js";
 import type { EvidenceService } from "../evidence/service.js";
 import type { PayPalClient } from "../paypal/client.js";
@@ -59,7 +59,7 @@ export class TribunalRunner {
       await this.stateMachine.transition({
         purchaseId: dispute.purchaseId,
         action: "OPEN_DISPUTE",
-        actor: dispute.claimantActor,
+        actor: dispute.claimantActor as EvidenceActor,
         payload: {
           disputeId: dispute.id,
           reason: dispute.reason,
