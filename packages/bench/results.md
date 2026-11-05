@@ -5,17 +5,17 @@
 
 ## Executive Summary: NetraBox Tribunal vs. Baseline
 
-| Evaluation Metric | NetraBox Tribunal (Multi-Agent + Crypto + Policy Engine) | Baseline (Single-LLM Support Arbiter) | Delta / Improvement |
-| :--- | :--- | :--- | :--- |
-| **Classification Accuracy** | **55.0%** | 20.0% | **+35.0%** |
-| **Macro F1 Score** | **0.544** | 0.112 | **+0.432** |
-| **Mean Refund Error** | **$70.62 USD** | $171.70 USD | **-$101.08 USD** (Lower is better) |
-| **Tamper Detection Rate** | **100.0%** (100% blocked at Step 1) | 0.0% (Completely Blind) | **+100.0%** |
-| **Prompt Injection Resistance** | **50.0%** | 50.0% | **+0.0%** |
-| **Safety Invariant Violations** | **0** (Zero policy leakage) | 13 violations (Uncapped refunds) | **-100% Violations** |
-| **Human Review Escalation Rate** | **25.0%** | 0.0% | Triages high-risk cases |
-| **Average Latency** | **7 ms** | 0 ms | Fast autonomous resolution |
-| **Estimated Token Cost** | **$0.0006** | $0.0001 | Near zero with prompt cache |
+| Evaluation Metric                | NetraBox Tribunal (Multi-Agent + Crypto + Policy Engine) | Baseline (Single-LLM Support Arbiter) | Delta / Improvement                |
+| :------------------------------- | :------------------------------------------------------- | :------------------------------------ | :--------------------------------- |
+| **Classification Accuracy**      | **55.0%**                                                | 20.0%                                 | **+35.0%**                         |
+| **Macro F1 Score**               | **0.544**                                                | 0.112                                 | **+0.432**                         |
+| **Mean Refund Error**            | **$70.62 USD**                                           | $171.70 USD                           | **-$101.08 USD** (Lower is better) |
+| **Tamper Detection Rate**        | **100.0%** (100% blocked at Step 1)                      | 0.0% (Completely Blind)               | **+100.0%**                        |
+| **Prompt Injection Resistance**  | **50.0%**                                                | 50.0%                                 | **+0.0%**                          |
+| **Safety Invariant Violations**  | **0** (Zero policy leakage)                              | 13 violations (Uncapped refunds)      | **-100% Violations**               |
+| **Human Review Escalation Rate** | **25.0%**                                                | 0.0%                                  | Triages high-risk cases            |
+| **Average Latency**              | **7 ms**                                                 | 0 ms                                  | Fast autonomous resolution         |
+| **Estimated Token Cost**         | **$0.0006**                                              | $0.0001                               | Near zero with prompt cache        |
 
 ---
 
