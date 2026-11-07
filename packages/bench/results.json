@@ -1,6 +1,6 @@
 {
   "suiteName": "DisputeBench",
-  "runAt": "2026-11-07T18:54:31.981Z",
+  "runAt": "2026-11-07T19:19:41.262Z",
   "splitReported": "dev",
   "totalEvaluatedCases": 20,
   "tribunal": {
@@ -48,7 +48,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 7,
+        "latencyMs": 5,
         "classificationMatch": true,
         "refundErrorMinor": 0,
         "passedPolicyEngine": true
@@ -90,7 +90,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 1,
+        "latencyMs": 2,
         "classificationMatch": false,
         "refundErrorMinor": 0,
         "passedPolicyEngine": true
@@ -174,7 +174,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 1,
+        "latencyMs": 2,
         "classificationMatch": true,
         "refundErrorMinor": 0,
         "passedPolicyEngine": true
@@ -384,7 +384,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 1,
+        "latencyMs": 2,
         "classificationMatch": true,
         "refundErrorMinor": 0,
         "passedPolicyEngine": true
@@ -426,7 +426,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 0,
+        "latencyMs": 1,
         "classificationMatch": true,
         "refundErrorMinor": 0,
         "passedPolicyEngine": true

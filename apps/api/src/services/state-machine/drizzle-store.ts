@@ -124,9 +124,7 @@ export class DrizzleStateStore implements IStateStore {
     id: string,
     patch: Partial<SettlementActionRecord>,
   ): Promise<SettlementActionRecord> {
-    const cleanPatch = { ...patch };
-    delete cleanPatch.createdAt;
-    delete cleanPatch.updatedAt;
+    const { createdAt: _ca, updatedAt: _ua, ...cleanPatch } = patch;
     const rows = await db
       .update(settlementActions)
       .set({
@@ -204,10 +202,12 @@ export class DrizzleStateStore implements IStateStore {
   }): Promise<void> {
     await db.transaction(async (tx) => {
       // 1. Update settlement action to SUCCEEDED
-      const cleanActionPatch = { ...params.actionPatch };
-      delete cleanActionPatch.createdAt;
-      delete cleanActionPatch.updatedAt;
-      delete cleanActionPatch.status;
+      const {
+        createdAt: _ca,
+        updatedAt: _ua,
+        status: _st,
+        ...cleanActionPatch
+      } = params.actionPatch;
       await tx
         .update(settlementActions)
         .set({
@@ -252,9 +252,7 @@ export class DrizzleStateStore implements IStateStore {
     failedEvent: EvidenceEvent,
   ): Promise<SettlementActionRecord> {
     return await db.transaction(async (tx) => {
-      const cleanPatch = { ...patch };
-      delete cleanPatch.createdAt;
-      delete cleanPatch.updatedAt;
+      const { createdAt: _ca, updatedAt: _ua, ...cleanPatch } = patch;
       const rows = await tx
         .update(settlementActions)
         .set({

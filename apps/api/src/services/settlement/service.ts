@@ -19,7 +19,14 @@ import {
 import type { IStateStore } from "../state-machine/machine.js";
 import type { PayPalClient } from "../paypal/client.js";
 import { PayPalError } from "../paypal/errors.js";
+import type {
+  PayPalCaptureResponse,
+  PayPalVoidResponse,
+  PayPalRefundResponse,
+} from "../paypal/types.js";
 import type { PurchaseRecord } from "../state-machine/types.js";
+
+type MutatingPayPalResponse = PayPalCaptureResponse | PayPalVoidResponse | PayPalRefundResponse;
 
 export class SettlementPolicyViolationError extends Error {
   public readonly errors: string[];
@@ -216,7 +223,7 @@ export class SettlementService {
     const activeAction = pendingResult.action;
 
     // 4. Call PayPal with the same idempotency key
-    let paypalResponse: Record<string, unknown> | null = null;
+    let paypalResponse: MutatingPayPalResponse | null = null;
     try {
       if (params.kind === "CAPTURE" || params.kind === "PARTIAL_CAPTURE") {
         if (!purchase.paypalAuthorizationId) {
@@ -347,7 +354,7 @@ export class SettlementService {
       {
         action: checkResult.resolvedAction,
         settlementActionId: activeAction.id,
-        transactionId: typeof paypalResponse?.id === "string" ? paypalResponse.id : undefined,
+        transactionId: paypalResponse?.id,
         amountMinor: params.amountMinor,
         executedAt: new Date().toISOString(),
       },
@@ -374,7 +381,7 @@ export class SettlementService {
           ? paypalResponse?.id
           : undefined,
       paypalAuthorizationId: purchase.paypalAuthorizationId || undefined,
-      paypalDebugId: paypalResponse?.debug_id || undefined,
+      paypalDebugId: (paypalResponse as unknown as { debug_id?: string })?.debug_id || undefined,
     };
 
     try {
@@ -466,7 +473,7 @@ export class SettlementService {
 
         // If the action already succeeded in PayPal (or was pending with an idempotency key),
         // query PayPal by re-executing with the exact same idempotency key or fetching status.
-        let paypalResponse: Record<string, unknown> | null = null;
+        let paypalResponse: MutatingPayPalResponse | null = null;
         if (action.kind === "CAPTURE" || action.kind === "PARTIAL_CAPTURE") {
           paypalResponse = await this.paypalClient.captureAuthorization(
             purchase.paypalAuthorizationId!,
@@ -567,11 +574,8 @@ export class SettlementService {
           patch: purchasePatch,
           evidenceEvents: [ev1, ev2],
           actionPatch: {
-            paypalCaptureId: typeof paypalResponse?.id === "string" ? paypalResponse.id : undefined,
-            paypalRefundId:
-              action.kind.includes("REFUND") && typeof paypalResponse?.id === "string"
-                ? paypalResponse.id
-                : undefined,
+            paypalCaptureId: paypalResponse?.id,
+            paypalRefundId: action.kind.includes("REFUND") ? paypalResponse?.id : undefined,
           },
         });
 
