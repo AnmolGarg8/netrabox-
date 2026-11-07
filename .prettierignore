@@ -9,3 +9,5 @@ pnpm-lock.yaml
 *.sarif
 results.sarif
 .gitleaksignore
+packages/bench/results.json
+packages/bench/results.md
