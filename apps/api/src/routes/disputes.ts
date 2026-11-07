@@ -7,6 +7,7 @@ import type {
   PurchaseStateMachineService,
   IStateStore,
 } from "../services/state-machine/machine.js";
+import type { PurchaseRecord } from "../services/state-machine/types.js";
 import type { SettlementService } from "../services/settlement/service.js";
 
 export interface DisputeRouteOptions {
@@ -157,7 +158,7 @@ export const disputeRoutes: FastifyPluginAsync<DisputeRouteOptions> = async (fas
         body.overrideAction === "RESOLVE_REFUND_PARTIAL" ||
         body.overrideAction === "RESOLVE_VOID")
     ) {
-      let purchase: any;
+      let purchase: PurchaseRecord | null = null;
       if (store) {
         purchase = await store.getPurchase(dispute.purchaseId);
       }

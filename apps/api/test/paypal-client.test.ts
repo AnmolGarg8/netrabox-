@@ -238,9 +238,10 @@ describe("PayPalClient", () => {
     });
 
     // 2. Raw request headers and body attributes MUST NEVER be attached
-    expect((classified as any).raw_headers).toBeUndefined();
-    expect((classified as any).client_secret).toBeUndefined();
-    expect((classified as any).access_token).toBeUndefined();
+    const classifiedObj = classified as unknown as Record<string, unknown>;
+    expect(classifiedObj.raw_headers).toBeUndefined();
+    expect(classifiedObj.client_secret).toBeUndefined();
+    expect(classifiedObj.access_token).toBeUndefined();
 
     // 3. Stringification / logging assertions: no secrets appear
     const serialized = JSON.stringify(classified);

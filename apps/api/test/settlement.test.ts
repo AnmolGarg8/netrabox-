@@ -7,7 +7,6 @@ import {
 import { PolicyEngine } from "@netrabox/core";
 import { InMemoryStateStore } from "../src/services/state-machine/in-memory-store.js";
 import { PayPalClient, type CustomFetch } from "../src/services/paypal/client.js";
-import { classifyPayPalError } from "../src/services/paypal/errors.js";
 import type { PurchaseRecord } from "../src/services/state-machine/types.js";
 
 describe("SettlementService & Single Money-Movement Architecture", () => {

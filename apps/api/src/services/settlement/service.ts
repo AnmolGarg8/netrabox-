@@ -12,6 +12,7 @@ import {
   GENESIS_PREV_HASH,
   type EvidenceEvent,
   type EvidenceEventBody,
+  type EvidenceEventType,
   getNextPurchaseState,
   getPublicKeyFromPrivate,
 } from "@netrabox/core";
@@ -81,7 +82,7 @@ export class SettlementService {
    */
   private async createSignedEvent(
     purchaseId: string,
-    type: any,
+    type: EvidenceEventType,
     payload: Record<string, unknown>,
   ): Promise<EvidenceEvent> {
     const lastEvent = await this.store.getLastEvidenceEvent(purchaseId);
@@ -215,7 +216,7 @@ export class SettlementService {
     const activeAction = pendingResult.action;
 
     // 4. Call PayPal with the same idempotency key
-    let paypalResponse: any;
+    let paypalResponse: Record<string, unknown> | null = null;
     try {
       if (params.kind === "CAPTURE" || params.kind === "PARTIAL_CAPTURE") {
         if (!purchase.paypalAuthorizationId) {
@@ -259,7 +260,7 @@ export class SettlementService {
       } else {
         throw new Error(`Unsupported settlement kind: ${String(params.kind)}`);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       // (e) On definitive PayPal error (4xx client failure), mark FAILED and leave state unchanged
       if (err instanceof PayPalError && err.status >= 400 && err.status < 500 && !err.isRetryable) {
         const failedEvent = await this.createSignedEvent(params.purchaseId, "SETTLEMENT_FAILED", {
@@ -346,7 +347,7 @@ export class SettlementService {
       {
         action: checkResult.resolvedAction,
         settlementActionId: activeAction.id,
-        transactionId: paypalResponse?.id,
+        transactionId: typeof paypalResponse?.id === "string" ? paypalResponse.id : undefined,
         amountMinor: params.amountMinor,
         executedAt: new Date().toISOString(),
       },
@@ -416,7 +417,7 @@ export class SettlementService {
    */
   private async createSignedEventWithPrev(
     purchaseId: string,
-    type: any,
+    type: EvidenceEventType,
     payload: Record<string, unknown>,
     prevEvent: EvidenceEvent,
   ): Promise<EvidenceEvent> {
@@ -465,7 +466,7 @@ export class SettlementService {
 
         // If the action already succeeded in PayPal (or was pending with an idempotency key),
         // query PayPal by re-executing with the exact same idempotency key or fetching status.
-        let paypalResponse: any;
+        let paypalResponse: Record<string, unknown> | null = null;
         if (action.kind === "CAPTURE" || action.kind === "PARTIAL_CAPTURE") {
           paypalResponse = await this.paypalClient.captureAuthorization(
             purchase.paypalAuthorizationId!,
@@ -566,15 +567,18 @@ export class SettlementService {
           patch: purchasePatch,
           evidenceEvents: [ev1, ev2],
           actionPatch: {
-            paypalCaptureId: paypalResponse?.id,
-            paypalRefundId: action.kind.includes("REFUND") ? paypalResponse?.id : undefined,
+            paypalCaptureId: typeof paypalResponse?.id === "string" ? paypalResponse.id : undefined,
+            paypalRefundId:
+              action.kind.includes("REFUND") && typeof paypalResponse?.id === "string"
+                ? paypalResponse.id
+                : undefined,
           },
         });
 
         const updated = await this.store.getSettlementAction(action.id);
         if (updated) finalized.push(updated);
         count++;
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (
           err instanceof PayPalError &&
           err.status >= 400 &&
