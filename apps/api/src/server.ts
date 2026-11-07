@@ -59,11 +59,15 @@ export const PINO_REDACT_PATHS = [
   "body.signingPrivateKeyHex",
 ];
 
+import { PolicyEngine } from "@netrabox/core";
+import { SettlementService } from "./services/settlement/service.js";
+
 export interface ServerOptions {
   store?: IStateStore;
   paypalClient?: PayPalClient;
   evidenceService?: EvidenceService;
   tribunalRunner?: TribunalRunner;
+  settlementService?: SettlementService;
   llm?: LLMAdapter;
   signingPrivateKeyHex?: string;
   signingPublicKeyHex?: string;
@@ -150,6 +154,11 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
     options.evidenceService ||
     new EvidenceService(store, signingPrivateKeyHex, signingPublicKeyHex);
 
+  const policyEngine = new PolicyEngine();
+  const settlementService =
+    options.settlementService ||
+    new SettlementService(store, paypalClient, policyEngine, signingPrivateKeyHex);
+
   const llm =
     options.llm ||
     (process.env.LLM_PROVIDER === "google" && process.env.LLM_API_KEY
@@ -165,6 +174,7 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
       paypalClient,
       llm,
       signingPrivateKeyHex,
+      settlementService,
     });
 
   const publicBaseUrl =
@@ -186,6 +196,13 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
         };
       });
 
+      // Jobs reconciliation endpoint
+      api.post("/jobs/reconcile", async (request, reply) => {
+        const body = (request.body as { olderThanMs?: number }) || {};
+        const result = await settlementService.reconcile(body.olderThanMs ?? 30000);
+        return reply.send({ status: "ok", ...result });
+      });
+
       // Purchase lifecycle routes
       api.register(purchaseRoutes, {
         paypalClient,
@@ -194,6 +211,7 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
         signingPrivateKeyHex,
         publicBaseUrl,
         dashboardUrl,
+        settlementService,
       });
 
       // Evidence routes
@@ -207,6 +225,8 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
         tribunalRunner,
         stateMachine,
         signingPrivateKeyHex,
+        store,
+        settlementService,
       });
 
       // Webhooks
@@ -224,6 +244,13 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
 
   // Root /bench compatibility
   app.register(benchRoutes);
+
+  // Root /jobs/reconcile compatibility
+  app.post("/jobs/reconcile", async (request, reply) => {
+    const body = (request.body as { olderThanMs?: number }) || {};
+    const result = await settlementService.reconcile(body.olderThanMs ?? 30000);
+    return reply.send({ status: "ok", ...result });
+  });
 
   // Root /health compatibility
   app.get("/health", async () => {

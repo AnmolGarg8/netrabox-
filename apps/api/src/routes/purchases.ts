@@ -4,6 +4,7 @@ import { CreatePurchaseSchema, ProposedCartSchema } from "@netrabox/core";
 import type { PayPalClient } from "../services/paypal/client.js";
 import type { PurchaseStateMachineService } from "../services/state-machine/machine.js";
 import type { IStateStore } from "../services/state-machine/machine.js";
+import type { SettlementService } from "../services/settlement/service.js";
 
 export interface PurchaseRouteOptions {
   paypalClient: PayPalClient;
@@ -12,11 +13,19 @@ export interface PurchaseRouteOptions {
   signingPrivateKeyHex: string;
   publicBaseUrl: string;
   dashboardUrl: string;
+  settlementService: SettlementService;
 }
 
 export const purchaseRoutes: FastifyPluginAsync<PurchaseRouteOptions> = async (fastify, opts) => {
-  const { paypalClient, stateMachine, store, signingPrivateKeyHex, publicBaseUrl, dashboardUrl } =
-    opts;
+  const {
+    paypalClient,
+    stateMachine,
+    store,
+    signingPrivateKeyHex,
+    publicBaseUrl,
+    dashboardUrl,
+    settlementService,
+  } = opts;
 
   /**
    * Initialize a new purchase in DRAFT
@@ -270,7 +279,7 @@ export const purchaseRoutes: FastifyPluginAsync<PurchaseRouteOptions> = async (f
   });
 
   /**
-   * Capture authorization (Full or Partial)
+   * Capture authorization (Full or Partial) routed via SettlementService
    */
   fastify.post("/purchases/:id/capture", async (request, reply) => {
     const { id } = request.params as { id: string };
@@ -286,34 +295,20 @@ export const purchaseRoutes: FastifyPluginAsync<PurchaseRouteOptions> = async (f
     const isPartial = body.amountMinor !== undefined && body.amountMinor < purchase.amountMinor;
     const captureAmountMinor = body.amountMinor ?? purchase.amountMinor;
 
-    const captureResult = await paypalClient.captureAuthorization(
-      purchase.paypalAuthorizationId,
-      id,
-      {
-        amountMinor: isPartial ? captureAmountMinor : undefined,
-        currency: purchase.currency,
-        finalCapture: body.finalCapture ?? true,
-      },
-    );
-
-    const action = isPartial ? "CAPTURE_PARTIAL" : "CAPTURE_PAYMENT";
-    const result = await stateMachine.transition({
+    const result = await settlementService.execute({
       purchaseId: id,
-      action,
-      actor: "system",
-      payload: { captureResponse: captureResult, isPartial, amountMinor: captureAmountMinor },
-      signingPrivateKeyHex,
-      patch: {
-        capturedAmountMinor: captureAmountMinor,
-        paypalCaptureId: captureResult.id,
-      },
+      kind: isPartial ? "PARTIAL_CAPTURE" : "CAPTURE",
+      amountMinor: captureAmountMinor,
+      currency: purchase.currency,
+      requestedBy: "merchant",
+      finalCapture: body.finalCapture ?? true,
     });
 
     return reply.send(result);
   });
 
   /**
-   * Void authorization
+   * Void authorization routed via SettlementService
    */
   fastify.post("/purchases/:id/void", async (request, reply) => {
     const { id } = request.params as { id: string };
@@ -324,21 +319,19 @@ export const purchaseRoutes: FastifyPluginAsync<PurchaseRouteOptions> = async (f
         .send({ error: "Purchase is not authorized or missing paypalAuthorizationId" });
     }
 
-    const voidResponse = await paypalClient.voidAuthorization(purchase.paypalAuthorizationId, id);
-
-    const result = await stateMachine.transition({
+    const result = await settlementService.execute({
       purchaseId: id,
-      action: "VOID_ORDER",
-      actor: "system",
-      payload: { voidResponse },
-      signingPrivateKeyHex,
+      kind: "VOID",
+      amountMinor: 0,
+      currency: purchase.currency,
+      requestedBy: "merchant",
     });
 
     return reply.send(result);
   });
 
   /**
-   * Refund capture (Full or Partial)
+   * Refund capture (Full or Partial) routed via SettlementService
    */
   fastify.post("/purchases/:id/refund", async (request, reply) => {
     const { id } = request.params as { id: string };
@@ -352,22 +345,13 @@ export const purchaseRoutes: FastifyPluginAsync<PurchaseRouteOptions> = async (f
     const refundAmountMinor = body.amountMinor ?? purchase.capturedAmountMinor;
     const isPartial = refundAmountMinor < purchase.capturedAmountMinor;
 
-    const refundResponse = await paypalClient.refundCapture(purchase.paypalCaptureId, id, {
-      amountMinor: isPartial ? refundAmountMinor : undefined,
-      currency: purchase.currency,
-      note: body.note,
-    });
-
-    const action = isPartial ? "RESOLVE_REFUND_PARTIAL" : "RESOLVE_REFUND_FULL";
-    const result = await stateMachine.transition({
+    const result = await settlementService.execute({
       purchaseId: id,
-      action,
-      actor: "system",
-      payload: { refundResponse, isPartial, refundAmountMinor },
-      signingPrivateKeyHex,
-      patch: {
-        refundedAmountMinor: (purchase.refundedAmountMinor || 0) + refundAmountMinor,
-      },
+      kind: isPartial ? "REFUND_PARTIAL" : "REFUND_FULL",
+      amountMinor: refundAmountMinor,
+      currency: purchase.currency,
+      requestedBy: "merchant",
+      reason: body.note,
     });
 
     return reply.send(result);

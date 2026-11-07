@@ -14,10 +14,15 @@ interface Finding {
 }
 
 const COMPROMISED_KEY_FRAGMENT_A = "302e020100300506032b657004220420";
-const COMPROMISED_KEY_FRAGMENT_B = "5c791a5a1ca8e687718fb638985b86aca07e7928a03a5a2932ad14ca539869bd";
+const COMPROMISED_KEY_FRAGMENT_B =
+  "5c791a5a1ca8e687718fb638985b86aca07e7928a03a5a2932ad14ca539869bd";
 const COMPROMISED_KEY_LITERAL = `${COMPROMISED_KEY_FRAGMENT_A}${COMPROMISED_KEY_FRAGMENT_B}`;
 
-const SECRET_PATTERNS: Array<{ name: string; regex: RegExp; filter?: (m: string, ctx: string) => boolean }> = [
+const SECRET_PATTERNS: Array<{
+  name: string;
+  regex: RegExp;
+  filter?: (m: string, ctx: string) => boolean;
+}> = [
   {
     name: "Compromised Ed25519 Private Key Literal",
     regex: new RegExp(COMPROMISED_KEY_LITERAL, "i"),
@@ -103,7 +108,9 @@ export function scanGitHistory(): Finding[] {
         if (filePath.includes("scan-secrets.ts")) continue;
 
         // Check added lines (starting with +)
-        const addedLines = diff.split("\n").filter((l) => l.startsWith("+") && !l.startsWith("+++"));
+        const addedLines = diff
+          .split("\n")
+          .filter((l) => l.startsWith("+") && !l.startsWith("+++"));
         for (const line of addedLines) {
           for (const pattern of SECRET_PATTERNS) {
             const match = line.match(pattern.regex);

@@ -29,6 +29,8 @@ export const EvidenceEventTypeSchema = z.enum([
   "TRIBUNAL_STEP",
   "TRIBUNAL_VERDICT",
   "ACTION_EXECUTED",
+  "SETTLEMENT_REQUESTED",
+  "SETTLEMENT_FAILED",
 ]);
 
 export type EvidenceEventType = z.infer<typeof EvidenceEventTypeSchema>;

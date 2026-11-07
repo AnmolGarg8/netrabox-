@@ -86,11 +86,7 @@ export class PayPalClient {
           } catch {
             parsed = undefined;
           }
-          throw classifyPayPalError(
-            response.status,
-            "PayPal OAuth authentication failed",
-            parsed,
-          );
+          throw classifyPayPalError(response.status, "PayPal OAuth authentication failed", parsed);
         }
 
         const data = (await response.json()) as PayPalTokenResponse;
@@ -117,6 +113,19 @@ export class PayPalClient {
       maxRetries?: number;
     },
   ): Promise<T> {
+    // Invariant (Requirement 6): All mutating POST or PATCH requests to PayPal must supply
+    // a PayPal-Request-Id idempotency key to prevent double charges, duplicate captures, or split voids.
+    // Explicit Exemption: /v1/notifications/verify-webhook-signature is an idempotent, read-only
+    // cryptographic verification probe. It performs no state mutation or ledger balance adjustment on PayPal rails.
+    const isMutatingMethod = options.method === "POST" || options.method === "PATCH";
+    const isWebhookVerification = endpoint.includes("/verify-webhook-signature");
+
+    if (isMutatingMethod && !options.idempotencyKey && !isWebhookVerification) {
+      throw new Error(
+        `PayPalClient invariant violation: Mutating ${options.method} request to '${endpoint}' requires an idempotency key (PayPal-Request-Id).`,
+      );
+    }
+
     const maxRetries = options.maxRetries ?? 2;
     let attempt = 0;
 
@@ -283,10 +292,12 @@ export class PayPalClient {
       currency?: string;
       finalCapture?: boolean;
       actionSuffix?: string;
+      idempotencyKey?: string;
     },
   ): Promise<PayPalCaptureResponse> {
     const action = options?.actionSuffix ? `capture_${options.actionSuffix}` : "capture";
-    const idempotencyKey = this.generateIdempotencyKey(purchaseId, action);
+    const idempotencyKey =
+      options?.idempotencyKey || this.generateIdempotencyKey(purchaseId, action);
 
     const body: Record<string, unknown> = {};
 
@@ -315,8 +326,12 @@ export class PayPalClient {
   public async voidAuthorization(
     authorizationId: string,
     purchaseId: string,
+    options?: {
+      idempotencyKey?: string;
+    },
   ): Promise<PayPalVoidResponse> {
-    const idempotencyKey = this.generateIdempotencyKey(purchaseId, "void");
+    const idempotencyKey =
+      options?.idempotencyKey || this.generateIdempotencyKey(purchaseId, "void");
     return await this.request<PayPalVoidResponse>(
       `/v2/payments/authorizations/${authorizationId}/void`,
       {
@@ -337,10 +352,12 @@ export class PayPalClient {
       currency?: string;
       note?: string;
       actionSuffix?: string;
+      idempotencyKey?: string;
     },
   ): Promise<PayPalRefundResponse> {
     const action = options?.actionSuffix ? `refund_${options.actionSuffix}` : "refund";
-    const idempotencyKey = this.generateIdempotencyKey(purchaseId, action);
+    const idempotencyKey =
+      options?.idempotencyKey || this.generateIdempotencyKey(purchaseId, action);
 
     const body: Record<string, unknown> = {};
 

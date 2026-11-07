@@ -1,5 +1,4 @@
-import type { PayPalClient } from "../paypal/client.js";
-import type { PurchaseStateMachineService } from "../state-machine/machine.js";
+import type { SettlementService } from "../settlement/service.js";
 import type { PurchaseRecord } from "../state-machine/types.js";
 
 export interface AuthExpiryJobOptions {
@@ -7,7 +6,7 @@ export interface AuthExpiryJobOptions {
   autoVoidCloseToExpiry?: boolean; // automatically void authorizations nearing cutoff
   honorPeriodDays?: number; // default: 3 days
   maxValidityDays?: number; // default: 29 days (PayPal standard)
-  signingPrivateKeyHex: string;
+  signingPrivateKeyHex?: string;
 }
 
 export interface AuthExpiryScanResult {
@@ -19,23 +18,17 @@ export interface AuthExpiryScanResult {
 }
 
 export class AuthExpiryMonitorJob {
-  private paypalClient: PayPalClient;
-  private stateMachine: PurchaseStateMachineService;
+  private settlementService: SettlementService;
   private options: Required<AuthExpiryJobOptions>;
 
-  constructor(
-    paypalClient: PayPalClient,
-    stateMachine: PurchaseStateMachineService,
-    options: AuthExpiryJobOptions,
-  ) {
-    this.paypalClient = paypalClient;
-    this.stateMachine = stateMachine;
+  constructor(settlementService: SettlementService, options: AuthExpiryJobOptions = {}) {
+    this.settlementService = settlementService;
     this.options = {
       warningThresholdHours: options.warningThresholdHours ?? 48,
       autoVoidCloseToExpiry: options.autoVoidCloseToExpiry ?? false,
       honorPeriodDays: options.honorPeriodDays ?? 3,
       maxValidityDays: options.maxValidityDays ?? 29,
-      signingPrivateKeyHex: options.signingPrivateKeyHex,
+      signingPrivateKeyHex: options.signingPrivateKeyHex || "",
     };
   }
 
@@ -73,17 +66,13 @@ export class AuthExpiryMonitorJob {
 
         if (this.options.autoVoidCloseToExpiry && msRemaining > 0) {
           try {
-            await this.paypalClient.voidAuthorization(purchase.paypalAuthorizationId, purchase.id);
-
-            await this.stateMachine.transition({
+            await this.settlementService.execute({
               purchaseId: purchase.id,
-              action: "VOID_ORDER",
-              actor: "system",
-              payload: {
-                reason: "Auto-voided by AuthExpiryMonitorJob before 29-day cutoff",
-                msRemaining,
-              },
-              signingPrivateKeyHex: this.options.signingPrivateKeyHex,
+              kind: "VOID",
+              amountMinor: 0,
+              currency: purchase.currency,
+              requestedBy: "job",
+              reason: "Auto-voided by AuthExpiryMonitorJob before 29-day cutoff",
             });
 
             result.voidedCount++;

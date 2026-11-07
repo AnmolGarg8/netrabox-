@@ -122,3 +122,35 @@ export const benchRuns = pgTable("bench_runs", {
   resultsJson: jsonb("results_json").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+export const settlementActions = pgTable(
+  "settlement_actions",
+  {
+    id: text("id").primaryKey(),
+    purchaseId: text("purchase_id")
+      .notNull()
+      .references(() => purchases.id, { onDelete: "cascade" }),
+    disputeId: text("dispute_id"),
+    kind: text("kind").notNull(), // 'CAPTURE' | 'PARTIAL_CAPTURE' | 'VOID' | 'REFUND_FULL' | 'REFUND_PARTIAL'
+    amountMinor: integer("amount_minor").notNull(),
+    currency: text("currency").notNull().default("USD"),
+    idempotencyKey: text("idempotency_key").notNull().unique(),
+    status: text("status").notNull().default("PENDING"), // 'PENDING' | 'SUCCEEDED' | 'FAILED' | 'NEEDS_RECONCILE'
+    requestedBy: text("requested_by").notNull(), // 'policy' | 'human' | 'job' | 'merchant'
+    verdictId: text("verdict_id"),
+    reviewerId: text("reviewer_id"),
+    reason: text("reason"),
+    paypalCaptureId: text("paypal_capture_id"),
+    paypalRefundId: text("paypal_refund_id"),
+    paypalAuthorizationId: text("paypal_authorization_id"),
+    paypalDebugId: text("paypal_debug_id"),
+    errorMessage: text("error_message"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("settlement_idempotency_idx").on(table.idempotencyKey),
+    index("settlement_purchase_idx").on(table.purchaseId),
+    index("settlement_status_idx").on(table.status),
+  ],
+);

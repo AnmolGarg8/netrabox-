@@ -270,6 +270,8 @@ For event at sequence $i$ ($seq_i$):
 15. `TRIBUNAL_STEP`: Arguments submitted by Buyer Advocate or Merchant Advocate.
 16. `TRIBUNAL_VERDICT`: Impartial Judge verdict and recommended action.
 17. `ACTION_EXECUTED`: Policy Engine execution of money settlement on PayPal.
+18. `SETTLEMENT_REQUESTED`: SettlementService initiated a mutating PayPal operation with idempotency tracking.
+19. `SETTLEMENT_FAILED`: PayPal rejected a mutating financial settlement with a definitive client error.
 
 ### 5.4 Verification Algorithm
 

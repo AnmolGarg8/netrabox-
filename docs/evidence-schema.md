@@ -271,6 +271,46 @@ Logged after the deterministic Policy Engine approves and executes a PayPal fina
 }
 ```
 
+### 2.12 `SETTLEMENT_REQUESTED`
+
+Logged when the `SettlementService` initiates an idempotent mutating PayPal operation.
+
+- **Actor**: `system`
+- **Payload Schema**:
+
+```json
+{
+  "settlementActionId": "set_act_a1b2c3d4",
+  "kind": "REFUND_FULL", // "CAPTURE" | "PARTIAL_CAPTURE" | "VOID" | "REFUND_FULL" | "REFUND_PARTIAL"
+  "amountMinor": 34999,
+  "currency": "USD",
+  "idempotencyKey": "set_pur_123_refund-full_34999_seq1",
+  "requestedBy": "policy", // "policy" | "human" | "job" | "merchant"
+  "reason": "Tribunal resolution awards full refund",
+  "verdictId": "tr_run_9981"
+}
+```
+
+### 2.13 `SETTLEMENT_FAILED`
+
+Logged when PayPal rejects a mutating settlement with a definitive 4xx error.
+
+- **Actor**: `system`
+- **Payload Schema**:
+
+```json
+{
+  "settlementActionId": "set_act_a1b2c3d4",
+  "kind": "CAPTURE",
+  "amountMinor": 34999,
+  "currency": "USD",
+  "error": "The authorization has already been captured.",
+  "paypalStatus": 422,
+  "paypalErrorName": "AUTHORIZATION_ALREADY_CAPTURED",
+  "debugId": "dbg_99182341"
+}
+```
+
 ---
 
 ## 3. Cryptographic Verification Algorithm

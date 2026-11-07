@@ -1,8 +1,17 @@
-import type { TribunalVerdict } from "../schemas/index.js";
-import type { PurchaseTransitionAction } from "../state-machine/index.js";
+import type {
+  TribunalVerdict,
+  SettlementActionKind,
+  SettlementRequestedBy,
+} from "../schemas/index.js";
+import {
+  type PurchaseTransitionAction,
+  canTransition,
+  type PurchaseState,
+} from "../state-machine/index.js";
 
 export interface PolicyEnginePurchaseInfo {
   id: string;
+  state?: PurchaseState;
   amountMinor: number;
   capturedAmountMinor: number;
   currency: string;
@@ -24,11 +33,159 @@ export interface PolicyEngineValidationResult {
   sanitizedRefundAmountMinor: number;
 }
 
+export interface CheckSettlementRequest {
+  kind: SettlementActionKind;
+  amountMinor: number;
+  currency: string;
+  purchase: {
+    id: string;
+    state: PurchaseState;
+    amountMinor: number;
+    capturedAmountMinor: number;
+    refundedAmountMinor: number;
+    currency: string;
+  };
+  requestedBy: SettlementRequestedBy;
+  reviewerId?: string | null;
+  reason?: string | null;
+  verdictId?: string | null;
+  disputeId?: string | null;
+}
+
+export interface CheckSettlementResult {
+  passed: boolean;
+  errors: string[];
+  resolvedAction: PurchaseTransitionAction;
+}
+
 export class PolicyEngine {
   private defaultConfidenceThreshold: number;
 
   constructor(defaultConfidenceThreshold = 0.7) {
     this.defaultConfidenceThreshold = defaultConfidenceThreshold;
+  }
+
+  /**
+   * Evaluates a money movement settlement request against financial invariants,
+   * authorization/capture balances, state machine rules, and authorization policies.
+   */
+  public checkSettlement(request: CheckSettlementRequest): CheckSettlementResult {
+    const errors: string[] = [];
+    const { kind, amountMinor, currency, purchase, requestedBy, reviewerId, reason, verdictId } =
+      request;
+
+    // 1. Amount verification (amount > 0 unless VOID)
+    if (kind === "VOID") {
+      if (amountMinor < 0) {
+        errors.push("Void settlement amount cannot be negative");
+      }
+    } else {
+      if (!Number.isInteger(amountMinor) || amountMinor <= 0) {
+        errors.push(
+          `Settlement amount must be a positive integer minor units (received: ${amountMinor})`,
+        );
+      }
+    }
+
+    // 2. Currency verification
+    if (currency.toUpperCase() !== purchase.currency.toUpperCase()) {
+      errors.push(
+        `Currency mismatch: request currency '${currency}' does not match purchase currency '${purchase.currency}'`,
+      );
+    }
+
+    // 3. Balance verification for Captures: capture <= authorized - already captured
+    if (kind === "CAPTURE" || kind === "PARTIAL_CAPTURE") {
+      const remainingAuthorized = purchase.amountMinor - (purchase.capturedAmountMinor || 0);
+      if (amountMinor > remainingAuthorized) {
+        errors.push(
+          `Capture amount ($${(amountMinor / 100).toFixed(2)}) exceeds remaining authorized balance ($${(
+            remainingAuthorized / 100
+          ).toFixed(2)})`,
+        );
+      }
+    }
+
+    // 4. Balance verification for Refunds: refund <= captured - already refunded
+    if (kind === "REFUND_FULL" || kind === "REFUND_PARTIAL") {
+      const alreadyCaptured = purchase.capturedAmountMinor || 0;
+      const alreadyRefunded = purchase.refundedAmountMinor || 0;
+      const remainingCaptured = alreadyCaptured - alreadyRefunded;
+
+      if (alreadyCaptured <= 0) {
+        errors.push("Cannot issue refund: purchase has zero captured funds");
+      } else if (amountMinor > remainingCaptured) {
+        errors.push(
+          `Refund amount ($${(amountMinor / 100).toFixed(2)}) exceeds remaining captured balance ($${(
+            remainingCaptured / 100
+          ).toFixed(2)})`,
+        );
+      }
+    }
+
+    // 5. Map settlement kind to state machine transition action
+    let resolvedAction: PurchaseTransitionAction;
+    switch (kind) {
+      case "CAPTURE":
+        resolvedAction =
+          purchase.state === "DISPUTED" || purchase.state === "NEEDS_HUMAN_REVIEW"
+            ? "RESOLVE_CAPTURE"
+            : "CAPTURE_PAYMENT";
+        break;
+      case "PARTIAL_CAPTURE":
+        resolvedAction =
+          purchase.state === "DISPUTED" || purchase.state === "NEEDS_HUMAN_REVIEW"
+            ? "RESOLVE_CAPTURE"
+            : "CAPTURE_PARTIAL";
+        break;
+      case "VOID":
+        resolvedAction =
+          purchase.state === "DISPUTED" || purchase.state === "NEEDS_HUMAN_REVIEW"
+            ? "RESOLVE_VOID"
+            : "VOID_ORDER";
+        break;
+      case "REFUND_FULL":
+        resolvedAction = "RESOLVE_REFUND_FULL";
+        break;
+      case "REFUND_PARTIAL":
+        resolvedAction = "RESOLVE_REFUND_PARTIAL";
+        break;
+      default:
+        resolvedAction = "ESCALATE";
+        errors.push(`Unknown settlement kind: ${String(kind)}`);
+    }
+
+    // 6. Verify transition legality from current state
+    if (!canTransition(purchase.state, resolvedAction)) {
+      errors.push(
+        `Action '${resolvedAction}' (from ${kind}) is an illegal state transition from current state '${purchase.state}'`,
+      );
+    }
+
+    // 7. Human override requires reviewerId and reason
+    if (requestedBy === "human") {
+      if (!reviewerId || typeof reviewerId !== "string" || reviewerId.trim().length === 0) {
+        errors.push("Human override settlement requires a valid non-empty reviewerId");
+      }
+      if (!reason || typeof reason !== "string" || reason.trim().length === 0) {
+        errors.push(
+          "Human override settlement requires a non-empty reason explaining the decision",
+        );
+      }
+    }
+
+    // 8. Dispute-driven actions require a validated verdict id
+    if (requestedBy === "policy") {
+      if (!verdictId || typeof verdictId !== "string" || verdictId.trim().length === 0) {
+        errors.push("Dispute-driven policy settlement requires a validated verdictId");
+      }
+    }
+
+    return {
+      passed: errors.length === 0,
+      errors,
+      resolvedAction,
+    };
   }
 
   /**

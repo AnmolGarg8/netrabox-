@@ -1,4 +1,4 @@
-# NetraBox 👁️
+# NetraBox
 
 > **The Flight Recorder & Dispute Tribunal for Autonomous AI-Agent Purchases**  
 > Built for the _"Build What's Next with PayPal and AI"_ Hackathon.

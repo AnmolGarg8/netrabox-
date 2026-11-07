@@ -21,13 +21,18 @@ export interface SanitizedPayPalErrorDetails {
 function sanitizeErrorMessage(msg: string): string {
   if (!msg || typeof msg !== "string") return "Unknown PayPal error";
 
-  return msg
-    // Redact Bearer / Basic auth tokens
-    .replace(/(Bearer|Basic)\s+[A-Za-z0-9._~+/-]+=*/gi, "$1 [REDACTED]")
-    // Redact client_secret, token, or password key-value patterns
-    .replace(/(client_secret|access_token|refresh_token|password|secret)[=:][\s"']*[^&"'\s,\}]+/gi, "$1=[REDACTED]")
-    // Truncate excessively long message strings that might be raw dumps
-    .slice(0, 500);
+  return (
+    msg
+      // Redact Bearer / Basic auth tokens
+      .replace(/(Bearer|Basic)\s+[A-Za-z0-9._~+/-]+=*/gi, "$1 [REDACTED]")
+      // Redact client_secret, token, or password key-value patterns
+      .replace(
+        /(client_secret|access_token|refresh_token|password|secret)[=:][\s"']*[^&"'\s,\}]+/gi,
+        "$1=[REDACTED]",
+      )
+      // Truncate excessively long message strings that might be raw dumps
+      .slice(0, 500)
+  );
 }
 
 export class PayPalError extends Error {
@@ -65,7 +70,10 @@ export class PayPalError extends Error {
     };
   }
 
-  public toJSON(): SanitizedPayPalErrorDetails & { category: PayPalErrorCategory; isRetryable: boolean } {
+  public toJSON(): SanitizedPayPalErrorDetails & {
+    category: PayPalErrorCategory;
+    isRetryable: boolean;
+  } {
     return {
       status: this.status,
       category: this.category,

@@ -128,6 +128,29 @@ export const ActionExecutedPayloadSchema = z.object({
   details: z.record(z.string(), z.unknown()).optional(),
 });
 
+export const SettlementRequestedPayloadSchema = z.object({
+  settlementActionId: z.string().min(1),
+  kind: z.enum(["CAPTURE", "PARTIAL_CAPTURE", "VOID", "REFUND_FULL", "REFUND_PARTIAL"]),
+  amountMinor: z.number().int().nonnegative(),
+  currency: z.string().length(3),
+  idempotencyKey: z.string().min(1),
+  requestedBy: z.enum(["policy", "human", "job", "merchant"]),
+  reason: z.string().optional(),
+  verdictId: z.string().optional(),
+  reviewerId: z.string().optional(),
+});
+
+export const SettlementFailedPayloadSchema = z.object({
+  settlementActionId: z.string().min(1),
+  kind: z.enum(["CAPTURE", "PARTIAL_CAPTURE", "VOID", "REFUND_FULL", "REFUND_PARTIAL"]),
+  amountMinor: z.number().int().nonnegative(),
+  currency: z.string().length(3),
+  error: z.string().min(1),
+  paypalStatus: z.number().int().optional(),
+  paypalErrorName: z.string().optional(),
+  debugId: z.string().optional(),
+});
+
 export const ToolExecutionPayloadSchema = z.object({
   toolName: z.string().min(1),
   input: z.unknown(),
@@ -154,4 +177,6 @@ export const EventPayloadSchemas = {
   TRIBUNAL_STEP: TribunalStepPayloadSchema,
   TRIBUNAL_VERDICT: TribunalVerdictPayloadSchema,
   ACTION_EXECUTED: ActionExecutedPayloadSchema,
+  SETTLEMENT_REQUESTED: SettlementRequestedPayloadSchema,
+  SETTLEMENT_FAILED: SettlementFailedPayloadSchema,
 } as const;

@@ -1,4 +1,5 @@
 import type { PurchaseState } from "../schemas/purchase.js";
+export type { PurchaseState };
 
 export type PurchaseTransitionAction =
   | "PASS_INTENT_CHECK"

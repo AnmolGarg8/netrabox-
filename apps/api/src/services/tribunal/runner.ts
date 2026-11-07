@@ -7,6 +7,7 @@ import { PolicyEngine } from "./policy-engine.js";
 import { BuyerAdvocateAgent, MerchantAdvocateAgent } from "./advocates.js";
 import { ChiefJudgeAgent } from "./judge.js";
 import type { DisputeRecord, TribunalRunRecord, TribunalExecutionResult } from "./types.js";
+import { SettlementService } from "../settlement/service.js";
 
 export interface TribunalRunnerOptions {
   store: IStateStore;
@@ -16,6 +17,7 @@ export interface TribunalRunnerOptions {
   llm: LLMAdapter;
   signingPrivateKeyHex: string;
   confidenceThreshold?: number;
+  settlementService?: SettlementService;
 }
 
 export class TribunalRunner {
@@ -23,6 +25,7 @@ export class TribunalRunner {
   private stateMachine: PurchaseStateMachineService;
   private evidenceService: EvidenceService;
   private paypalClient: PayPalClient;
+  private settlementService: SettlementService;
   private policyEngine: PolicyEngine;
   private buyerAdvocate: BuyerAdvocateAgent;
   private merchantAdvocate: MerchantAdvocateAgent;
@@ -35,10 +38,18 @@ export class TribunalRunner {
     this.evidenceService = options.evidenceService;
     this.paypalClient = options.paypalClient;
     this.policyEngine = new PolicyEngine(options.confidenceThreshold ?? 0.7);
+    this.signingPrivateKeyHex = options.signingPrivateKeyHex;
+    this.settlementService =
+      options.settlementService ||
+      new SettlementService(
+        this.store,
+        this.paypalClient,
+        this.policyEngine,
+        this.signingPrivateKeyHex,
+      );
     this.buyerAdvocate = new BuyerAdvocateAgent(options.llm);
     this.merchantAdvocate = new MerchantAdvocateAgent(options.llm);
     this.chiefJudge = new ChiefJudgeAgent(options.llm);
-    this.signingPrivateKeyHex = options.signingPrivateKeyHex;
   }
 
   /**
@@ -202,62 +213,66 @@ export class TribunalRunner {
 
     if (validation.passed && !validation.requiresHumanReview) {
       try {
-        // Execute real settlement action on PayPal
         if (
-          (validation.resolvedAction === "RESOLVE_REFUND_FULL" ||
-            validation.resolvedAction === "RESOLVE_REFUND_PARTIAL") &&
-          purchase.paypalCaptureId
+          validation.resolvedAction === "RESOLVE_REFUND_FULL" ||
+          validation.resolvedAction === "RESOLVE_REFUND_PARTIAL"
         ) {
-          const refundRes = await this.paypalClient.refundCapture(
-            purchase.paypalCaptureId,
-            dispute.purchaseId,
-            {
-              amountMinor: validation.sanitizedRefundAmountMinor,
-              currency: purchase.currency,
-              note: `NetraBox Tribunal Settlement: ${verdict.classification}`,
-            },
-          );
-          executedActionId = refundRes.id;
-        } else if (validation.resolvedAction === "RESOLVE_VOID" && purchase.paypalAuthorizationId) {
-          const voidRes = await this.paypalClient.voidAuthorization(
-            purchase.paypalAuthorizationId,
-            dispute.purchaseId,
-          );
-          executedActionId = voidRes.id;
-        }
-
-        // Apply state machine transition atomically with evidence event
-        await this.stateMachine.transition({
-          purchaseId: dispute.purchaseId,
-          action: validation.resolvedAction,
-          actor: "system",
-          payload: {
-            tribunalRunId: runId,
-            verdict,
-            executedActionId,
-            refundAmountMinor: validation.sanitizedRefundAmountMinor,
-          },
-          signingPrivateKeyHex: this.signingPrivateKeyHex,
-          patch: {
-            refundedAmountMinor:
-              (purchase.refundedAmountMinor || 0) + validation.sanitizedRefundAmountMinor,
-          },
-        });
-
-        // Record ACTION_EXECUTED in the ledger
-        await this.evidenceService.appendEvent({
-          purchaseId: dispute.purchaseId,
-          type: "ACTION_EXECUTED",
-          actor: "system",
-          payload: {
+          const settlementRes = await this.settlementService.execute({
+            purchaseId: dispute.purchaseId,
+            kind:
+              validation.resolvedAction === "RESOLVE_REFUND_FULL"
+                ? "REFUND_FULL"
+                : "REFUND_PARTIAL",
+            amountMinor: validation.sanitizedRefundAmountMinor,
+            currency: purchase.currency,
+            requestedBy: "policy",
+            verdictId: runId,
+            disputeId: dispute.id,
+            reason: `NetraBox Tribunal Settlement: ${verdict.classification}`,
+          });
+          executedActionId =
+            settlementRes.settlementAction.paypalRefundId || settlementRes.settlementAction.id;
+        } else if (validation.resolvedAction === "RESOLVE_VOID") {
+          const settlementRes = await this.settlementService.execute({
+            purchaseId: dispute.purchaseId,
+            kind: "VOID",
+            amountMinor: 0,
+            currency: purchase.currency,
+            requestedBy: "policy",
+            verdictId: runId,
+            disputeId: dispute.id,
+            reason: `NetraBox Tribunal Settlement: ${verdict.classification}`,
+          });
+          executedActionId =
+            settlementRes.settlementAction.paypalAuthorizationId ||
+            settlementRes.settlementAction.id;
+        } else {
+          // Non-monetary resolution actions (e.g., RESOLVE_CAPTURE, RESOLVE_REJECT)
+          await this.stateMachine.transition({
+            purchaseId: dispute.purchaseId,
             action: validation.resolvedAction,
-            executedActionId,
-            refundAmountMinor: validation.sanitizedRefundAmountMinor,
-            verdictClassification: verdict.classification,
-          },
-          signerKeyId: "netrabox_policy_engine",
-          signingPrivateKeyHex: this.signingPrivateKeyHex,
-        });
+            actor: "system",
+            payload: {
+              tribunalRunId: runId,
+              verdict,
+              executedActionId: `act_${randomUUID()}`,
+            },
+            signingPrivateKeyHex: this.signingPrivateKeyHex,
+          });
+
+          await this.evidenceService.appendEvent({
+            purchaseId: dispute.purchaseId,
+            type: "ACTION_EXECUTED",
+            actor: "system",
+            payload: {
+              action: validation.resolvedAction,
+              verdictClassification: verdict.classification,
+              tribunalRunId: runId,
+            },
+            signerKeyId: "netrabox_policy_engine",
+            signingPrivateKeyHex: this.signingPrivateKeyHex,
+          });
+        }
 
         dispute.status = "RESOLVED";
         dispute.resolutionState = validation.resolvedAction;

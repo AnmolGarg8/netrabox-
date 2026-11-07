@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 import { generateKeyPairSync } from "node:crypto";
 import { AuthExpiryMonitorJob } from "../src/services/jobs/auth-expiry.js";
-import { PurchaseStateMachineService } from "../src/services/state-machine/machine.js";
+import { SettlementService } from "../src/services/settlement/service.js";
+import { PolicyEngine } from "@netrabox/core";
 import { InMemoryStateStore } from "../src/services/state-machine/in-memory-store.js";
 import { PayPalClient, type CustomFetch } from "../src/services/paypal/client.js";
 import type { PurchaseRecord } from "../src/services/state-machine/types.js";
@@ -12,7 +13,7 @@ describe("AuthExpiryMonitorJob", () => {
 
   it("flags purchases within configurable warning window and auto-voids if configured", async () => {
     const store = new InMemoryStateStore();
-    const stateMachine = new PurchaseStateMachineService(store);
+    const policyEngine = new PolicyEngine(0.7);
 
     // Mock void API response
     let voidCalledWithAuthId = "";
@@ -33,6 +34,13 @@ describe("AuthExpiryMonitorJob", () => {
     const paypalClient = new PayPalClient(
       { clientId: "id", clientSecret: "sec", environment: "sandbox" },
       mockFetch,
+    );
+
+    const settlementService = new SettlementService(
+      store,
+      paypalClient,
+      policyEngine,
+      privateKeyHex,
     );
 
     const now = Date.now();
@@ -74,7 +82,7 @@ describe("AuthExpiryMonitorJob", () => {
     store.purchases.set("pur_near_expiry", nearExpiryPurchase);
     store.purchases.set("pur_fresh", freshPurchase);
 
-    const job = new AuthExpiryMonitorJob(paypalClient, stateMachine, {
+    const job = new AuthExpiryMonitorJob(settlementService, {
       warningThresholdHours: 48,
       autoVoidCloseToExpiry: true,
       maxValidityDays: 29,

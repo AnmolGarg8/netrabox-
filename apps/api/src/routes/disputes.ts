@@ -3,18 +3,24 @@ import { randomUUID } from "node:crypto";
 import { OpenDisputeInputSchema, type EvidenceActor } from "@netrabox/core";
 import type { TribunalRunner } from "../services/tribunal/runner.js";
 import type { DisputeRecord, TribunalRunRecord } from "../services/tribunal/types.js";
-import type { PurchaseStateMachineService } from "../services/state-machine/machine.js";
+import type {
+  PurchaseStateMachineService,
+  IStateStore,
+} from "../services/state-machine/machine.js";
+import type { SettlementService } from "../services/settlement/service.js";
 
 export interface DisputeRouteOptions {
   tribunalRunner: TribunalRunner;
   stateMachine: PurchaseStateMachineService;
   signingPrivateKeyHex: string;
+  store?: IStateStore;
+  settlementService?: SettlementService;
   disputesMap?: Map<string, DisputeRecord>;
   tribunalRunsMap?: Map<string, TribunalRunRecord>;
 }
 
 export const disputeRoutes: FastifyPluginAsync<DisputeRouteOptions> = async (fastify, opts) => {
-  const { tribunalRunner, stateMachine, signingPrivateKeyHex } = opts;
+  const { tribunalRunner, stateMachine, signingPrivateKeyHex, store, settlementService } = opts;
   const disputes = opts.disputesMap || new Map<string, DisputeRecord>();
   const tribunalRuns = opts.tribunalRunsMap || new Map<string, TribunalRunRecord>();
 
@@ -132,6 +138,7 @@ export const disputeRoutes: FastifyPluginAsync<DisputeRouteOptions> = async (fas
         | "RESOLVE_CAPTURE"
         | "RESOLVE_REJECT";
       humanNotes: string;
+      reviewerId?: string;
       refundAmountMinor?: number;
     };
 
@@ -141,19 +148,60 @@ export const disputeRoutes: FastifyPluginAsync<DisputeRouteOptions> = async (fas
       });
     }
 
-    // Execute state transition
-    await stateMachine.transition({
-      purchaseId: dispute.purchaseId,
-      action: body.overrideAction,
-      actor: "system",
-      payload: {
-        humanOverride: true,
-        humanNotes: body.humanNotes,
+    const reviewerId = body.reviewerId || "human_admin_reviewer";
+
+    // If a financial action, route through SettlementService
+    if (
+      settlementService &&
+      (body.overrideAction === "RESOLVE_REFUND_FULL" ||
+        body.overrideAction === "RESOLVE_REFUND_PARTIAL" ||
+        body.overrideAction === "RESOLVE_VOID")
+    ) {
+      let purchase: any;
+      if (store) {
+        purchase = await store.getPurchase(dispute.purchaseId);
+      }
+
+      const refundAmount =
+        body.overrideAction === "RESOLVE_REFUND_PARTIAL"
+          ? (body.refundAmountMinor ?? dispute.disputedAmountMinor)
+          : (body.refundAmountMinor ??
+            purchase?.capturedAmountMinor ??
+            dispute.disputedAmountMinor);
+
+      const kind =
+        body.overrideAction === "RESOLVE_REFUND_FULL"
+          ? "REFUND_FULL"
+          : body.overrideAction === "RESOLVE_REFUND_PARTIAL"
+            ? "REFUND_PARTIAL"
+            : "VOID";
+
+      await settlementService.execute({
+        purchaseId: dispute.purchaseId,
+        kind,
+        amountMinor: kind === "VOID" ? 0 : refundAmount,
+        currency: purchase?.currency || "USD",
+        requestedBy: "human",
+        reviewerId,
+        reason: body.humanNotes,
         disputeId: id,
-      },
-      signingPrivateKeyHex,
-      patch: body.refundAmountMinor ? { refundedAmountMinor: body.refundAmountMinor } : undefined,
-    });
+      });
+    } else {
+      // Non-monetary state transition (or fallback)
+      await stateMachine.transition({
+        purchaseId: dispute.purchaseId,
+        action: body.overrideAction,
+        actor: "system",
+        payload: {
+          humanOverride: true,
+          humanNotes: body.humanNotes,
+          reviewerId,
+          disputeId: id,
+        },
+        signingPrivateKeyHex,
+        patch: body.refundAmountMinor ? { refundedAmountMinor: body.refundAmountMinor } : undefined,
+      });
+    }
 
     dispute.status = "RESOLVED";
     dispute.resolutionState = body.overrideAction;

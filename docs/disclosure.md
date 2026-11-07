@@ -27,8 +27,10 @@ NetraBox operates directly against PayPal's official Sandbox infrastructure (`ht
   - Live post-capture monetary refunds via `/v2/payments/captures/{capture_id}/refund` when the autonomous tribunal resolves in favor of the buyer.
 - **Cryptographic Webhook Signature Verification**:
   - Live validation of incoming PayPal webhook events against `/v1/notifications/verify-webhook-signature` using `auth_algo`, `cert_url`, `transmission_id`, `transmission_sig`, and `transmission_time`.
-- **Strict Idempotency**:
-  - Every mutating HTTP call sends a deterministic `PayPal-Request-Id` derived from `sha256(purchaseId + action)` to prevent duplicate settlement.
+- **Strict Idempotency & 72-Hour Deduplication Window**:
+  - Per official PayPal REST API v2 documentation, `PayPal-Request-Id` headers are cached and honored by PayPal servers for **72 hours** (3 days).
+  - NetraBox routes all mutating financial calls exclusively through a monolithic `SettlementService`, generating deterministic keys (`set_<purchaseId>_<kind>_<amountMinor>_seq<sequence>`). Within the 72-hour window, identical requests return the cached response without duplicate capture or refund actions.
+  - An automated reconciliation daemon (`POST /jobs/reconcile`) recovers pending or interrupted settlement transactions older than 30 seconds by querying PayPal with the same idempotency key.
 
 ### What is Simulated / Mocked for Demo & Benchmarking
 

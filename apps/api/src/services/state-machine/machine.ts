@@ -8,6 +8,8 @@ import {
   GENESIS_PREV_HASH,
   type EvidenceEvent,
   type EvidenceEventBody,
+  type SettlementActionRecord,
+  type PurchaseState,
 } from "@netrabox/core";
 import type { PurchaseRecord, TransitionContext, TransitionResult } from "./types.js";
 import { mapActionToEvidenceType } from "./mapper.js";
@@ -27,6 +29,33 @@ export interface IStateStore {
     targetSeq: number,
     tamperedPayload: Record<string, unknown>,
   ): Promise<boolean>;
+
+  // Settlement Actions & Reconciliation Store Invariants
+  getSettlementAction(id: string): Promise<SettlementActionRecord | null>;
+  getSettlementActionByIdempotencyKey(key: string): Promise<SettlementActionRecord | null>;
+  createSettlementAction(action: SettlementActionRecord): Promise<SettlementActionRecord>;
+  updateSettlementAction(
+    id: string,
+    patch: Partial<SettlementActionRecord>,
+  ): Promise<SettlementActionRecord>;
+  getUnreconciledSettlementActions(olderThanMs?: number): Promise<SettlementActionRecord[]>;
+  recordSettlementPendingWithEvidence(params: {
+    action: SettlementActionRecord;
+    evidenceEvent: EvidenceEvent;
+  }): Promise<{ existing: boolean; action: SettlementActionRecord }>;
+  applyAtomicSettlementSuccess(params: {
+    actionId: string;
+    purchaseId: string;
+    nextState: PurchaseState;
+    patch: Partial<PurchaseRecord>;
+    evidenceEvents: EvidenceEvent[];
+    actionPatch: Partial<SettlementActionRecord>;
+  }): Promise<void>;
+  recordSettlementFailureWithEvidence(
+    actionId: string,
+    patch: Partial<SettlementActionRecord>,
+    failedEvent: EvidenceEvent,
+  ): Promise<SettlementActionRecord>;
 }
 
 export class PurchaseStateMachineService {
