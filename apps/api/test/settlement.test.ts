@@ -48,7 +48,7 @@ describe("SettlementService & Single Money-Movement Architecture", () => {
             });
           }
           return new Response("Not found", { status: 404 });
-        }) as any),
+        }) as unknown as CustomFetch),
     );
 
     const settlementService = new SettlementService(
@@ -333,8 +333,12 @@ describe("SettlementService & Single Money-Movement Architecture", () => {
     );
 
     // 1. Direct POST without idempotency key throws invariant violation
+    const clientWithPrivates = client as unknown as {
+      request: (endpoint: string, opts: Record<string, unknown>) => Promise<unknown>;
+    };
+
     await expect(
-      (client as any)["request"]("/v2/checkout/orders", {
+      clientWithPrivates.request("/v2/checkout/orders", {
         method: "POST",
         body: { test: true },
         // idempotencyKey omitted!
@@ -343,7 +347,7 @@ describe("SettlementService & Single Money-Movement Architecture", () => {
 
     // 2. Webhook verification call with method POST is explicitly exempt
     await expect(
-      (client as any)["request"]("/v1/notifications/verify-webhook-signature", {
+      clientWithPrivates.request("/v1/notifications/verify-webhook-signature", {
         method: "POST",
         body: { webhook_id: "wh_1" },
         // idempotencyKey omitted!
