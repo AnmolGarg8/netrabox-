@@ -1,4 +1,38 @@
-import { sign, verify, createPrivateKey, createPublicKey } from "node:crypto";
+import { sign, verify, createPrivateKey, createPublicKey, generateKeyPairSync } from "node:crypto";
+
+export function generateEd25519Keypair(): { privateKeyHex: string; publicKeyHex: string } {
+  const { publicKey, privateKey } = generateKeyPairSync("ed25519");
+  const privateKeyHex = privateKey.export({ type: "pkcs8", format: "der" }).toString("hex");
+  const publicKeyHex = publicKey.export({ type: "spki", format: "der" }).toString("hex");
+  return { privateKeyHex, publicKeyHex };
+}
+
+export function validateEd25519PrivateKey(privateKeyHex: string): boolean {
+  try {
+    if (!privateKeyHex || typeof privateKeyHex !== "string") return false;
+    const privateKeyDer = Buffer.from(privateKeyHex, "hex");
+    if (privateKeyDer.length === 0) return false;
+    const key = createPrivateKey({
+      key: privateKeyDer,
+      format: "der",
+      type: "pkcs8",
+    });
+    return key.asymmetricKeyType === "ed25519";
+  } catch {
+    return false;
+  }
+}
+
+export function getPublicKeyFromPrivate(privateKeyHex: string): string {
+  const privateKeyDer = Buffer.from(privateKeyHex, "hex");
+  const key = createPrivateKey({
+    key: privateKeyDer,
+    format: "der",
+    type: "pkcs8",
+  });
+  const pub = createPublicKey(key);
+  return pub.export({ type: "spki", format: "der" }).toString("hex");
+}
 
 export function signHash(hashHex: string, privateKeyHex: string): string {
   const privateKeyDer = Buffer.from(privateKeyHex, "hex");

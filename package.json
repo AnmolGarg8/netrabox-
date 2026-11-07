@@ -14,6 +14,7 @@
     "db:migrate": "pnpm --filter @netrabox/core db:migrate",
     "db:seed": "tsx scripts/seed-replay-data.ts",
     "keys:generate": "tsx scripts/generate-keypair.ts",
+    "secrets:scan": "tsx scripts/scan-secrets.ts",
     "bench": "pnpm --filter @netrabox/bench bench",
     "build": "pnpm --filter \"@netrabox/*\" build"
   },

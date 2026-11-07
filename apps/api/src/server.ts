@@ -12,7 +12,52 @@ import { disputeRoutes } from "./routes/disputes.js";
 import { benchRoutes } from "./routes/bench.js";
 import { EvidenceService } from "./services/evidence/service.js";
 import { TribunalRunner } from "./services/tribunal/runner.js";
-import { MockLLMAdapter, GeminiLLMAdapter, type LLMAdapter } from "@netrabox/core";
+import {
+  MockLLMAdapter,
+  GeminiLLMAdapter,
+  type LLMAdapter,
+  generateEd25519Keypair,
+  validateEd25519PrivateKey,
+  getPublicKeyFromPrivate,
+} from "@netrabox/core";
+
+export const PINO_REDACT_PATHS = [
+  "req.headers.authorization",
+  "req.headers.cookie",
+  "req.headers['set-cookie']",
+  "req.headers['paypal-auth-assertion']",
+  "req.headers['paypal-client-metadata-id']",
+  "*.password",
+  "*.secret",
+  "*.token",
+  "*.client_secret",
+  "*.clientSecret",
+  "*.clientId",
+  "*.client_id",
+  "*.access_token",
+  "*.accessToken",
+  "*.refresh_token",
+  "*.refreshToken",
+  "*.webhookId",
+  "*.webhook_id",
+  "*.SIGNING_PRIVATE_KEY",
+  "*.signingPrivateKey",
+  "*.signingPrivateKeyHex",
+  "*.PAYPAL_CLIENT_SECRET",
+  "*.paypalClientSecret",
+  "*.PAYPAL_CLIENT_ID",
+  "*.paypalClientId",
+  "body.password",
+  "body.secret",
+  "body.token",
+  "body.clientSecret",
+  "body.client_secret",
+  "body.accessToken",
+  "body.access_token",
+  "body.refreshToken",
+  "body.signingPrivateKey",
+  "body.signingPrivateKeyHex",
+];
 
 export interface ServerOptions {
   store?: IStateStore;
@@ -32,7 +77,15 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
   const isTest = options.isTest ?? process.env.NODE_ENV === "test";
 
   const app = Fastify({
-    logger: !isTest,
+    logger: isTest
+      ? false
+      : {
+          level: process.env.LOG_LEVEL || "info",
+          redact: {
+            paths: PINO_REDACT_PATHS,
+            censor: "[REDACTED]",
+          },
+        },
   });
 
   app.register(cors, {
@@ -57,16 +110,40 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
       webhookId: process.env.PAYPAL_WEBHOOK_ID,
     });
 
-  // Default fallback signing private key (valid Ed25519 pkcs8 hex)
-  const signingPrivateKeyHex =
-    options.signingPrivateKeyHex ||
-    process.env.SIGNING_PRIVATE_KEY ||
-    "";
+  // Strict Ed25519 Keypair Resolution:
+  // In non-test environments, fail fast if SIGNING_PRIVATE_KEY is missing or malformed.
+  // In tests, dynamically generate a fresh ephemeral keypair if none was provided. Never use a fixed literal.
+  let signingPrivateKeyHex = options.signingPrivateKeyHex || process.env.SIGNING_PRIVATE_KEY;
+  let signingPublicKeyHex = options.signingPublicKeyHex || process.env.SIGNING_PUBLIC_KEY;
 
-  const signingPublicKeyHex =
-    options.signingPublicKeyHex ||
-    process.env.SIGNING_PUBLIC_KEY ||
-    "";
+  if (!signingPrivateKeyHex) {
+    if (isTest) {
+      const ephemeral = generateEd25519Keypair();
+      signingPrivateKeyHex = ephemeral.privateKeyHex;
+      signingPublicKeyHex = ephemeral.publicKeyHex;
+    } else {
+      throw new Error(
+        "FATAL: SIGNING_PRIVATE_KEY environment variable is missing. " +
+          "In non-test environments, a valid hex-encoded Ed25519 PKCS#8 private key is strictly required to sign evidence chains.",
+      );
+    }
+  } else {
+    if (!validateEd25519PrivateKey(signingPrivateKeyHex)) {
+      throw new Error(
+        "FATAL: SIGNING_PRIVATE_KEY is malformed. " +
+          "Must be a valid hex-encoded DER PKCS#8 Ed25519 private key.",
+      );
+    }
+    if (!signingPublicKeyHex) {
+      try {
+        signingPublicKeyHex = getPublicKeyFromPrivate(signingPrivateKeyHex);
+      } catch (err) {
+        throw new Error(
+          `FATAL: Failed to derive public key from SIGNING_PRIVATE_KEY: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+    }
+  }
 
   const stateMachine = new PurchaseStateMachineService(store);
   const evidenceService =
@@ -161,11 +238,11 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
   return app;
 }
 
-const server = buildServer();
-const port = Number(process.env.PORT) || 4000;
-const host = "0.0.0.0";
-
 if (process.env.NODE_ENV !== "test") {
+  const server = buildServer();
+  const port = Number(process.env.PORT) || 4000;
+  const host = "0.0.0.0";
+
   server.listen({ port, host }, (err, address) => {
     if (err) {
       server.log.error(err);

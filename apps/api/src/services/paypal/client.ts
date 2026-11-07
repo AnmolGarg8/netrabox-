@@ -80,7 +80,17 @@ export class PayPalClient {
 
         if (!response.ok) {
           const errorBody = await response.text();
-          throw classifyPayPalError(response.status, `Failed to authenticate: ${errorBody}`);
+          let parsed: unknown;
+          try {
+            parsed = JSON.parse(errorBody);
+          } catch {
+            parsed = undefined;
+          }
+          throw classifyPayPalError(
+            response.status,
+            "PayPal OAuth authentication failed",
+            parsed,
+          );
         }
 
         const data = (await response.json()) as PayPalTokenResponse;

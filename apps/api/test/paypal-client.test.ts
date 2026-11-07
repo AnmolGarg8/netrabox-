@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { PayPalClient, type CustomFetch } from "../src/services/paypal/client.js";
+import { classifyPayPalError } from "../src/services/paypal/errors.js";
 
 describe("PayPalClient", () => {
   const mockConfig = {
@@ -204,5 +205,61 @@ describe("PayPalClient", () => {
 
     expect(isValid).toBe(true);
     expect(capturedVerificationPayload?.webhook_id).toBe("wh_test_123");
+  });
+
+  it("classifyPayPalError retains strictly safe fields and never leaks secrets or raw bodies", () => {
+    const rawSensitivePayload = {
+      name: "INVALID_CLIENT",
+      message: "Client Authentication failed for client_id: secret_client_id_999",
+      debug_id: "dbg_88776655",
+      client_secret: "SUPER_SECRET_PAYPAL_KEY_NEVER_LOG",
+      access_token: "A21AA_SENSITIVE_OAUTH_TOKEN_BEARER",
+      raw_headers: {
+        authorization: "Basic bW9ja19jbGllbnRfaWQ6bW9ja19jbGllbnRfc2VjcmV0",
+        cookie: "session_id=ultra_sensitive_session_123",
+      },
+    };
+
+    const classified = classifyPayPalError(
+      401,
+      "Failed to authenticate: Bearer A21AA_SENSITIVE_OAUTH_TOKEN_BEARER with client_secret=SUPER_SECRET_PAYPAL_KEY_NEVER_LOG",
+      rawSensitivePayload,
+    );
+
+    // 1. Keeps only HTTP status, PayPal error name, message, and debug_id
+    expect(classified.status).toBe(401);
+    expect(classified.paypalErrorName).toBe("INVALID_CLIENT");
+    expect(classified.debug_id).toBe("dbg_88776655");
+    expect(classified.details).toEqual({
+      status: 401,
+      paypalErrorName: "INVALID_CLIENT",
+      message: expect.not.stringContaining("SUPER_SECRET_PAYPAL_KEY_NEVER_LOG"),
+      debug_id: "dbg_88776655",
+    });
+
+    // 2. Raw request headers and body attributes MUST NEVER be attached
+    expect((classified as any).raw_headers).toBeUndefined();
+    expect((classified as any).client_secret).toBeUndefined();
+    expect((classified as any).access_token).toBeUndefined();
+
+    // 3. Stringification / logging assertions: no secrets appear
+    const serialized = JSON.stringify(classified);
+    const jsonOutput = JSON.stringify(classified.toJSON());
+    const errorMessage = classified.message;
+    const errorString = classified.toString();
+
+    const sensitiveStrings = [
+      "SUPER_SECRET_PAYPAL_KEY_NEVER_LOG",
+      "A21AA_SENSITIVE_OAUTH_TOKEN_BEARER",
+      "bW9ja19jbGllbnRfaWQ6bW9ja19jbGllbnRfc2VjcmV0",
+      "ultra_sensitive_session_123",
+    ];
+
+    for (const secret of sensitiveStrings) {
+      expect(serialized).not.toContain(secret);
+      expect(jsonOutput).not.toContain(secret);
+      expect(errorMessage).not.toContain(secret);
+      expect(errorString).not.toContain(secret);
+    }
   });
 });
