@@ -1,0 +1,10 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Allowlist false positives in test cases and security scanner"
+paths = [
+  '''scripts/scan-secrets\.ts''',
+  '''\.env\.example''',
+  '''packages/bench/src/datasets/cases\.jsonl''',
+]
