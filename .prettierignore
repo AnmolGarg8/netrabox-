@@ -6,3 +6,6 @@ coverage
 next-env.d.ts
 packages/core/drizzle
 pnpm-lock.yaml
+*.sarif
+results.sarif
+.gitleaksignore
