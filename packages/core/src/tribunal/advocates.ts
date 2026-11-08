@@ -8,8 +8,14 @@ export class AdvocateValidationError extends Error {
   public readonly attempts: number;
   public readonly lastFeedback: string;
 
-  constructor(role: "buyer_advocate" | "merchant_advocate", attempts: number, lastFeedback: string) {
-    super(`[${role}] Output failed schema/citation validation after ${attempts} attempts: ${lastFeedback}`);
+  constructor(
+    role: "buyer_advocate" | "merchant_advocate",
+    attempts: number,
+    lastFeedback: string,
+  ) {
+    super(
+      `[${role}] Output failed schema/citation validation after ${attempts} attempts: ${lastFeedback}`,
+    );
     this.name = "AdvocateValidationError";
     this.role = role;
     this.attempts = attempts;
@@ -222,7 +228,8 @@ Prepare your formal Merchant Advocate Brief. Return a list of claims in 'claims'
     throw new AdvocateValidationError(
       "merchant_advocate",
       maxRetries,
-      feedback || "Failed to produce a valid schema-compliant merchant advocate brief after retries",
+      feedback ||
+        "Failed to produce a valid schema-compliant merchant advocate brief after retries",
     );
   }
 }

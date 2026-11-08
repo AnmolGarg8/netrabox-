@@ -82,8 +82,8 @@ export class MockLLMAdapter implements LLMAdapter {
       }
     }
 
-    const eventIdMatches = Array.from(prompt.matchAll(/\[Event(?:\s+ID)?:?\s*([^\]]+)\]/gi)).map((m) =>
-      m[1].trim(),
+    const eventIdMatches = Array.from(prompt.matchAll(/\[Event(?:\s+ID)?:?\s*([^\]]+)\]/gi)).map(
+      (m) => m[1].trim(),
     );
     const citingMatches = Array.from(prompt.matchAll(/citing\s*\[([^\]]+)\]/gi)).flatMap((m) =>
       m[1].split(",").map((s) => s.trim()),

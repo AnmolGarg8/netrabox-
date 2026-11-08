@@ -12,7 +12,9 @@ export class JudgeValidationError extends Error {
   public readonly lastFeedback: string;
 
   constructor(attempts: number, lastFeedback: string) {
-    super(`Chief judge output failed schema/citation validation after ${attempts} attempts: ${lastFeedback}`);
+    super(
+      `Chief judge output failed schema/citation validation after ${attempts} attempts: ${lastFeedback}`,
+    );
     this.name = "JudgeValidationError";
     this.attempts = attempts;
     this.lastFeedback = lastFeedback;
