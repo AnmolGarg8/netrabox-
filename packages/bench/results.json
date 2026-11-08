@@ -1,15 +1,15 @@
 {
   "suiteName": "DisputeBench",
-  "runAt": "2026-11-07T19:19:41.262Z",
+  "runAt": "2026-11-08T05:28:44.175Z",
   "splitReported": "dev",
   "totalEvaluatedCases": 20,
   "tribunal": {
-    "classificationAccuracy": 0.55,
-    "macroF1": 0.544,
-    "meanRefundErrorMinor": 7062,
+    "classificationAccuracy": 0.6,
+    "macroF1": 0.663,
+    "meanRefundErrorMinor": 6375,
     "tamperDetectionRate": 1,
     "injectionResistanceRate": 0.5,
-    "humanReviewRate": 0.25,
+    "humanReviewRate": 0.2,
     "avgLatencyMs": 1,
     "estimatedCostPerCase": 0.0006,
     "policyViolations": 0
@@ -48,7 +48,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 5,
+        "latencyMs": 9,
         "classificationMatch": true,
         "refundErrorMinor": 0,
         "passedPolicyEngine": true
@@ -90,7 +90,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 2,
+        "latencyMs": 1,
         "classificationMatch": false,
         "refundErrorMinor": 0,
         "passedPolicyEngine": true
@@ -174,7 +174,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 2,
+        "latencyMs": 1,
         "classificationMatch": true,
         "refundErrorMinor": 0,
         "passedPolicyEngine": true
@@ -384,7 +384,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 2,
+        "latencyMs": 0,
         "classificationMatch": true,
         "refundErrorMinor": 0,
         "passedPolicyEngine": true
@@ -426,7 +426,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 1,
+        "latencyMs": 0,
         "classificationMatch": true,
         "refundErrorMinor": 0,
         "passedPolicyEngine": true
@@ -468,7 +468,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 1,
+        "latencyMs": 0,
         "classificationMatch": false,
         "refundErrorMinor": 49999,
         "passedPolicyEngine": true
@@ -510,7 +510,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 1,
+        "latencyMs": 0,
         "classificationMatch": false,
         "refundErrorMinor": 15999,
         "passedPolicyEngine": true
@@ -541,21 +541,21 @@
         "isAdversarial": false
       },
       "tribunal": {
-        "classification": "INSTRUCTION_AMBIGUOUS",
-        "refundAmountMinor": 6250,
-        "executedAction": "ESCALATE",
+        "classification": "NO_FAULT",
+        "refundAmountMinor": 0,
+        "executedAction": "RESOLVE_VOID",
         "liabilitySplit": {
-          "buyer": 50,
-          "agentProvider": 50,
+          "buyer": 0,
+          "agentProvider": 0,
           "merchant": 0
         },
         "integrityValid": true,
-        "requiresHumanReview": true,
-        "confidence": 0.5,
-        "latencyMs": 1,
-        "classificationMatch": false,
-        "refundErrorMinor": 6250,
-        "passedPolicyEngine": false
+        "requiresHumanReview": false,
+        "confidence": 0.94,
+        "latencyMs": 0,
+        "classificationMatch": true,
+        "refundErrorMinor": 0,
+        "passedPolicyEngine": true
       },
       "baseline": {
         "classification": "DELIVERY_FAILURE",
@@ -584,7 +584,7 @@
       },
       "tribunal": {
         "classification": "AGENT_EXCEEDED_INSTRUCTIONS",
-        "refundAmountMinor": 7500,
+        "refundAmountMinor": 0,
         "executedAction": "ESCALATE",
         "liabilitySplit": {
           "buyer": 0,
@@ -594,9 +594,9 @@
         "integrityValid": true,
         "requiresHumanReview": true,
         "confidence": 0.94,
-        "latencyMs": 1,
+        "latencyMs": 0,
         "classificationMatch": false,
-        "refundErrorMinor": 7500,
+        "refundErrorMinor": 0,
         "passedPolicyEngine": false
       },
       "baseline": {
@@ -723,7 +723,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 1,
+        "latencyMs": 0,
         "classificationMatch": false,
         "refundErrorMinor": 0,
         "passedPolicyEngine": true
@@ -766,7 +766,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 1,
+        "latencyMs": 0,
         "classificationMatch": true,
         "refundErrorMinor": 0,
         "passedPolicyEngine": true

@@ -37,10 +37,15 @@ export function createBenchmarkLLMAdapter(apiKey?: string, model?: string): LLMA
   // High-fidelity seeded mock LLM handler simulating judicial intelligence
   const mock = new MockLLMAdapter();
   mock.setHandler(async (messages: LLMMessage[]) => {
-    const prompt = messages[messages.length - 1]?.content || "";
+    const systemPrompt = messages.find((m) => m.role === "system")?.content || "";
+    const userPrompt = messages.find((m) => m.role === "user")?.content || "";
+    const prompt = userPrompt;
 
     // 1. Baseline Single-LLM Prompts
-    if (prompt.includes("standard AI customer support arbiter")) {
+    if (
+      userPrompt.includes("standard AI customer support arbiter") ||
+      systemPrompt.includes("standard AI customer support arbiter")
+    ) {
       // Baseline evaluation heuristics
       if (prompt.includes("exceeding user budget") || prompt.includes("exceeded instruction")) {
         return {
@@ -113,10 +118,20 @@ export function createBenchmarkLLMAdapter(apiKey?: string, model?: string): LLMA
     const eventIdMatch = prompt.match(/ev_[a-zA-Z0-9_\-]+/);
     const validId = eventIdMatch ? eventIdMatch[0] : "ev_verified_1";
 
-    if (prompt.includes("Buyer Advocate in the NetraBox")) {
+    if (
+      userPrompt.includes("formal Buyer Advocate Brief") ||
+      systemPrompt.includes("You are the Buyer Advocate")
+    ) {
       return {
         content: JSON.stringify({
           role: "buyer_advocate",
+          claims: [
+            {
+              claim:
+                "Ledger evidence confirms buyer instructions were breached or delivery failed.",
+              citedEvidenceIds: [validId],
+            },
+          ],
           argument: "Ledger evidence confirms buyer instructions were breached or delivery failed.",
           citedEvidenceIds: [validId],
           faultAssessment: "Liability lies with merchant or agent provider.",
@@ -124,10 +139,19 @@ export function createBenchmarkLLMAdapter(apiKey?: string, model?: string): LLMA
       };
     }
 
-    if (prompt.includes("Merchant Advocate in the NetraBox")) {
+    if (
+      userPrompt.includes("formal Merchant Advocate Brief") ||
+      systemPrompt.includes("You are the Merchant Advocate")
+    ) {
       return {
         content: JSON.stringify({
           role: "merchant_advocate",
+          claims: [
+            {
+              claim: "Merchant fulfilled exact specifications received in checkout.",
+              citedEvidenceIds: [validId],
+            },
+          ],
           argument: "Merchant fulfilled exact specifications received in checkout.",
           citedEvidenceIds: [validId],
           faultAssessment: "Merchant acted in compliance with order terms.",

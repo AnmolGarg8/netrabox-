@@ -28,7 +28,11 @@ export interface LLMResponse {
 
 export interface LLMAdapter {
   chat(messages: LLMMessage[], tools?: LLMToolDefinition[]): Promise<LLMResponse>;
-  structuredOutput<T>(prompt: string, schema: z.ZodType<T>, systemPrompt?: string): Promise<T>;
+  structuredOutput<T>(
+    prompt: string,
+    schema: z.ZodType<T, z.ZodTypeDef, any>,
+    systemPrompt?: string,
+  ): Promise<T>;
 }
 
 /**

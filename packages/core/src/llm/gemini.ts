@@ -50,7 +50,7 @@ export class GeminiLLMAdapter implements LLMAdapter {
 
   async structuredOutput<T>(
     prompt: string,
-    schema: z.ZodType<T>,
+    schema: z.ZodType<T, z.ZodTypeDef, any>,
     systemPrompt?: string,
   ): Promise<T> {
     const fullPrompt = `${systemPrompt ? systemPrompt + "\n\n" : ""}User Request:\n${prompt}\n\nRespond ONLY with valid JSON matching the requested structure.`;

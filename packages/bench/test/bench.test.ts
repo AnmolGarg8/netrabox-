@@ -12,17 +12,17 @@ describe("DisputeBench Suite", () => {
   describe("Dataset Generation & Integrity", () => {
     const cases = generateBenchmarkCases();
 
-    it("generates 52 total curated dispute cases", () => {
-      expect(cases.length).toBe(52);
+    it("generates 57 total curated dispute cases", () => {
+      expect(cases.length).toBe(57);
     });
 
-    it("partitions cases cleanly into dev (20) and test (32) sets", () => {
+    it("partitions cases cleanly into dev (20) and test (37) sets", () => {
       const devCases = cases.filter((c) => c.split === "dev");
       const testCases = cases.filter((c) => c.split === "test");
 
       expect(devCases.length).toBe(20);
-      expect(testCases.length).toBe(32);
-      expect(devCases.length + testCases.length).toBe(52);
+      expect(testCases.length).toBe(37);
+      expect(devCases.length + testCases.length).toBe(57);
     });
 
     it("covers every primary tribunal classification", () => {
@@ -38,7 +38,7 @@ describe("DisputeBench Suite", () => {
 
     it("includes adversarial subsets: tampered, reordered, forged signatures, prompt injection, rogue agent", () => {
       const adversarial = cases.filter((c) => c.isAdversarial);
-      expect(adversarial.length).toBeGreaterThanOrEqual(12);
+      expect(adversarial.length).toBeGreaterThanOrEqual(17);
 
       const advTypes = new Set(adversarial.map((c) => c.adversarialType));
       expect(advTypes.has("tampered")).toBe(true);
@@ -48,6 +48,8 @@ describe("DisputeBench Suite", () => {
       expect(advTypes.has("injection_buyer")).toBe(true);
       expect(advTypes.has("false_rogue_agent")).toBe(true);
       expect(advTypes.has("contradictory")).toBe(true);
+      expect(advTypes.has("injection_advocate")).toBe(true);
+      expect(advTypes.has("unicode_overlong")).toBe(true);
     });
   });
 
@@ -125,7 +127,7 @@ describe("DisputeBench Suite", () => {
       const runner = new DisputeBenchRunner({ useCache: false });
       const summary = await runner.runBenchmark({ split: "test" });
 
-      expect(summary.totalEvaluatedCases).toBe(32);
+      expect(summary.totalEvaluatedCases).toBe(37);
       expect(summary.splitReported).toBe("test");
 
       // Target criteria from SPEC.md:

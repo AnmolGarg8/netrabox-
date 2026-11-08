@@ -1,15 +1,13 @@
 import type { StructuredConstraints, IntentGuardResult, IntentGuardStatus } from "./schemas.js";
 import type { ProposedCart } from "../schemas/purchase.js";
+import { wrapUntrusted } from "../tribunal/sanitizer.js";
 
 /**
  * Wraps untrusted merchant text into explicitly delimited safe blocks
  * and strips any attempts to close the delimiter tags.
  */
 export function sanitizeUntrustedMerchantText(rawText: string): string {
-  const sanitized = rawText
-    .replace(/<\/untrusted_merchant_text>/gi, "")
-    .replace(/<untrusted_merchant_text>/gi, "");
-  return `<untrusted_merchant_text>\n${sanitized}\n</untrusted_merchant_text>`;
+  return wrapUntrusted("untrusted_merchant_text", rawText, { maxLength: 5000 });
 }
 
 /**

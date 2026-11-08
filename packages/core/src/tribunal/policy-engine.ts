@@ -3,6 +3,7 @@ import type {
   SettlementActionKind,
   SettlementRequestedBy,
 } from "../schemas/index.js";
+import type { EvidenceEvent } from "../schemas/evidence.js";
 import {
   type PurchaseTransitionAction,
   canTransition,
@@ -23,6 +24,7 @@ export interface PolicyEngineContext {
   maxAllowedRefundMinor: number;
   confidenceThreshold?: number; // default: 0.70
   purchase: PolicyEnginePurchaseInfo;
+  events?: EvidenceEvent[];
 }
 
 export interface PolicyEngineValidationResult {
@@ -200,20 +202,82 @@ export class PolicyEngine {
     const threshold = context.confidenceThreshold ?? this.defaultConfidenceThreshold;
 
     // Invariant 1: All cited evidence event IDs must genuinely exist in the verified ledger
-    for (const citedId of verdict.citedEvidenceIds) {
-      if (!context.validEvidenceIds.has(citedId)) {
-        errors.push(`Cited evidence ID '${citedId}' does not exist in verified evidence chain`);
+    if (!verdict.citedEvidenceIds || verdict.citedEvidenceIds.length === 0) {
+      errors.push("Verdict must cite at least one verified evidence event");
+    } else {
+      for (const citedId of verdict.citedEvidenceIds) {
+        if (!context.validEvidenceIds.has(citedId)) {
+          errors.push(`Cited evidence ID '${citedId}' does not exist in verified evidence chain`);
+        }
       }
     }
 
-    // Invariant 2: Liability split percentages must sum exactly to 100%
+    // Invariant 1b: Citation relevance check
+    if (context.events && context.events.length > 0 && verdict.citedEvidenceIds.length > 0) {
+      const eventMap = new Map(context.events.map((e) => [e.id, e]));
+      const substantiveTypes = new Set([
+        "INSTRUCTION_RECEIVED",
+        "CONSTRAINTS_EXTRACTED",
+        "CART_PROPOSED",
+        "BUYER_APPROVED",
+        "USER_APPROVAL",
+        "DELIVERY_EVENT",
+        "PAYPAL_CAPTURED",
+        "PAYPAL_AUTHORIZED",
+        "DISPUTE_OPENED",
+      ]);
+
+      const hasSubstantiveCitation = verdict.citedEvidenceIds.some((id) => {
+        const ev = eventMap.get(id);
+        return ev && substantiveTypes.has(ev.type);
+      });
+
+      if (!hasSubstantiveCitation) {
+        errors.push(
+          "Cited evidence events are irrelevant or non-substantive to the dispute resolution",
+        );
+      }
+    }
+
+    // Invariant 2: Liability split percentages must sum exactly to 100% (or 0% for NO_FAULT)
     const totalSplit =
       verdict.liabilitySplit.buyer +
       verdict.liabilitySplit.agentProvider +
       verdict.liabilitySplit.merchant;
 
-    if (totalSplit !== 100) {
+    if (verdict.classification === "NO_FAULT") {
+      if (totalSplit !== 0 && totalSplit !== 100) {
+        errors.push(`Liability split for NO_FAULT must sum to 0% or 100% (sums to ${totalSplit}%)`);
+      }
+    } else if (totalSplit !== 100) {
       errors.push(`Liability split sums to ${totalSplit}%, must sum exactly to 100%`);
+    }
+
+    // Invariant 2b: Logical coherence between liability split and refund actions
+    if (
+      verdict.classification === "FALSE_CLAIM" &&
+      (verdict.recommendedAction.includes("REFUND") || verdict.refundAmountMinor > 0)
+    ) {
+      errors.push(
+        "Policy violation: Cannot grant refund when dispute classification is FALSE_CLAIM",
+      );
+    }
+
+    if (
+      verdict.liabilitySplit.buyer === 100 &&
+      (verdict.recommendedAction.includes("REFUND") || verdict.refundAmountMinor > 0)
+    ) {
+      errors.push("Policy violation: Cannot grant refund when buyer is assigned 100% liability");
+    }
+
+    if (
+      verdict.liabilitySplit.merchant === 0 &&
+      verdict.liabilitySplit.agentProvider === 0 &&
+      (verdict.recommendedAction.includes("REFUND") || verdict.refundAmountMinor > 0)
+    ) {
+      errors.push(
+        "Policy violation: Cannot grant refund when merchant and agent provider have 0% liability",
+      );
     }
 
     // Invariant 3: Refund amount must not exceed captured/authorized funds
@@ -285,6 +349,7 @@ export class PolicyEngine {
       }
     } else {
       resolvedAction = "ESCALATE";
+      sanitizedRefundMinor = 0;
     }
 
     const passed = errors.length === 0 && !requiresHumanReview;

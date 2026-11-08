@@ -12,7 +12,9 @@ export type AdversarialType =
   | "injection_buyer"
   | "false_rogue_agent"
   | "contradictory"
-  | "replayed_request";
+  | "replayed_request"
+  | "injection_advocate"
+  | "unicode_overlong";
 
 export interface BenchPurchase {
   id: string;

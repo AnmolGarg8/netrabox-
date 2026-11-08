@@ -155,7 +155,19 @@ export class TribunalRunner {
     };
 
     // 2a. Buyer Advocate
-    const buyerBrief = await this.buyerAdvocate.generateBrief(advocateInput);
+    let buyerBrief;
+    try {
+      buyerBrief = await this.buyerAdvocate.generateBrief(advocateInput);
+    } catch (err) {
+      return await this.handleTribunalRejection(
+        dispute,
+        runId,
+        `Buyer Advocate schema/citation rejection: ${err instanceof Error ? err.message : String(err)}`,
+        disputesMap,
+        tribunalRunsMap,
+      );
+    }
+
     await this.evidenceService.appendEvent({
       purchaseId: dispute.purchaseId,
       type: "TRIBUNAL_STEP",
@@ -166,7 +178,19 @@ export class TribunalRunner {
     });
 
     // 2b. Merchant Advocate
-    const merchantBrief = await this.merchantAdvocate.generateBrief(advocateInput);
+    let merchantBrief;
+    try {
+      merchantBrief = await this.merchantAdvocate.generateBrief(advocateInput);
+    } catch (err) {
+      return await this.handleTribunalRejection(
+        dispute,
+        runId,
+        `Merchant Advocate schema/citation rejection: ${err instanceof Error ? err.message : String(err)}`,
+        disputesMap,
+        tribunalRunsMap,
+      );
+    }
+
     await this.evidenceService.appendEvent({
       purchaseId: dispute.purchaseId,
       type: "TRIBUNAL_STEP",
@@ -179,14 +203,25 @@ export class TribunalRunner {
     // =========================================================================
     // STEP 3: IMPARTIAL CHIEF JUDGE VERDICT
     // =========================================================================
-    const verdict = await this.chiefJudge.evaluateDispute({
-      disputeReason: dispute.reason,
-      disputedAmountMinor: dispute.disputedAmountMinor,
-      buyerBrief,
-      merchantBrief,
-      events,
-      validEvidenceIds,
-    });
+    let verdict;
+    try {
+      verdict = await this.chiefJudge.evaluateDispute({
+        disputeReason: dispute.reason,
+        disputedAmountMinor: dispute.disputedAmountMinor,
+        buyerBrief,
+        merchantBrief,
+        events,
+        validEvidenceIds,
+      });
+    } catch (err) {
+      return await this.handleTribunalRejection(
+        dispute,
+        runId,
+        `Chief Judge schema/citation rejection: ${err instanceof Error ? err.message : String(err)}`,
+        disputesMap,
+        tribunalRunsMap,
+      );
+    }
 
     await this.evidenceService.appendEvent({
       purchaseId: dispute.purchaseId,
@@ -207,6 +242,7 @@ export class TribunalRunner {
       validEvidenceIds,
       maxAllowedRefundMinor: maxAllowedRefund,
       purchase,
+      events,
     });
 
     let executedActionId: string | undefined;
@@ -338,6 +374,73 @@ export class TribunalRunner {
       verdict,
       executedAction: validation.resolvedAction,
       requiresHumanReview: validation.requiresHumanReview,
+    };
+  }
+
+  private async handleTribunalRejection(
+    dispute: DisputeRecord,
+    runId: string,
+    reason: string,
+    disputesMap?: Map<string, DisputeRecord>,
+    tribunalRunsMap?: Map<string, TribunalRunRecord>,
+  ): Promise<TribunalExecutionResult> {
+    console.warn(`[Tribunal Escalation] ${reason}`);
+
+    const rejectedRun: TribunalRunRecord = {
+      id: runId,
+      disputeId: dispute.id,
+      purchaseId: dispute.purchaseId,
+      chainIntegrityValid: true,
+      judgeClassification: "NO_FAULT",
+      liabilityBuyer: 0,
+      liabilityAgentProvider: 0,
+      liabilityMerchant: 0,
+      recommendedAction: "ESCALATE_HUMAN",
+      confidence: "0.0",
+      judgeReasoning: `TRIBUNAL REJECTED: ${reason}. Escalated to human review.`,
+      executedAction: "ESCALATE",
+      policyEnginePassed: false,
+      policyEngineErrors: [reason],
+      createdAt: new Date(),
+    };
+
+    dispute.status = "NEEDS_HUMAN_REVIEW";
+    if (disputesMap) disputesMap.set(dispute.id, dispute);
+    if (tribunalRunsMap) tribunalRunsMap.set(runId, rejectedRun);
+
+    try {
+      await this.stateMachine.transition({
+        purchaseId: dispute.purchaseId,
+        action: "ESCALATE",
+        actor: "tribunal",
+        payload: {
+          reason,
+          rejectedRunId: runId,
+        },
+        signingPrivateKeyHex: this.signingPrivateKeyHex,
+      });
+
+      await this.evidenceService.appendEvent({
+        purchaseId: dispute.purchaseId,
+        type: "ACTION_EXECUTED",
+        actor: "system",
+        payload: {
+          action: "ESCALATE",
+          reason,
+          tribunalRunId: runId,
+        },
+        signerKeyId: "netrabox_policy_engine",
+        signingPrivateKeyHex: this.signingPrivateKeyHex,
+      });
+    } catch (err) {
+      console.warn(`State transition to ESCALATE failed:`, err);
+    }
+
+    return {
+      dispute,
+      tribunalRun: rejectedRun,
+      executedAction: "ESCALATE",
+      requiresHumanReview: true,
     };
   }
 }

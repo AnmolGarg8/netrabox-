@@ -47,11 +47,16 @@ export class MockLLMAdapter implements LLMAdapter {
 
   async structuredOutput<T>(
     prompt: string,
-    schema: z.ZodType<T>,
-    _systemPrompt?: string,
+    schema: z.ZodType<T, z.ZodTypeDef, any>,
+    systemPrompt?: string,
   ): Promise<T> {
     if (this.customHandler) {
-      const res = await this.customHandler([{ role: "user", content: prompt }]);
+      const messages: LLMMessage[] = [];
+      if (systemPrompt) {
+        messages.push({ role: "system", content: systemPrompt });
+      }
+      messages.push({ role: "user", content: prompt });
+      const res = await this.customHandler(messages);
       const parsed = typeof res.content === "string" ? JSON.parse(res.content) : res.content;
       return schema.parse(parsed);
     }
@@ -77,11 +82,27 @@ export class MockLLMAdapter implements LLMAdapter {
       }
     }
 
+    const eventIdMatches = Array.from(prompt.matchAll(/\[Event(?:\s+ID)?:?\s*([^\]]+)\]/gi)).map((m) =>
+      m[1].trim(),
+    );
+    const citingMatches = Array.from(prompt.matchAll(/citing\s*\[([^\]]+)\]/gi)).flatMap((m) =>
+      m[1].split(",").map((s) => s.trim()),
+    );
+    const combinedIds = Array.from(new Set([...eventIdMatches, ...citingMatches])).filter(
+      (id) => id && !id.includes(" "),
+    );
+    const validIds = combinedIds.length > 0 ? [combinedIds[0]] : ["ev_genesis"];
+
     if (prompt.includes("Buyer Advocate") || prompt.includes("buyer_advocate")) {
       const mockBrief = {
         role: "buyer_advocate",
-        argument: "Buyer was delivered incorrect goods or overcharged.",
-        citedEvidenceIds: [],
+        claims: [
+          {
+            claim: "Buyer was delivered incorrect goods or overcharged.",
+            citedEvidenceIds: validIds,
+          },
+        ],
+        citedEvidenceIds: validIds,
         faultAssessment: "Merchant or agent fault",
       };
       const parsed = schema.safeParse(mockBrief);
@@ -91,8 +112,13 @@ export class MockLLMAdapter implements LLMAdapter {
     if (prompt.includes("Merchant Advocate") || prompt.includes("merchant_advocate")) {
       const mockBrief = {
         role: "merchant_advocate",
-        argument: "Merchant fulfilled order accurately according to received specifications.",
-        citedEvidenceIds: [],
+        claims: [
+          {
+            claim: "Merchant fulfilled order accurately according to received specifications.",
+            citedEvidenceIds: validIds,
+          },
+        ],
+        citedEvidenceIds: validIds,
         faultAssessment: "Merchant fulfilled terms",
       };
       const parsed = schema.safeParse(mockBrief);
@@ -110,8 +136,8 @@ export class MockLLMAdapter implements LLMAdapter {
         liabilitySplit: { buyer: 0, agentProvider: 100, merchant: 0 },
         refundAmountMinor: 34999,
         confidence: 0.95,
-        citedEvidenceIds: [],
-        reasoning: "Agent exceeded user instructions based on evidence ledger.",
+        citedEvidenceIds: validIds,
+        reasoning: "Agent exceeded user instructions based on verified evidence ledger.",
         recommendedAction: "REFUND_FULL",
       };
       const parsed = schema.safeParse(mockVerdict);
