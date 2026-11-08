@@ -1,6 +1,6 @@
 {
   "suiteName": "DisputeBench",
-  "runAt": "2026-11-08T05:28:44.175Z",
+  "runAt": "2026-11-08T06:18:48.344Z",
   "splitReported": "dev",
   "totalEvaluatedCases": 20,
   "tribunal": {
@@ -48,7 +48,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 9,
+        "latencyMs": 5,
         "classificationMatch": true,
         "refundErrorMinor": 0,
         "passedPolicyEngine": true
@@ -216,7 +216,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 1,
+        "latencyMs": 0,
         "classificationMatch": true,
         "refundErrorMinor": 0,
         "passedPolicyEngine": true
@@ -258,7 +258,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 1,
+        "latencyMs": 0,
         "classificationMatch": false,
         "refundErrorMinor": 0,
         "passedPolicyEngine": true

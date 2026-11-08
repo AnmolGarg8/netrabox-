@@ -47,7 +47,7 @@ export class MockLLMAdapter implements LLMAdapter {
 
   async structuredOutput<T>(
     prompt: string,
-    schema: z.ZodType<T, z.ZodTypeDef, any>,
+    schema: z.ZodType<T, z.ZodTypeDef, unknown>,
     systemPrompt?: string,
   ): Promise<T> {
     if (this.customHandler) {

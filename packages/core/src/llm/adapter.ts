@@ -30,7 +30,7 @@ export interface LLMAdapter {
   chat(messages: LLMMessage[], tools?: LLMToolDefinition[]): Promise<LLMResponse>;
   structuredOutput<T>(
     prompt: string,
-    schema: z.ZodType<T, z.ZodTypeDef, any>,
+    schema: z.ZodType<T, z.ZodTypeDef, unknown>,
     systemPrompt?: string,
   ): Promise<T>;
 }

@@ -76,7 +76,7 @@ export class CachedLLMAdapter implements LLMAdapter {
 
   async structuredOutput<T>(
     prompt: string,
-    schema: z.ZodType<T, z.ZodTypeDef, any>,
+    schema: z.ZodType<T, z.ZodTypeDef, unknown>,
     systemPrompt?: string,
   ): Promise<T> {
     const combinedPrompt = `${systemPrompt || ""}\n${prompt}`;
