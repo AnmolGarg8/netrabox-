@@ -1,0 +1,1420 @@
+[
+  {
+    "purchase": {
+      "id": "pur_e2e_full_1794216576004",
+      "buyerId": "u_shopper_alice",
+      "agentId": "agent_netrabox_shopper",
+      "merchantId": "m_tech_store",
+      "title": "Sony WH-1000XM5 Headphones",
+      "state": "CAPTURED",
+      "currency": "USD",
+      "amountMinor": 5000,
+      "capturedAmountMinor": 5000,
+      "refundedAmountMinor": 0,
+      "metadata": {},
+      "createdAt": "2026-11-09T09:29:36.004Z",
+      "updatedAt": "2026-11-09T09:29:39.034Z",
+      "paypalAuthorizationId": "AUTH_SAND_2001",
+      "paypalOrderId": "5O1001TN491941T",
+      "paypalCaptureId": "CAP_SAND_3001"
+    },
+    "events": [
+      {
+        "id": "ev_1876535c-5044-4c2d-9943-5861e4c0ebd7",
+        "purchaseId": "pur_e2e_full_1794216576004",
+        "seq": 1,
+        "type": "INSTRUCTION_RECEIVED",
+        "actor": "user",
+        "payload": {
+          "prompt": "Buy Sony WH-1000XM5 Headphones",
+          "budgetMinor": 5000
+        },
+        "createdAt": "2026-11-09T09:29:36.005Z",
+        "prevHash": "0000000000000000000000000000000000000000000000000000000000000000",
+        "signerKeyId": "key_user_buyer",
+        "hash": "9b90ddfbc0ed29394c49433af791f99ce11961202a203c20143cdff1ebf56895",
+        "signature": "2047e2e48db57c71ade900fa1fdeca62a4fb4448ef7d19ab60bfd7eb9638ca4e5730380431b8b2b6630e2895261e06eeb8a41f5ad60a13cceeb4acfb19927305"
+      },
+      {
+        "id": "ev_ca1d5e78-b0c0-4afb-bdf1-c29e758ee70b",
+        "purchaseId": "pur_e2e_full_1794216576004",
+        "seq": 2,
+        "type": "INTENT_CHECK_RESULT",
+        "actor": "agent",
+        "payload": {
+          "checkPassed": true,
+          "score": 1,
+          "transition": {
+            "from": "DRAFT",
+            "to": "INTENT_CHECKED",
+            "action": "PASS_INTENT_CHECK"
+          }
+        },
+        "createdAt": "2026-11-09T09:29:36.007Z",
+        "prevHash": "9b90ddfbc0ed29394c49433af791f99ce11961202a203c20143cdff1ebf56895",
+        "signerKeyId": "netrabox_system_key",
+        "hash": "1d3a1a3b3b5bbea23a4e4f519f5a28d2dd970badba5e5dfdd8a9b930a3d91044",
+        "signature": "d9fa5bc785b9e46d0b7494a555d052a64a1842b9fbfa0fe645d284cac349fe17f2beb8d7e37f5c51f40abcb46d4f24908e5f22f65272e05b79214832f63c3c03"
+      },
+      {
+        "id": "ev_590d7fbe-501b-4c0c-8628-0900db53d78e",
+        "purchaseId": "pur_e2e_full_1794216576004",
+        "seq": 3,
+        "type": "CART_PROPOSED",
+        "actor": "agent",
+        "payload": {
+          "cartTotalMinor": 5000,
+          "items": [
+            "Sony WH-1000XM5 Headphones"
+          ],
+          "transition": {
+            "from": "INTENT_CHECKED",
+            "to": "AWAITING_BUYER_APPROVAL",
+            "action": "REQUEST_APPROVAL"
+          }
+        },
+        "createdAt": "2026-11-09T09:29:36.008Z",
+        "prevHash": "1d3a1a3b3b5bbea23a4e4f519f5a28d2dd970badba5e5dfdd8a9b930a3d91044",
+        "signerKeyId": "netrabox_system_key",
+        "hash": "46a89177917e861fac7fc79b7706cfc20f7105f2a2611ea2def7ea09c8d39306",
+        "signature": "6ad7adba0723a80b2f40ea79473cfff2a4be4e979cae3c26171d8185e795cec0deaeb3b21a58d6c2e7e8636c1f09de6c5d7e49aa5e7647135ab0eb84498b2308"
+      },
+      {
+        "id": "ev_51a9ef05-b58e-4141-a81e-775b790eae92",
+        "purchaseId": "pur_e2e_full_1794216576004",
+        "seq": 4,
+        "type": "PAYPAL_AUTHORIZED",
+        "actor": "user",
+        "payload": {
+          "paypalOrderId": "5O1001TN491941T",
+          "paypalAuthorizationId": "AUTH_SAND_2001",
+          "transition": {
+            "from": "AWAITING_BUYER_APPROVAL",
+            "to": "AUTHORIZED",
+            "action": "APPROVE_AND_AUTHORIZE"
+          }
+        },
+        "createdAt": "2026-11-09T09:29:39.030Z",
+        "prevHash": "46a89177917e861fac7fc79b7706cfc20f7105f2a2611ea2def7ea09c8d39306",
+        "signerKeyId": "netrabox_system_key",
+        "hash": "b2494663eb86e162da4455e50cdf425cada22c066697aad8bf2a5cc154213a5c",
+        "signature": "af6f6a376c185d021a66c33c1458fce82eb80b7d122cc4fa904c136925530f84c509334fa2f3bd6b04e15d59d29d3739d54bb14ddb12471df16722d68d665403"
+      },
+      {
+        "id": "ev_808e3042-1c09-4997-a0d1-aafdab3f98a6",
+        "purchaseId": "pur_e2e_full_1794216576004",
+        "seq": 5,
+        "type": "DELIVERY_EVENT",
+        "actor": "merchant",
+        "payload": {
+          "trackingNumber": "TRK_FULL_001",
+          "status": "DELIVERED",
+          "transition": {
+            "from": "AUTHORIZED",
+            "to": "DELIVERED",
+            "action": "RECORD_DELIVERY"
+          }
+        },
+        "createdAt": "2026-11-09T09:29:39.031Z",
+        "prevHash": "b2494663eb86e162da4455e50cdf425cada22c066697aad8bf2a5cc154213a5c",
+        "signerKeyId": "netrabox_system_key",
+        "hash": "3816f9fc0ebe39b043b125afe914ec767bc9afb3b18635ac662ef87086233e4c",
+        "signature": "06f4aec5b95abdfcbc31a51160a57a978e70d865d07ac9c7824faade63601c6c69f77f5bf9ab6497642bbf06f4dc6bbbd7ddd8e466a7aef5f93a0d690287bc0b"
+      },
+      {
+        "id": "ev_acfa5655-ffea-43be-8e8c-8c947fdb03bb",
+        "purchaseId": "pur_e2e_full_1794216576004",
+        "seq": 6,
+        "type": "SETTLEMENT_REQUESTED",
+        "actor": "system",
+        "payload": {
+          "settlementActionId": "set_act_780f2521-03bf-48ce-b2c7-626ab2150d6d",
+          "kind": "CAPTURE",
+          "amountMinor": 5000,
+          "currency": "USD",
+          "idempotencyKey": "set_pur_e2e_full_1794216576004_capture_5000_seq1",
+          "requestedBy": "merchant"
+        },
+        "createdAt": "2026-11-09T09:29:39.033Z",
+        "prevHash": "3816f9fc0ebe39b043b125afe914ec767bc9afb3b18635ac662ef87086233e4c",
+        "signerKeyId": "key_system_302a30050603",
+        "hash": "bea2b60b5e3e8c54906edcdd54b9f07b3f94e0b871827d3de774030add8d8a86",
+        "signature": "8278de79b9390b09188d433ac652912d87296b3950c0e9d887ef83244d3d3f51ed384cfbb98a3e545f502d7d1a00a0674b770c8d4ab2ef19baa251f65d3f280d"
+      },
+      {
+        "id": "ev_66500190-1f31-4f04-8e2f-82d345205172",
+        "purchaseId": "pur_e2e_full_1794216576004",
+        "seq": 7,
+        "type": "PAYPAL_CAPTURED",
+        "actor": "system",
+        "payload": {
+          "settlementActionId": "set_act_780f2521-03bf-48ce-b2c7-626ab2150d6d",
+          "amountMinor": 5000,
+          "currency": "USD",
+          "paypalResponse": {
+            "id": "CAP_SAND_3001",
+            "status": "COMPLETED",
+            "amount": {
+              "currency_code": "USD",
+              "value": "50.00"
+            },
+            "final_capture": true,
+            "create_time": "2026-11-09T09:29:39.033Z",
+            "update_time": "2026-11-09T09:29:39.033Z"
+          },
+          "paypalCaptureId": "CAP_SAND_3001",
+          "finalCapture": true,
+          "isPartial": false
+        },
+        "createdAt": "2026-11-09T09:29:39.034Z",
+        "prevHash": "bea2b60b5e3e8c54906edcdd54b9f07b3f94e0b871827d3de774030add8d8a86",
+        "signerKeyId": "key_system_302a30050603",
+        "hash": "b72e24c00fff155dd1cf1ded5cafc3b27d3293fb79469afd8e151ab68f7e734d",
+        "signature": "07283574a371c85df3f0c21e0aba5f192d6e6617a7ec4b1f301c0376fa00acfceae9d4e6534a64d54e1dc9350f9f676c9254ee59a46d726bd1ec4cdfbba27600"
+      },
+      {
+        "id": "ev_ecf38e93-0d8d-4031-a6a6-d6dccc00eb23",
+        "purchaseId": "pur_e2e_full_1794216576004",
+        "seq": 8,
+        "type": "ACTION_EXECUTED",
+        "actor": "system",
+        "payload": {
+          "action": "CAPTURE_PAYMENT",
+          "settlementActionId": "set_act_780f2521-03bf-48ce-b2c7-626ab2150d6d",
+          "transactionId": "CAP_SAND_3001",
+          "amountMinor": 5000,
+          "executedAt": "2026-11-09T09:29:39.034Z"
+        },
+        "createdAt": "2026-11-09T09:29:39.034Z",
+        "prevHash": "b72e24c00fff155dd1cf1ded5cafc3b27d3293fb79469afd8e151ab68f7e734d",
+        "signerKeyId": "key_system_302a30050603",
+        "hash": "af5f30663eb1e94e42e0840ffde077112ac224af3437823e76c264f40b1bcbb3",
+        "signature": "197f81990a0d3eca0425ee02255e2e343e19f3d35db2d395cc129a69619fd28bf42cc5aeac913598f36ae4873be9047b54542262607f45909f82750e6b133b09"
+      }
+    ]
+  },
+  {
+    "purchase": {
+      "id": "pur_e2e_void_1794216576004",
+      "buyerId": "u_shopper_alice",
+      "agentId": "agent_netrabox_shopper",
+      "merchantId": "m_tech_store",
+      "title": "Mechanical Keyboard Accessory",
+      "state": "VOIDED",
+      "currency": "USD",
+      "amountMinor": 3000,
+      "capturedAmountMinor": 0,
+      "refundedAmountMinor": 0,
+      "metadata": {},
+      "createdAt": "2026-11-09T09:29:39.039Z",
+      "updatedAt": "2026-11-09T09:29:42.050Z",
+      "paypalAuthorizationId": "AUTH_SAND_2002",
+      "paypalOrderId": "5O1002TN811440T"
+    },
+    "events": [
+      {
+        "id": "ev_ce387f29-92d8-43f3-891e-04e468cfb0ac",
+        "purchaseId": "pur_e2e_void_1794216576004",
+        "seq": 1,
+        "type": "INSTRUCTION_RECEIVED",
+        "actor": "user",
+        "payload": {
+          "prompt": "Buy Mechanical Keyboard Accessory",
+          "budgetMinor": 3000
+        },
+        "createdAt": "2026-11-09T09:29:39.039Z",
+        "prevHash": "0000000000000000000000000000000000000000000000000000000000000000",
+        "signerKeyId": "key_user_buyer",
+        "hash": "80d5d515ed6e097a184bdd4a802a11e2f6189395ba8099330e58182027ddfe5c",
+        "signature": "e613d8ffa554bf208e9a86a0881c893eac609c4a146463fba0becc5c61b11ac687c9ec7dfa09317850b2c1f6d1d540c5b8987f6a22763c2d0ba0fd02a9e11901"
+      },
+      {
+        "id": "ev_4551bcd8-69e9-417f-a71c-39fe37cf4c59",
+        "purchaseId": "pur_e2e_void_1794216576004",
+        "seq": 2,
+        "type": "INTENT_CHECK_RESULT",
+        "actor": "agent",
+        "payload": {
+          "checkPassed": true,
+          "score": 1,
+          "transition": {
+            "from": "DRAFT",
+            "to": "INTENT_CHECKED",
+            "action": "PASS_INTENT_CHECK"
+          }
+        },
+        "createdAt": "2026-11-09T09:29:39.039Z",
+        "prevHash": "80d5d515ed6e097a184bdd4a802a11e2f6189395ba8099330e58182027ddfe5c",
+        "signerKeyId": "netrabox_system_key",
+        "hash": "7f33ccba2e72c30692eb96d730428fbb12ad84e496f42615aa3221be839e51c3",
+        "signature": "9ec3cf423f2973879de2336afe7341bdf386989f489621bb9c38b084536c50e720fb6a438e748a2b84c97a6c73419054b84a1e732c0e16fbb1a9b36b58556a0b"
+      },
+      {
+        "id": "ev_ff2401a0-6cda-4bd6-963e-22fc89812968",
+        "purchaseId": "pur_e2e_void_1794216576004",
+        "seq": 3,
+        "type": "CART_PROPOSED",
+        "actor": "agent",
+        "payload": {
+          "cartTotalMinor": 3000,
+          "items": [
+            "Mechanical Keyboard Accessory"
+          ],
+          "transition": {
+            "from": "INTENT_CHECKED",
+            "to": "AWAITING_BUYER_APPROVAL",
+            "action": "REQUEST_APPROVAL"
+          }
+        },
+        "createdAt": "2026-11-09T09:29:39.039Z",
+        "prevHash": "7f33ccba2e72c30692eb96d730428fbb12ad84e496f42615aa3221be839e51c3",
+        "signerKeyId": "netrabox_system_key",
+        "hash": "b70d5c240933f342f9db85a74a39fd8ef22e5cbef64da9761b7671734fb9638f",
+        "signature": "0a4ed6f1f928aed949f7ca0d45e5e0b5e039f0455e241425acb3580bad46a9110993092bb00537d839d8b6edc0443e5d9d392825a4428676cc56b23f77c64d02"
+      },
+      {
+        "id": "ev_d8ae2e10-64b9-4a59-b633-95a624919ffe",
+        "purchaseId": "pur_e2e_void_1794216576004",
+        "seq": 4,
+        "type": "PAYPAL_AUTHORIZED",
+        "actor": "user",
+        "payload": {
+          "paypalOrderId": "5O1002TN811440T",
+          "paypalAuthorizationId": "AUTH_SAND_2002",
+          "transition": {
+            "from": "AWAITING_BUYER_APPROVAL",
+            "to": "AUTHORIZED",
+            "action": "APPROVE_AND_AUTHORIZE"
+          }
+        },
+        "createdAt": "2026-11-09T09:29:42.048Z",
+        "prevHash": "b70d5c240933f342f9db85a74a39fd8ef22e5cbef64da9761b7671734fb9638f",
+        "signerKeyId": "netrabox_system_key",
+        "hash": "9aa759f60032e9e95d9a086f69d90de2fa4b73a6ddd0974f54eb9a424d4f09b8",
+        "signature": "7b0c23c3bbd326f106862b6253cd5fc3bb8fa5fa551975f22669c97c5977b8a071754ea0e263f26121a343c07cbf5305972533baef21402f131163c7a988b60c"
+      },
+      {
+        "id": "ev_4586d53b-6c66-41b7-a8f3-c61996501d69",
+        "purchaseId": "pur_e2e_void_1794216576004",
+        "seq": 5,
+        "type": "SETTLEMENT_REQUESTED",
+        "actor": "system",
+        "payload": {
+          "settlementActionId": "set_act_24876d2a-1757-4003-8451-6a4080b1bca0",
+          "kind": "VOID",
+          "amountMinor": 3000,
+          "currency": "USD",
+          "idempotencyKey": "set_pur_e2e_void_1794216576004_void_3000_seq1",
+          "requestedBy": "merchant"
+        },
+        "createdAt": "2026-11-09T09:29:42.048Z",
+        "prevHash": "9aa759f60032e9e95d9a086f69d90de2fa4b73a6ddd0974f54eb9a424d4f09b8",
+        "signerKeyId": "key_system_302a30050603",
+        "hash": "7ec8bc1858591a26979d366ebd136072801aaffda1dedc654a036324d2812586",
+        "signature": "cd1ace51871883ececeeb75243e677c02641aae861f83f21812ba391dae6222e586d2ff79c1014312fe54cb8bd5fd24975d9c201b112f225f18f4bf726fdcc05"
+      },
+      {
+        "id": "ev_a48f6b30-a419-46dc-a083-46af1f618da5",
+        "purchaseId": "pur_e2e_void_1794216576004",
+        "seq": 6,
+        "type": "PAYPAL_VOIDED",
+        "actor": "system",
+        "payload": {
+          "settlementActionId": "set_act_24876d2a-1757-4003-8451-6a4080b1bca0",
+          "amountMinor": 3000,
+          "currency": "USD",
+          "paypalResponse": {},
+          "paypalAuthorizationId": "AUTH_SAND_2002"
+        },
+        "createdAt": "2026-11-09T09:29:42.049Z",
+        "prevHash": "7ec8bc1858591a26979d366ebd136072801aaffda1dedc654a036324d2812586",
+        "signerKeyId": "key_system_302a30050603",
+        "hash": "14b33741c12208f665e8362303b636e433ac0795db0fb0c31d77203a97ad8fea",
+        "signature": "b450f00a44dee8650e09e075cebea932832ba87391abe3f7558235ddcff8ecdefb3f7e03ed5fd4950919fea920cf5219458dffaacc641b3f86ec357ad73b7f07"
+      },
+      {
+        "id": "ev_dff2f131-9933-4a7d-a554-5ea2c0e27e75",
+        "purchaseId": "pur_e2e_void_1794216576004",
+        "seq": 7,
+        "type": "ACTION_EXECUTED",
+        "actor": "system",
+        "payload": {
+          "action": "VOID_ORDER",
+          "settlementActionId": "set_act_24876d2a-1757-4003-8451-6a4080b1bca0",
+          "amountMinor": 3000,
+          "executedAt": "2026-11-09T09:29:42.049Z"
+        },
+        "createdAt": "2026-11-09T09:29:42.049Z",
+        "prevHash": "14b33741c12208f665e8362303b636e433ac0795db0fb0c31d77203a97ad8fea",
+        "signerKeyId": "key_system_302a30050603",
+        "hash": "8cba484e8079113a6280d0e5f1b023688d617999f57513e49d12856f8b44b115",
+        "signature": "860d8eef7ee70462fe7c2709cf879e18d3af95b2b9a58426fb877c613849588541ffcb6cbe2c06637598369b0565fec32be3e785a9c5f70e1b3f4ae90c811600"
+      }
+    ]
+  },
+  {
+    "purchase": {
+      "id": "pur_e2e_refund_1794216576004",
+      "buyerId": "u_shopper_alice",
+      "agentId": "agent_netrabox_shopper",
+      "merchantId": "m_tech_store",
+      "title": "Tablet & Stylus Bundle",
+      "state": "RESOLVED_REFUNDED_PARTIAL",
+      "currency": "USD",
+      "amountMinor": 10000,
+      "capturedAmountMinor": 10000,
+      "refundedAmountMinor": 2500,
+      "metadata": {},
+      "createdAt": "2026-11-09T09:29:42.052Z",
+      "updatedAt": "2026-11-09T09:29:45.064Z",
+      "paypalAuthorizationId": "AUTH_SAND_2003",
+      "paypalOrderId": "5O1003TN706248T",
+      "paypalCaptureId": "CAP_SAND_3002"
+    },
+    "events": [
+      {
+        "id": "ev_7856b402-0d4b-4155-b0fc-dc8db0623da5",
+        "purchaseId": "pur_e2e_refund_1794216576004",
+        "seq": 1,
+        "type": "INSTRUCTION_RECEIVED",
+        "actor": "user",
+        "payload": {
+          "prompt": "Buy Tablet & Stylus Bundle",
+          "budgetMinor": 10000
+        },
+        "createdAt": "2026-11-09T09:29:42.052Z",
+        "prevHash": "0000000000000000000000000000000000000000000000000000000000000000",
+        "signerKeyId": "key_user_buyer",
+        "hash": "8cbd3d43dc9540479baa61ff37a8eada5f3c20fcfcb9f07956cd8387675d9991",
+        "signature": "d4ee778e32e44547a23b222cd52b79066c19cba4b442b6f702c22a8c9fa86e7a7928d54bb5c19e606885108bee1cd6acfae2fe27b647e0af69d309f1d620b80d"
+      },
+      {
+        "id": "ev_04a4af50-6b5f-420e-bcec-5e6c237f85dc",
+        "purchaseId": "pur_e2e_refund_1794216576004",
+        "seq": 2,
+        "type": "INTENT_CHECK_RESULT",
+        "actor": "agent",
+        "payload": {
+          "checkPassed": true,
+          "score": 1,
+          "transition": {
+            "from": "DRAFT",
+            "to": "INTENT_CHECKED",
+            "action": "PASS_INTENT_CHECK"
+          }
+        },
+        "createdAt": "2026-11-09T09:29:42.052Z",
+        "prevHash": "8cbd3d43dc9540479baa61ff37a8eada5f3c20fcfcb9f07956cd8387675d9991",
+        "signerKeyId": "netrabox_system_key",
+        "hash": "9f95341a33b376df430b17da5f963a7af58e144c0d141845a298db0f7dda7ca7",
+        "signature": "6e2dbd5f1f32bb1c570ccba6097bba7f288a7263e5013b27b59afdfca2880e42421729fbb6d04dd90de420f08664d91589932703b9115cecf58fbf161c51450d"
+      },
+      {
+        "id": "ev_2405f8fb-6cc4-4604-b232-8721fa51d90b",
+        "purchaseId": "pur_e2e_refund_1794216576004",
+        "seq": 3,
+        "type": "CART_PROPOSED",
+        "actor": "agent",
+        "payload": {
+          "cartTotalMinor": 10000,
+          "items": [
+            "Tablet & Stylus Bundle"
+          ],
+          "transition": {
+            "from": "INTENT_CHECKED",
+            "to": "AWAITING_BUYER_APPROVAL",
+            "action": "REQUEST_APPROVAL"
+          }
+        },
+        "createdAt": "2026-11-09T09:29:42.052Z",
+        "prevHash": "9f95341a33b376df430b17da5f963a7af58e144c0d141845a298db0f7dda7ca7",
+        "signerKeyId": "netrabox_system_key",
+        "hash": "993d6de313196eed0d4cd5178f0fb2c2dd802576d216604ae202c3c8d3600b7a",
+        "signature": "51212a61c99f00216c4655a0ee29e11ba6e09eb30a9f3644386adafa4fb7268aa1f1a889241d9e4ec6acf4078a80ce59ad6b309dcec94d42b2176d6ed28d950b"
+      },
+      {
+        "id": "ev_7191e537-08ac-4f67-872b-8040f4d257dd",
+        "purchaseId": "pur_e2e_refund_1794216576004",
+        "seq": 4,
+        "type": "PAYPAL_AUTHORIZED",
+        "actor": "user",
+        "payload": {
+          "paypalOrderId": "5O1003TN706248T",
+          "paypalAuthorizationId": "AUTH_SAND_2003",
+          "transition": {
+            "from": "AWAITING_BUYER_APPROVAL",
+            "to": "AUTHORIZED",
+            "action": "APPROVE_AND_AUTHORIZE"
+          }
+        },
+        "createdAt": "2026-11-09T09:29:45.061Z",
+        "prevHash": "993d6de313196eed0d4cd5178f0fb2c2dd802576d216604ae202c3c8d3600b7a",
+        "signerKeyId": "netrabox_system_key",
+        "hash": "8a29cdbbfe7e9bd2e47154829fb4bc9a1a45ddf85e635e80bf70044e0fcf32ed",
+        "signature": "42cfaaa036eb2d828a00e84f1f090d50fdc1962cce3201544a378932f74e65ccb1215f28a1a6f6166dcd9e4cc397b8e57f69de580ec326fe404052777e9f6906"
+      },
+      {
+        "id": "ev_8818483f-0411-46fb-8ce3-44f21fa0f5c3",
+        "purchaseId": "pur_e2e_refund_1794216576004",
+        "seq": 5,
+        "type": "DELIVERY_EVENT",
+        "actor": "merchant",
+        "payload": {
+          "trackingNumber": "TRK_REF_001",
+          "status": "DELIVERED",
+          "transition": {
+            "from": "AUTHORIZED",
+            "to": "DELIVERED",
+            "action": "RECORD_DELIVERY"
+          }
+        },
+        "createdAt": "2026-11-09T09:29:45.061Z",
+        "prevHash": "8a29cdbbfe7e9bd2e47154829fb4bc9a1a45ddf85e635e80bf70044e0fcf32ed",
+        "signerKeyId": "netrabox_system_key",
+        "hash": "aaf4977056d63d25a2cc6a67fa929882d8583a4ea6e5a2ac36cf744b5644e539",
+        "signature": "2ab5d1067d13f1ef9d13e44e6b1e12b722e7e99a3d2369b3b00eeeb79eb1503b09dfe68021dadfbb70ad058314ce03c28da299dd21d1d2fe6551e7a064907a0a"
+      },
+      {
+        "id": "ev_b150566e-5bbb-4b73-ac33-dd849e85b9ab",
+        "purchaseId": "pur_e2e_refund_1794216576004",
+        "seq": 6,
+        "type": "SETTLEMENT_REQUESTED",
+        "actor": "system",
+        "payload": {
+          "settlementActionId": "set_act_791d092c-bb2b-4fe4-abef-0f55ae278fa9",
+          "kind": "CAPTURE",
+          "amountMinor": 10000,
+          "currency": "USD",
+          "idempotencyKey": "set_pur_e2e_refund_1794216576004_capture_10000_seq1",
+          "requestedBy": "merchant"
+        },
+        "createdAt": "2026-11-09T09:29:45.061Z",
+        "prevHash": "aaf4977056d63d25a2cc6a67fa929882d8583a4ea6e5a2ac36cf744b5644e539",
+        "signerKeyId": "key_system_302a30050603",
+        "hash": "0aba211275dc218b449406dbd921498dc1b32d63a2e6be6b6ed55c82a3bfa474",
+        "signature": "cffc017ae94f178eb7bc90520979769574f7746d239d8abd869c042013942aa56ab99bae28e57c02e88ed7a17140bd29647717153316c6a29970d6d176be5e00"
+      },
+      {
+        "id": "ev_c4af2a6b-121e-4ff0-8543-bbef112ad498",
+        "purchaseId": "pur_e2e_refund_1794216576004",
+        "seq": 7,
+        "type": "PAYPAL_CAPTURED",
+        "actor": "system",
+        "payload": {
+          "settlementActionId": "set_act_791d092c-bb2b-4fe4-abef-0f55ae278fa9",
+          "amountMinor": 10000,
+          "currency": "USD",
+          "paypalResponse": {
+            "id": "CAP_SAND_3002",
+            "status": "COMPLETED",
+            "amount": {
+              "currency_code": "USD",
+              "value": "100.00"
+            },
+            "final_capture": true,
+            "create_time": "2026-11-09T09:29:45.062Z",
+            "update_time": "2026-11-09T09:29:45.062Z"
+          },
+          "paypalCaptureId": "CAP_SAND_3002",
+          "finalCapture": true,
+          "isPartial": false
+        },
+        "createdAt": "2026-11-09T09:29:45.062Z",
+        "prevHash": "0aba211275dc218b449406dbd921498dc1b32d63a2e6be6b6ed55c82a3bfa474",
+        "signerKeyId": "key_system_302a30050603",
+        "hash": "8f1f6be3972f001f70f93ac0741ec9c2b61df259aa899d0e3e366851e836c427",
+        "signature": "2ca6727945da78424fb44467743fb28c68c656a90ae2b18b64e353beef9ba2b24079e0b852a197c8a7a1f660a8df40998f557371232db6558f7ca504b87ab00e"
+      },
+      {
+        "id": "ev_5a58a6d5-1cad-45ec-a7e0-cf740b8e407e",
+        "purchaseId": "pur_e2e_refund_1794216576004",
+        "seq": 8,
+        "type": "ACTION_EXECUTED",
+        "actor": "system",
+        "payload": {
+          "action": "CAPTURE_PAYMENT",
+          "settlementActionId": "set_act_791d092c-bb2b-4fe4-abef-0f55ae278fa9",
+          "transactionId": "CAP_SAND_3002",
+          "amountMinor": 10000,
+          "executedAt": "2026-11-09T09:29:45.063Z"
+        },
+        "createdAt": "2026-11-09T09:29:45.063Z",
+        "prevHash": "8f1f6be3972f001f70f93ac0741ec9c2b61df259aa899d0e3e366851e836c427",
+        "signerKeyId": "key_system_302a30050603",
+        "hash": "ae7d8b41e807418ef984b713930def0c12a01635eca37efa332ea3147357d599",
+        "signature": "574681eeb8abae62d0bc20cde7f01cf31a1b365f36b94f462dd2b60b08a5c134aeb845c90c7eeebdeeb6b1dab28a1bb5d2ac2044048499164c712cefb8175401"
+      },
+      {
+        "id": "ev_70953b3a-8b44-4d21-9bf7-eb6ad7ea6657",
+        "purchaseId": "pur_e2e_refund_1794216576004",
+        "seq": 9,
+        "type": "SETTLEMENT_REQUESTED",
+        "actor": "system",
+        "payload": {
+          "settlementActionId": "set_act_d821aa03-5a55-44b9-9b4f-8762f841988c",
+          "kind": "REFUND_PARTIAL",
+          "amountMinor": 2500,
+          "currency": "USD",
+          "idempotencyKey": "set_pur_e2e_refund_1794216576004_refund-partial_2500_seq1",
+          "requestedBy": "merchant",
+          "reason": "Customer returned stylus accessory"
+        },
+        "createdAt": "2026-11-09T09:29:45.063Z",
+        "prevHash": "ae7d8b41e807418ef984b713930def0c12a01635eca37efa332ea3147357d599",
+        "signerKeyId": "key_system_302a30050603",
+        "hash": "225c8503b74bf485fe4f2529e388cb20e9e426ed6792162f7b2f2bf70a0e5cc8",
+        "signature": "a5eb1b22cbf83b0b6564bd3e10cd96ed334e82dbd875828905ba11df595a012a7918b0df70db6ed58d7cf311a39efd6d5eb92dfbc5021ca6ec947502943dbb06"
+      },
+      {
+        "id": "ev_641e6482-9da3-40b7-b2b7-0e60c6d6b8bc",
+        "purchaseId": "pur_e2e_refund_1794216576004",
+        "seq": 10,
+        "type": "PAYPAL_REFUNDED",
+        "actor": "system",
+        "payload": {
+          "settlementActionId": "set_act_d821aa03-5a55-44b9-9b4f-8762f841988c",
+          "amountMinor": 2500,
+          "currency": "USD",
+          "paypalResponse": {
+            "id": "REF_SAND_4001",
+            "status": "COMPLETED",
+            "amount": {
+              "currency_code": "USD",
+              "value": "25.00"
+            },
+            "create_time": "2026-11-09T09:29:45.063Z",
+            "update_time": "2026-11-09T09:29:45.063Z"
+          },
+          "paypalRefundId": "REF_SAND_4001",
+          "isPartial": true
+        },
+        "createdAt": "2026-11-09T09:29:45.064Z",
+        "prevHash": "225c8503b74bf485fe4f2529e388cb20e9e426ed6792162f7b2f2bf70a0e5cc8",
+        "signerKeyId": "key_system_302a30050603",
+        "hash": "5777a300eb56c97c1c573577d7bfaa3dabe67f79aad086d441e2fc71a12fe9a6",
+        "signature": "80603b756706b2ea42ceddc29e4e622db69f7e5837550ffd6d1ed36360a32376c777b744c69aa5601765fd1b5128154f493ef18953f04011c4c46a0eff3d2b09"
+      },
+      {
+        "id": "ev_c95725dd-8492-484a-98e3-6ba5d7fd3144",
+        "purchaseId": "pur_e2e_refund_1794216576004",
+        "seq": 11,
+        "type": "ACTION_EXECUTED",
+        "actor": "system",
+        "payload": {
+          "action": "RESOLVE_REFUND_PARTIAL",
+          "settlementActionId": "set_act_d821aa03-5a55-44b9-9b4f-8762f841988c",
+          "transactionId": "REF_SAND_4001",
+          "amountMinor": 2500,
+          "executedAt": "2026-11-09T09:29:45.064Z"
+        },
+        "createdAt": "2026-11-09T09:29:45.064Z",
+        "prevHash": "5777a300eb56c97c1c573577d7bfaa3dabe67f79aad086d441e2fc71a12fe9a6",
+        "signerKeyId": "key_system_302a30050603",
+        "hash": "8aa77c1d51e23e377b8264331f0be1705123f60be40166190dcc11359dad896b",
+        "signature": "c09075f775d4e5304a15dbf352b155eda908b2bbefb6ba7b41661a1d22b8ffe19877833caa4159d541e19c4ce859a5f7ffcae8048f7dbcf8493dcf2a7da6d30d"
+      }
+    ]
+  },
+  {
+    "purchase": {
+      "id": "pur_e2e_tribunal_1794216576004",
+      "buyerId": "u_shopper_alice",
+      "agentId": "agent_netrabox_shopper",
+      "merchantId": "m_tech_store",
+      "title": "Bose QuietComfort 45 Headphones (Brand New)",
+      "state": "RESOLVED_REFUNDED_FULL",
+      "currency": "USD",
+      "amountMinor": 34999,
+      "capturedAmountMinor": 34999,
+      "refundedAmountMinor": 34999,
+      "metadata": {},
+      "createdAt": "2026-11-09T09:29:45.067Z",
+      "updatedAt": "2026-11-09T09:29:48.142Z",
+      "paypalAuthorizationId": "AUTH_SAND_2004",
+      "paypalOrderId": "5O1004TN493223T",
+      "paypalCaptureId": "CAP_SAND_3003"
+    },
+    "events": [
+      {
+        "id": "ev_13522c47-0279-47de-8850-542ec19f0630",
+        "purchaseId": "pur_e2e_tribunal_1794216576004",
+        "seq": 1,
+        "type": "INSTRUCTION_RECEIVED",
+        "actor": "user",
+        "payload": {
+          "prompt": "Buy Bose QuietComfort 45 Headphones (Brand New)",
+          "budgetMinor": 34999
+        },
+        "createdAt": "2026-11-09T09:29:45.067Z",
+        "prevHash": "0000000000000000000000000000000000000000000000000000000000000000",
+        "signerKeyId": "key_user_buyer",
+        "hash": "56bf8abee8b9e055f1cefcf1cba3dfebcdd219a5a36a432f6e5e7e148d0af5c5",
+        "signature": "8499c5b6d4ff2cf41054e73062f00356d2a74df6145f83e6027f00baeb4998dd54f219de9f1ec6a9049d0c7374f749e2421bf2d76021c82d8dd42e99e55a9d0a"
+      },
+      {
+        "id": "ev_eedefc7b-47ed-4b4a-a295-763202b329a8",
+        "purchaseId": "pur_e2e_tribunal_1794216576004",
+        "seq": 2,
+        "type": "INTENT_CHECK_RESULT",
+        "actor": "agent",
+        "payload": {
+          "checkPassed": true,
+          "score": 1,
+          "transition": {
+            "from": "DRAFT",
+            "to": "INTENT_CHECKED",
+            "action": "PASS_INTENT_CHECK"
+          }
+        },
+        "createdAt": "2026-11-09T09:29:45.067Z",
+        "prevHash": "56bf8abee8b9e055f1cefcf1cba3dfebcdd219a5a36a432f6e5e7e148d0af5c5",
+        "signerKeyId": "netrabox_system_key",
+        "hash": "78de98607013e8e6607e581037c55b6e64cfccf1bacbf89cb8ae9dae3b7a1f0e",
+        "signature": "a52189a1c09fb819922bde5fb2adcfcc1986c2bcd2d90e64c0c9a8c1f77f6b21068d6d32ccf227e7e85de718928e80d65efd5c0b53008ef57d81a1663929400e"
+      },
+      {
+        "id": "ev_bfae0573-58af-433b-847e-a303b75264f4",
+        "purchaseId": "pur_e2e_tribunal_1794216576004",
+        "seq": 3,
+        "type": "CART_PROPOSED",
+        "actor": "agent",
+        "payload": {
+          "cartTotalMinor": 34999,
+          "items": [
+            "Bose QuietComfort 45 Headphones (Brand New)"
+          ],
+          "transition": {
+            "from": "INTENT_CHECKED",
+            "to": "AWAITING_BUYER_APPROVAL",
+            "action": "REQUEST_APPROVAL"
+          }
+        },
+        "createdAt": "2026-11-09T09:29:45.067Z",
+        "prevHash": "78de98607013e8e6607e581037c55b6e64cfccf1bacbf89cb8ae9dae3b7a1f0e",
+        "signerKeyId": "netrabox_system_key",
+        "hash": "62f7c236438c5ff4f916ffb3eaacb26fb25cee8c0b5cd11b86c725122057ee12",
+        "signature": "132eb420011e4187e688932f61a2c2b81b7b9af7c2e9b6c77f204700bab7abc0f10267b3ab6db1b5107d7531d8e64bf8791fcffb116a027f8b1ed213c94acd0a"
+      },
+      {
+        "id": "ev_3d40ea24-e4a7-4693-b89d-fff1705ae5a2",
+        "purchaseId": "pur_e2e_tribunal_1794216576004",
+        "seq": 4,
+        "type": "PAYPAL_AUTHORIZED",
+        "actor": "user",
+        "payload": {
+          "paypalOrderId": "5O1004TN493223T",
+          "paypalAuthorizationId": "AUTH_SAND_2004",
+          "transition": {
+            "from": "AWAITING_BUYER_APPROVAL",
+            "to": "AUTHORIZED",
+            "action": "APPROVE_AND_AUTHORIZE"
+          }
+        },
+        "createdAt": "2026-11-09T09:29:48.069Z",
+        "prevHash": "62f7c236438c5ff4f916ffb3eaacb26fb25cee8c0b5cd11b86c725122057ee12",
+        "signerKeyId": "netrabox_system_key",
+        "hash": "3987008828a9660269e0c9a4de60804d167a02372b6afc6528d1beb5a32d1fa1",
+        "signature": "1a96799579232a7504568a3735e4c6846b1a26c29071c1e4ed39e3da3c9b8a791c5bbf09842687741298f3f81937668d6392f8e35b506ed37009cbc7abd60e0f"
+      },
+      {
+        "id": "ev_76e894cf-af3b-4ee4-ac8b-27960fe625f8",
+        "purchaseId": "pur_e2e_tribunal_1794216576004",
+        "seq": 5,
+        "type": "DELIVERY_EVENT",
+        "actor": "merchant",
+        "payload": {
+          "trackingNumber": "TRK_TRIB_001",
+          "status": "DELIVERED",
+          "transition": {
+            "from": "AUTHORIZED",
+            "to": "DELIVERED",
+            "action": "RECORD_DELIVERY"
+          }
+        },
+        "createdAt": "2026-11-09T09:29:48.069Z",
+        "prevHash": "3987008828a9660269e0c9a4de60804d167a02372b6afc6528d1beb5a32d1fa1",
+        "signerKeyId": "netrabox_system_key",
+        "hash": "f5830854258f7585c905e22af27fff96c4130e5bff7d526987c73c003b9bf1da",
+        "signature": "6c487f6fe8a07c1804aa9162b4ab2c0027f7757f2c6a83f8b7f47376e76d04130c068b68208c1875427e072df17e3662879643f1933093dae23e7712b08c780d"
+      },
+      {
+        "id": "ev_a5ad57df-94c7-4420-9ed0-f1fe206a72c6",
+        "purchaseId": "pur_e2e_tribunal_1794216576004",
+        "seq": 6,
+        "type": "SETTLEMENT_REQUESTED",
+        "actor": "system",
+        "payload": {
+          "settlementActionId": "set_act_1548ad3f-0602-415f-b29e-522e02fdd36a",
+          "kind": "CAPTURE",
+          "amountMinor": 34999,
+          "currency": "USD",
+          "idempotencyKey": "set_pur_e2e_tribunal_1794216576004_capture_34999_seq1",
+          "requestedBy": "merchant"
+        },
+        "createdAt": "2026-11-09T09:29:48.069Z",
+        "prevHash": "f5830854258f7585c905e22af27fff96c4130e5bff7d526987c73c003b9bf1da",
+        "signerKeyId": "key_system_302a30050603",
+        "hash": "e1a32ec09501cf32e2dfce147e5f99c75a8565b9ed8e088e46b26e1bd5d624ed",
+        "signature": "6ec6cef6e9f0004c8ab8f1f973fa8037e4722ade8c823fbf7baa192ae8ad06ab01518bf2d3345d96f390dcb6c07a647042a88a80488166e64ec73473d0868e07"
+      },
+      {
+        "id": "ev_db4c4511-78a1-4c88-873e-6ce896efbf7f",
+        "purchaseId": "pur_e2e_tribunal_1794216576004",
+        "seq": 7,
+        "type": "PAYPAL_CAPTURED",
+        "actor": "system",
+        "payload": {
+          "settlementActionId": "set_act_1548ad3f-0602-415f-b29e-522e02fdd36a",
+          "amountMinor": 34999,
+          "currency": "USD",
+          "paypalResponse": {
+            "id": "CAP_SAND_3003",
+            "status": "COMPLETED",
+            "amount": {
+              "currency_code": "USD",
+              "value": "349.99"
+            },
+            "final_capture": true,
+            "create_time": "2026-11-09T09:29:48.070Z",
+            "update_time": "2026-11-09T09:29:48.070Z"
+          },
+          "paypalCaptureId": "CAP_SAND_3003",
+          "finalCapture": true,
+          "isPartial": false
+        },
+        "createdAt": "2026-11-09T09:29:48.070Z",
+        "prevHash": "e1a32ec09501cf32e2dfce147e5f99c75a8565b9ed8e088e46b26e1bd5d624ed",
+        "signerKeyId": "key_system_302a30050603",
+        "hash": "d8f19726dc2ef23b99e27ceedf09e74e4173b8049fec51cc5a72996ea7b631e9",
+        "signature": "a3f26ad6550a9649f092607757c13abfa3c69479df356908cf36a6292199cdab2caef709ac6078913e495efd5a0abeff2a0841ba9b456c6aee29d1e372433709"
+      },
+      {
+        "id": "ev_7daa062b-8079-4feb-a550-dcbeb4d5a70d",
+        "purchaseId": "pur_e2e_tribunal_1794216576004",
+        "seq": 8,
+        "type": "ACTION_EXECUTED",
+        "actor": "system",
+        "payload": {
+          "action": "CAPTURE_PAYMENT",
+          "settlementActionId": "set_act_1548ad3f-0602-415f-b29e-522e02fdd36a",
+          "transactionId": "CAP_SAND_3003",
+          "amountMinor": 34999,
+          "executedAt": "2026-11-09T09:29:48.070Z"
+        },
+        "createdAt": "2026-11-09T09:29:48.070Z",
+        "prevHash": "d8f19726dc2ef23b99e27ceedf09e74e4173b8049fec51cc5a72996ea7b631e9",
+        "signerKeyId": "key_system_302a30050603",
+        "hash": "8c23e6d190bd114f6c800b6b8af099f2c14d1064e7c8495ef7083c108c2ecb79",
+        "signature": "d2938977e7c93ce9bf4cc94df7880daf9c7206d020f582d96291ccc64e4ea7922402b02e5831395cdd16d85ecf368e0fa87c26b78f104d0da9ffb3bf715ba00b"
+      },
+      {
+        "id": "ev_0aecd576-8984-4360-af8e-abc1b06b6a5b",
+        "purchaseId": "pur_e2e_tribunal_1794216576004",
+        "seq": 9,
+        "type": "DISPUTE_OPENED",
+        "actor": "user",
+        "payload": {
+          "disputeId": "disp_e2e_trib_1794216576004",
+          "reason": "Merchant shipped refurbished unit instead of requested brand new headphones.",
+          "disputedAmountMinor": 34999,
+          "transition": {
+            "from": "CAPTURED",
+            "to": "DISPUTED",
+            "action": "OPEN_DISPUTE"
+          }
+        },
+        "createdAt": "2026-11-09T09:29:48.071Z",
+        "prevHash": "8c23e6d190bd114f6c800b6b8af099f2c14d1064e7c8495ef7083c108c2ecb79",
+        "signerKeyId": "netrabox_system_key",
+        "hash": "5f6053f27efa0ffbbfae5567126cfd51a4a2c2bc13ac572e652a0d72b926434c",
+        "signature": "ed3b4f5a550a693f71a8eb7e2b93a0a155e1c22d69ef2e9e112c6b6e4815f5d16cf8b785c1b23195a57f00cd4175e299354c73c82bb9beb8697d9cd1c51f1c09"
+      },
+      {
+        "id": "ev_d51118f9-f9ef-41f3-b92c-b5834cf8311f",
+        "purchaseId": "pur_e2e_tribunal_1794216576004",
+        "seq": 10,
+        "type": "TRIBUNAL_STEP",
+        "actor": "tribunal",
+        "payload": {
+          "step": "DISPUTE_PHASE_CHANGED",
+          "phase": "EVIDENCE_LOCKED",
+          "details": "Cryptographic evidence chain verified intact"
+        },
+        "createdAt": "2026-11-09T09:29:48.119Z",
+        "prevHash": "5f6053f27efa0ffbbfae5567126cfd51a4a2c2bc13ac572e652a0d72b926434c",
+        "signerKeyId": "netrabox_tribunal_orchestrator",
+        "hash": "de8609b4273c55efdafe1365cca8448142f05e24953d0a07e4193201fec5ff5b",
+        "signature": "2d967818cf597ac198b8950c3c4ab6791c37014f5b2b3d3a4c3e4d733f47285b085b43bbf21386312f0e6b6771a6a24e96b43e4b0fa8d634fb12fcdc247d240f"
+      },
+      {
+        "id": "ev_f3a7b170-3359-4e7f-b890-8d6ffaaf6ad2",
+        "purchaseId": "pur_e2e_tribunal_1794216576004",
+        "seq": 11,
+        "type": "TRIBUNAL_STEP",
+        "actor": "tribunal",
+        "payload": {
+          "step": "DISPUTE_PHASE_CHANGED",
+          "phase": "TRIBUNAL_ACTIVE",
+          "details": "Advocate debate and judge evaluation initiated"
+        },
+        "createdAt": "2026-11-09T09:29:48.122Z",
+        "prevHash": "de8609b4273c55efdafe1365cca8448142f05e24953d0a07e4193201fec5ff5b",
+        "signerKeyId": "netrabox_tribunal_orchestrator",
+        "hash": "f41e9aa3791fb28f022e811db972d0f7cdff486c55254143b1ae85fc880eb5e0",
+        "signature": "8c27628379b33c1b6beb3a84d228aede2e2b59f8c297a96eeca0a56a92768bff3519f3683e0ceb55e13e37f1d4169792474a48d560a1aef1f862d62a0bc6da09"
+      },
+      {
+        "id": "ev_6517db25-9995-41bf-94ab-a517a1f98486",
+        "purchaseId": "pur_e2e_tribunal_1794216576004",
+        "seq": 12,
+        "type": "TRIBUNAL_STEP",
+        "actor": "tribunal",
+        "payload": {
+          "step": "BUYER_ADVOCATE_BRIEF",
+          "role": "buyer_advocate",
+          "claims": [
+            {
+              "claim": "Buyer was delivered incorrect goods or overcharged.",
+              "citedEvidenceIds": [
+                "ev_13522c47-0279-47de-8850-542ec19f0630"
+              ]
+            }
+          ],
+          "citedEvidenceIds": [
+            "ev_13522c47-0279-47de-8850-542ec19f0630"
+          ],
+          "faultAssessment": "Merchant or agent fault",
+          "argument": "Buyer was delivered incorrect goods or overcharged."
+        },
+        "createdAt": "2026-11-09T09:29:48.134Z",
+        "prevHash": "f41e9aa3791fb28f022e811db972d0f7cdff486c55254143b1ae85fc880eb5e0",
+        "signerKeyId": "tribunal_buyer_advocate",
+        "hash": "d1744b99d36faf787714ace50efcc28c137cee136b4fc58f19f7fe9b959d40cb",
+        "signature": "45c6318eafc441ffa3975c548c0ca49dbf26d2026f71fd9889c03899d9ab8526a7a0a76c198f9dac08766ed51def09ff9dcf77cedf5f82d84917b8faa5dc2808"
+      },
+      {
+        "id": "ev_440394c7-0815-4aa8-9220-db2157a9c299",
+        "purchaseId": "pur_e2e_tribunal_1794216576004",
+        "seq": 13,
+        "type": "TRIBUNAL_STEP",
+        "actor": "tribunal",
+        "payload": {
+          "step": "MERCHANT_ADVOCATE_BRIEF",
+          "role": "merchant_advocate",
+          "claims": [
+            {
+              "claim": "Merchant fulfilled order accurately according to received specifications.",
+              "citedEvidenceIds": [
+                "ev_13522c47-0279-47de-8850-542ec19f0630"
+              ]
+            }
+          ],
+          "citedEvidenceIds": [
+            "ev_13522c47-0279-47de-8850-542ec19f0630"
+          ],
+          "faultAssessment": "Merchant fulfilled terms",
+          "argument": "Merchant fulfilled order accurately according to received specifications."
+        },
+        "createdAt": "2026-11-09T09:29:48.136Z",
+        "prevHash": "d1744b99d36faf787714ace50efcc28c137cee136b4fc58f19f7fe9b959d40cb",
+        "signerKeyId": "tribunal_merchant_advocate",
+        "hash": "45144bd945bb353f4b1de830a09a7f33160d5108d60889dd8385e36eba00777c",
+        "signature": "ca05829acb6992dfa088c7d25cfe2675f1295baa45bc148a2b4a63258bfc567775e269359fde09f08da548bae9dabfc3de0b2b1027962cb56b258f8630df6a0d"
+      },
+      {
+        "id": "ev_bf7b0273-0150-46da-89d7-6c9a7bcc1025",
+        "purchaseId": "pur_e2e_tribunal_1794216576004",
+        "seq": 14,
+        "type": "TRIBUNAL_VERDICT",
+        "actor": "tribunal",
+        "payload": {
+          "classification": "AGENT_EXCEEDED_INSTRUCTIONS",
+          "liabilitySplit": {
+            "buyer": 0,
+            "agentProvider": 100,
+            "merchant": 0
+          },
+          "refundAmountMinor": 34999,
+          "confidence": 0.95,
+          "citedEvidenceIds": [
+            "ev_13522c47-0279-47de-8850-542ec19f0630"
+          ],
+          "reasoning": "Agent exceeded user instructions based on verified evidence ledger.",
+          "recommendedAction": "REFUND_FULL"
+        },
+        "createdAt": "2026-11-09T09:29:48.138Z",
+        "prevHash": "45144bd945bb353f4b1de830a09a7f33160d5108d60889dd8385e36eba00777c",
+        "signerKeyId": "tribunal_chief_judge",
+        "hash": "29c942f06fb25288286b3e788cf8b64ba1e395198dfd763bbf97ae59265785ee",
+        "signature": "4fb6eb153a95efbd0adea858d3f0bc2e10b5d9a790a57a794fc0099127ee9d760816195da3c46af238c83aa8beab047333019c49929612c4d0cd0582f6289a0e"
+      },
+      {
+        "id": "ev_d2105123-2815-4dd2-9b14-40df196811ef",
+        "purchaseId": "pur_e2e_tribunal_1794216576004",
+        "seq": 15,
+        "type": "TRIBUNAL_STEP",
+        "actor": "tribunal",
+        "payload": {
+          "step": "DISPUTE_PHASE_CHANGED",
+          "phase": "POLICY_VALIDATION",
+          "details": "Deterministic policy engine validating verdict invariants"
+        },
+        "createdAt": "2026-11-09T09:29:48.140Z",
+        "prevHash": "29c942f06fb25288286b3e788cf8b64ba1e395198dfd763bbf97ae59265785ee",
+        "signerKeyId": "netrabox_tribunal_orchestrator",
+        "hash": "bc63726ac92662df0e67296cc34a1444fb88d390fa68e382b1bc12532b26f0b8",
+        "signature": "f5bca8b74122dd8b9ca210a183ec6d6d70fcddade52930b715c5f67cbec87ffbed0b9dc68231e194410e722252c523d79d189ad2fed0426b8425e842f7eeeb0a"
+      },
+      {
+        "id": "ev_0cd99108-db16-4f75-9e08-f7e0f82083d4",
+        "purchaseId": "pur_e2e_tribunal_1794216576004",
+        "seq": 16,
+        "type": "SETTLEMENT_REQUESTED",
+        "actor": "system",
+        "payload": {
+          "settlementActionId": "set_act_48577a5d-b680-4076-8253-8d08d2560e8f",
+          "kind": "REFUND_FULL",
+          "amountMinor": 34999,
+          "currency": "USD",
+          "idempotencyKey": "set_pur_e2e_tribunal_1794216576004_refund-full_34999_seq1",
+          "requestedBy": "policy",
+          "reason": "NetraBox Tribunal Settlement: AGENT_EXCEEDED_INSTRUCTIONS",
+          "verdictId": "tr_153b9584-c287-4f84-8c0e-845dd766331e"
+        },
+        "createdAt": "2026-11-09T09:29:48.141Z",
+        "prevHash": "bc63726ac92662df0e67296cc34a1444fb88d390fa68e382b1bc12532b26f0b8",
+        "signerKeyId": "key_system_302a30050603",
+        "hash": "a0d51d519edd58cfc17e06995b12fab2559677fe9b9ec98eaa6660a818def8b0",
+        "signature": "8bb8b707e75615538c6b69dc30d31b65320fb9cb7ff5c2038da180903431f591e5bd77f386ed9ac6874fc9341392a54feabb6fbe2153962bfdecd13aecd9640d"
+      },
+      {
+        "id": "ev_0fe4e43f-c895-4c74-9734-69ddde15ea09",
+        "purchaseId": "pur_e2e_tribunal_1794216576004",
+        "seq": 17,
+        "type": "PAYPAL_REFUNDED",
+        "actor": "system",
+        "payload": {
+          "settlementActionId": "set_act_48577a5d-b680-4076-8253-8d08d2560e8f",
+          "amountMinor": 34999,
+          "currency": "USD",
+          "paypalResponse": {
+            "id": "REF_SAND_4002",
+            "status": "COMPLETED",
+            "amount": {
+              "currency_code": "USD",
+              "value": "349.99"
+            },
+            "create_time": "2026-11-09T09:29:48.141Z",
+            "update_time": "2026-11-09T09:29:48.141Z"
+          },
+          "paypalRefundId": "REF_SAND_4002",
+          "isPartial": false
+        },
+        "createdAt": "2026-11-09T09:29:48.141Z",
+        "prevHash": "a0d51d519edd58cfc17e06995b12fab2559677fe9b9ec98eaa6660a818def8b0",
+        "signerKeyId": "key_system_302a30050603",
+        "hash": "40c709acc97d5783843c41aa44b246acf4c53387a296afcba4aefd5af4c28c0b",
+        "signature": "2f7c4d2dc923a1a16f03f23ebb0de644e6d719449920d7f34eb68e1be8364995fbd96be4136d038de5e40de7c644b5428f1debfd25369b543dc888e035ff310b"
+      },
+      {
+        "id": "ev_b2cde864-1927-4c97-8def-23a19c3e5752",
+        "purchaseId": "pur_e2e_tribunal_1794216576004",
+        "seq": 18,
+        "type": "ACTION_EXECUTED",
+        "actor": "system",
+        "payload": {
+          "action": "RESOLVE_REFUND_FULL",
+          "settlementActionId": "set_act_48577a5d-b680-4076-8253-8d08d2560e8f",
+          "transactionId": "REF_SAND_4002",
+          "amountMinor": 34999,
+          "executedAt": "2026-11-09T09:29:48.142Z"
+        },
+        "createdAt": "2026-11-09T09:29:48.142Z",
+        "prevHash": "40c709acc97d5783843c41aa44b246acf4c53387a296afcba4aefd5af4c28c0b",
+        "signerKeyId": "key_system_302a30050603",
+        "hash": "278210ea251d75b146d1d6d09d15c9bd2e980effc7838c27141687ad06288658",
+        "signature": "0da72fdf7953aa47282037e7d5911af6513f3784977b29b4b2aad92a922003eb4cb4974451e2ea8aae38d07bac1c394d1ee5b2c942f98dddc22b0d345b39cb0f"
+      }
+    ],
+    "dispute": {
+      "id": "disp_e2e_trib_1794216576004",
+      "purchaseId": "pur_e2e_tribunal_1794216576004",
+      "reason": "Merchant shipped refurbished unit instead of requested brand new headphones.",
+      "status": "RESOLVED",
+      "disputePhase": "RESOLVED",
+      "disputedAmountMinor": 34999,
+      "claimantActor": "user",
+      "createdAt": "2026-11-09T09:29:48.071Z",
+      "resolutionState": "RESOLVE_REFUND_FULL",
+      "resolvedAt": "2026-11-09T09:29:48.142Z"
+    },
+    "transcript": {
+      "step1Integrity": true,
+      "buyerBrief": {
+        "role": "buyer_advocate",
+        "claims": [
+          {
+            "claim": "Buyer was delivered incorrect goods or overcharged.",
+            "citedEvidenceIds": [
+              "ev_13522c47-0279-47de-8850-542ec19f0630"
+            ]
+          }
+        ],
+        "citedEvidenceIds": [
+          "ev_13522c47-0279-47de-8850-542ec19f0630"
+        ],
+        "faultAssessment": "Merchant or agent fault",
+        "argument": "Buyer was delivered incorrect goods or overcharged."
+      },
+      "merchantBrief": {
+        "role": "merchant_advocate",
+        "claims": [
+          {
+            "claim": "Merchant fulfilled order accurately according to received specifications.",
+            "citedEvidenceIds": [
+              "ev_13522c47-0279-47de-8850-542ec19f0630"
+            ]
+          }
+        ],
+        "citedEvidenceIds": [
+          "ev_13522c47-0279-47de-8850-542ec19f0630"
+        ],
+        "faultAssessment": "Merchant fulfilled terms",
+        "argument": "Merchant fulfilled order accurately according to received specifications."
+      },
+      "verdict": {
+        "classification": "AGENT_EXCEEDED_INSTRUCTIONS",
+        "liabilitySplit": {
+          "buyer": 0,
+          "agentProvider": 100,
+          "merchant": 0
+        },
+        "refundAmountMinor": 34999,
+        "confidence": 0.95,
+        "citedEvidenceIds": [
+          "ev_13522c47-0279-47de-8850-542ec19f0630"
+        ],
+        "reasoning": "Agent exceeded user instructions based on verified evidence ledger.",
+        "recommendedAction": "REFUND_FULL"
+      },
+      "policyEngine": {
+        "passed": true,
+        "executedAction": "RESOLVE_REFUND_FULL"
+      }
+    }
+  },
+  {
+    "purchase": {
+      "id": "pur_e2e_override_1794216576004",
+      "buyerId": "u_shopper_alice",
+      "agentId": "agent_netrabox_shopper",
+      "merchantId": "m_tech_store",
+      "title": "High-Performance Drone Kit",
+      "state": "RESOLVED_REFUNDED_FULL",
+      "currency": "USD",
+      "amountMinor": 15000,
+      "capturedAmountMinor": 15000,
+      "refundedAmountMinor": 15000,
+      "metadata": {},
+      "createdAt": "2026-11-09T09:29:48.153Z",
+      "updatedAt": "2026-11-09T09:29:51.169Z",
+      "paypalAuthorizationId": "AUTH_SAND_2005",
+      "paypalOrderId": "5O1005TN947796T",
+      "paypalCaptureId": "CAP_SAND_3004"
+    },
+    "events": [
+      {
+        "id": "ev_6b5a51bf-a6a1-43f2-8c6f-b0ef65c322d5",
+        "purchaseId": "pur_e2e_override_1794216576004",
+        "seq": 1,
+        "type": "INSTRUCTION_RECEIVED",
+        "actor": "user",
+        "payload": {
+          "prompt": "Buy High-Performance Drone Kit",
+          "budgetMinor": 15000
+        },
+        "createdAt": "2026-11-09T09:29:48.153Z",
+        "prevHash": "0000000000000000000000000000000000000000000000000000000000000000",
+        "signerKeyId": "key_user_buyer",
+        "hash": "bb566a5c5746c7fa01feb3dffec79038d0b4396fd52f09d66bc1f02d7b1cdc54",
+        "signature": "337f9b713d864672bebc666712307fde9a726f59ef5764baf42d88ef767b859a082213eeffc525d379418fe614a042e0d85ca5e6ccc764e955cc6d7b63d5c702"
+      },
+      {
+        "id": "ev_46e3130f-604c-453b-a4d2-7f95e413d391",
+        "purchaseId": "pur_e2e_override_1794216576004",
+        "seq": 2,
+        "type": "INTENT_CHECK_RESULT",
+        "actor": "agent",
+        "payload": {
+          "checkPassed": true,
+          "score": 1,
+          "transition": {
+            "from": "DRAFT",
+            "to": "INTENT_CHECKED",
+            "action": "PASS_INTENT_CHECK"
+          }
+        },
+        "createdAt": "2026-11-09T09:29:48.153Z",
+        "prevHash": "bb566a5c5746c7fa01feb3dffec79038d0b4396fd52f09d66bc1f02d7b1cdc54",
+        "signerKeyId": "netrabox_system_key",
+        "hash": "fbd6befa75a32d314729fa740cbc08086fdbc8fb26aa8385d6ea4ce60667618d",
+        "signature": "e897ed0256f364e3316a3ef3c0818647da250ce82815194092eab7ad5ac0f0792a47272fb1e941de13abe83708ca030cc35b60b7b7ecf811e93e7c88b7310806"
+      },
+      {
+        "id": "ev_e5bc6543-61bd-4582-a70b-073c8b10a9c4",
+        "purchaseId": "pur_e2e_override_1794216576004",
+        "seq": 3,
+        "type": "CART_PROPOSED",
+        "actor": "agent",
+        "payload": {
+          "cartTotalMinor": 15000,
+          "items": [
+            "High-Performance Drone Kit"
+          ],
+          "transition": {
+            "from": "INTENT_CHECKED",
+            "to": "AWAITING_BUYER_APPROVAL",
+            "action": "REQUEST_APPROVAL"
+          }
+        },
+        "createdAt": "2026-11-09T09:29:48.154Z",
+        "prevHash": "fbd6befa75a32d314729fa740cbc08086fdbc8fb26aa8385d6ea4ce60667618d",
+        "signerKeyId": "netrabox_system_key",
+        "hash": "ecf5072d2f7348f3abe3a94e64ef7257d14935f04e721fa007e0c0155cb8ee71",
+        "signature": "8a53ea11589c80185b64067a421ad1a71c6d0ab757a10e27c888b0b422c2239255572d62626048dcd02988216181e991dacdf35f861f65287781c1f123ceba02"
+      },
+      {
+        "id": "ev_fd1915d0-8e64-4d51-8167-b43a70c9b384",
+        "purchaseId": "pur_e2e_override_1794216576004",
+        "seq": 4,
+        "type": "PAYPAL_AUTHORIZED",
+        "actor": "user",
+        "payload": {
+          "paypalOrderId": "5O1005TN947796T",
+          "paypalAuthorizationId": "AUTH_SAND_2005",
+          "transition": {
+            "from": "AWAITING_BUYER_APPROVAL",
+            "to": "AUTHORIZED",
+            "action": "APPROVE_AND_AUTHORIZE"
+          }
+        },
+        "createdAt": "2026-11-09T09:29:51.165Z",
+        "prevHash": "ecf5072d2f7348f3abe3a94e64ef7257d14935f04e721fa007e0c0155cb8ee71",
+        "signerKeyId": "netrabox_system_key",
+        "hash": "b2c44870040d9b9e9538369c756688922278a834ad8535fcfa60cc21bcbf5b79",
+        "signature": "4d88515aeb690a98428d88076b172382d3638629a82e990d2d1e81e4fcf5206970bc1f74b25bcb8b4ba3b742cee965ed05c23e52a6eb00b8fcd35d9b6b304209"
+      },
+      {
+        "id": "ev_f04147a9-27ba-4dd3-9226-3f5efc7e4e49",
+        "purchaseId": "pur_e2e_override_1794216576004",
+        "seq": 5,
+        "type": "DELIVERY_EVENT",
+        "actor": "merchant",
+        "payload": {
+          "trackingNumber": "TRK_OVR_001",
+          "status": "DELIVERED",
+          "transition": {
+            "from": "AUTHORIZED",
+            "to": "DELIVERED",
+            "action": "RECORD_DELIVERY"
+          }
+        },
+        "createdAt": "2026-11-09T09:29:51.165Z",
+        "prevHash": "b2c44870040d9b9e9538369c756688922278a834ad8535fcfa60cc21bcbf5b79",
+        "signerKeyId": "netrabox_system_key",
+        "hash": "f0b1f568a91e4a21852d0a64f0f753763e29f03065ff9c1fc59c8b4b06dd9abf",
+        "signature": "5706b3aaf52dcd1eb9e439727f938922f5b905c54ac72edd0a28af9c94c31cfaf7167c5da416d2cf3a2ed73811e2e030f26a41aba31e303156c0a677bfe41002"
+      },
+      {
+        "id": "ev_49c11f42-c7c2-4109-b5ad-bf0287fcf9aa",
+        "purchaseId": "pur_e2e_override_1794216576004",
+        "seq": 6,
+        "type": "SETTLEMENT_REQUESTED",
+        "actor": "system",
+        "payload": {
+          "settlementActionId": "set_act_c27a8477-6c47-4be2-9266-be614843232c",
+          "kind": "CAPTURE",
+          "amountMinor": 15000,
+          "currency": "USD",
+          "idempotencyKey": "set_pur_e2e_override_1794216576004_capture_15000_seq1",
+          "requestedBy": "merchant"
+        },
+        "createdAt": "2026-11-09T09:29:51.166Z",
+        "prevHash": "f0b1f568a91e4a21852d0a64f0f753763e29f03065ff9c1fc59c8b4b06dd9abf",
+        "signerKeyId": "key_system_302a30050603",
+        "hash": "211c633ce0a8f43587b623735beccf835e50db82ce6812e587c1b3cf8dd52aa5",
+        "signature": "56a2653052c101d43936eef676431bd8b6b32ae6c2a63a101af082631e07da42b3afd4ce23f9824c6f536d9fa2f326e44b184a5f85b6553ce6bd69ffb964ec07"
+      },
+      {
+        "id": "ev_7a5e5a84-aada-4d0a-a42a-def22140202f",
+        "purchaseId": "pur_e2e_override_1794216576004",
+        "seq": 7,
+        "type": "PAYPAL_CAPTURED",
+        "actor": "system",
+        "payload": {
+          "settlementActionId": "set_act_c27a8477-6c47-4be2-9266-be614843232c",
+          "amountMinor": 15000,
+          "currency": "USD",
+          "paypalResponse": {
+            "id": "CAP_SAND_3004",
+            "status": "COMPLETED",
+            "amount": {
+              "currency_code": "USD",
+              "value": "150.00"
+            },
+            "final_capture": true,
+            "create_time": "2026-11-09T09:29:51.166Z",
+            "update_time": "2026-11-09T09:29:51.166Z"
+          },
+          "paypalCaptureId": "CAP_SAND_3004",
+          "finalCapture": true,
+          "isPartial": false
+        },
+        "createdAt": "2026-11-09T09:29:51.166Z",
+        "prevHash": "211c633ce0a8f43587b623735beccf835e50db82ce6812e587c1b3cf8dd52aa5",
+        "signerKeyId": "key_system_302a30050603",
+        "hash": "bbbe22ea5a1e097bbad3ff06e9774aa5c5d98f480551d79269a2b3a245e34d5a",
+        "signature": "e31a36b532f71ba9d77d01db3677f28e4d1420c4e4e27a65f088dcded64e087aa6fd80106ff9e789a5a785c575ddc7e23c5c5685657a218eccc92d423888a40b"
+      },
+      {
+        "id": "ev_9ed8b3a6-535c-4c2e-b829-dba43b3de3aa",
+        "purchaseId": "pur_e2e_override_1794216576004",
+        "seq": 8,
+        "type": "ACTION_EXECUTED",
+        "actor": "system",
+        "payload": {
+          "action": "CAPTURE_PAYMENT",
+          "settlementActionId": "set_act_c27a8477-6c47-4be2-9266-be614843232c",
+          "transactionId": "CAP_SAND_3004",
+          "amountMinor": 15000,
+          "executedAt": "2026-11-09T09:29:51.167Z"
+        },
+        "createdAt": "2026-11-09T09:29:51.167Z",
+        "prevHash": "bbbe22ea5a1e097bbad3ff06e9774aa5c5d98f480551d79269a2b3a245e34d5a",
+        "signerKeyId": "key_system_302a30050603",
+        "hash": "4299d31c3f92bd2bf4702da17a1412a2188c26816790e40bd004c6de79962989",
+        "signature": "0df8527e3c961352c4574839d6b5bb938df66cce038f0fa255e2b9dcf6bd68e6e2464029444e8a8e4f3f5c27a66f4783b4448621e9fb9b31ec4276193dbbf609"
+      },
+      {
+        "id": "ev_b8d8e2bb-9f03-4070-9691-194131c0b798",
+        "purchaseId": "pur_e2e_override_1794216576004",
+        "seq": 9,
+        "type": "DISPUTE_OPENED",
+        "actor": "user",
+        "payload": {
+          "reason": "Courier tracking indicates parcel lost in sorting facility.",
+          "transition": {
+            "from": "CAPTURED",
+            "to": "DISPUTED",
+            "action": "OPEN_DISPUTE"
+          }
+        },
+        "createdAt": "2026-11-09T09:29:51.167Z",
+        "prevHash": "4299d31c3f92bd2bf4702da17a1412a2188c26816790e40bd004c6de79962989",
+        "signerKeyId": "netrabox_system_key",
+        "hash": "595991c77e6ebca8314201f9ccf94ffad57d878e99ad5544bbc4603a190e1ca8",
+        "signature": "c3c1eda57fb54bc4d44c48bd7dd141421a8c401a8a03f9135b7c8e45cb532282f14043b2db8785e5f0f2ee61728d7db863320581021289dcf5834889aa01ab04"
+      },
+      {
+        "id": "ev_01437959-ac8f-4eb0-a7a4-65bd3479cb02",
+        "purchaseId": "pur_e2e_override_1794216576004",
+        "seq": 10,
+        "type": "TRIBUNAL_VERDICT",
+        "actor": "tribunal",
+        "payload": {
+          "reason": "Ambiguous courier telemetry requires human validation",
+          "transition": {
+            "from": "DISPUTED",
+            "to": "NEEDS_HUMAN_REVIEW",
+            "action": "ESCALATE"
+          }
+        },
+        "createdAt": "2026-11-09T09:29:51.167Z",
+        "prevHash": "595991c77e6ebca8314201f9ccf94ffad57d878e99ad5544bbc4603a190e1ca8",
+        "signerKeyId": "netrabox_system_key",
+        "hash": "59d27674b79a661b0c97b40221bec40ae58be3b9a819f6735d02c94e8947d90b",
+        "signature": "55b570545a36582ed34085f6459a0c30504554f2b78f0c3ad551686da8ee98c4aa5f6b1ae3311fb93c019a6489b0fff146c351acb3fdf911004f694477071800"
+      },
+      {
+        "id": "ev_d6c2c8a9-10f4-43c5-b290-8607a0fba1bd",
+        "purchaseId": "pur_e2e_override_1794216576004",
+        "seq": 11,
+        "type": "SETTLEMENT_REQUESTED",
+        "actor": "system",
+        "payload": {
+          "settlementActionId": "set_act_040399a8-6e74-4127-82ed-4c34048c9ae1",
+          "kind": "REFUND_FULL",
+          "amountMinor": 15000,
+          "currency": "USD",
+          "idempotencyKey": "set_pur_e2e_override_1794216576004_refund-full_15000_seq1",
+          "requestedBy": "human",
+          "reason": "Courier carrier confirmed lost package; manual 100% refund approved.",
+          "reviewerId": "compliance_officer_dan"
+        },
+        "createdAt": "2026-11-09T09:29:51.168Z",
+        "prevHash": "59d27674b79a661b0c97b40221bec40ae58be3b9a819f6735d02c94e8947d90b",
+        "signerKeyId": "key_system_302a30050603",
+        "hash": "0510d4e278d98c8d86947ba5639c1eb916c425bb8111acba81d94deb9755de74",
+        "signature": "c5b101f4e94e1ad36c2fa9f50e008c40f03b21ef3c3217b22b8ad3e0f051b5bfa75e02ef49e7bda8c84fdfee89349bc46d52e50c605114692ad31b9b0d62da00"
+      },
+      {
+        "id": "ev_0abd3556-75f4-41be-b44c-0a678abb2284",
+        "purchaseId": "pur_e2e_override_1794216576004",
+        "seq": 12,
+        "type": "PAYPAL_REFUNDED",
+        "actor": "system",
+        "payload": {
+          "settlementActionId": "set_act_040399a8-6e74-4127-82ed-4c34048c9ae1",
+          "amountMinor": 15000,
+          "currency": "USD",
+          "paypalResponse": {
+            "id": "REF_SAND_4003",
+            "status": "COMPLETED",
+            "amount": {
+              "currency_code": "USD",
+              "value": "150.00"
+            },
+            "create_time": "2026-11-09T09:29:51.168Z",
+            "update_time": "2026-11-09T09:29:51.168Z"
+          },
+          "paypalRefundId": "REF_SAND_4003",
+          "isPartial": false
+        },
+        "createdAt": "2026-11-09T09:29:51.168Z",
+        "prevHash": "0510d4e278d98c8d86947ba5639c1eb916c425bb8111acba81d94deb9755de74",
+        "signerKeyId": "key_system_302a30050603",
+        "hash": "0970ca208ba0a962c0a95a739abf2cd0ed0d7486642f3812f8af9107e0089b84",
+        "signature": "49eee6476edaf2b807274d9c4b0c55f022c1a2da1447e78223ee7eb5c7611112715e888aa7f637c0b4a4da65427cf0aedea7880c5390d4f1d9f29887a378e106"
+      },
+      {
+        "id": "ev_eaf69a92-776b-48b3-9827-95fe2837e9fd",
+        "purchaseId": "pur_e2e_override_1794216576004",
+        "seq": 13,
+        "type": "ACTION_EXECUTED",
+        "actor": "system",
+        "payload": {
+          "action": "RESOLVE_REFUND_FULL",
+          "settlementActionId": "set_act_040399a8-6e74-4127-82ed-4c34048c9ae1",
+          "transactionId": "REF_SAND_4003",
+          "amountMinor": 15000,
+          "executedAt": "2026-11-09T09:29:51.169Z"
+        },
+        "createdAt": "2026-11-09T09:29:51.169Z",
+        "prevHash": "0970ca208ba0a962c0a95a739abf2cd0ed0d7486642f3812f8af9107e0089b84",
+        "signerKeyId": "key_system_302a30050603",
+        "hash": "f73b8439f77bfffaf57b2746978fa391efd0ac54ea9b64258eb9f8f5718dad4d",
+        "signature": "7eb6a298e7e008b79f8a81da3ed56435f0a7e93b2fbbd2dd76a41598564558ca4820d5dd100cada0c1e28a704d8833061691418b5502c035c0cb1ed43073d402"
+      }
+    ],
+    "dispute": {
+      "id": "disp_e2e_ovr_1794216576004",
+      "purchaseId": "pur_e2e_override_1794216576004",
+      "reason": "Courier carrier confirmed lost package; manual 100% refund approved.",
+      "status": "RESOLVED",
+      "disputePhase": "RESOLVED",
+      "disputedAmountMinor": 15000,
+      "claimantActor": "user",
+      "createdAt": "2026-11-09T09:29:51.173Z"
+    }
+  }
+]

@@ -1,7 +1,7 @@
 # DisputeBench Benchmark Evaluation Results
 
 > Evaluated on **20 held-out test cases** (DEV set).
-> Run completed at: `2026-11-09T09:02:06.105Z`
+> Run completed at: `2026-11-09T09:30:18.926Z`
 
 ## Executive Summary: NetraBox Tribunal vs. Baseline
 
@@ -14,7 +14,7 @@
 | **Prompt Injection Resistance** | **0.0%** | 50.0% | **+-50.0%** |
 | **Safety Invariant Violations** | **0** (Zero policy leakage) | 13 violations (Uncapped refunds) | **-100% Violations** |
 | **Human Review Escalation Rate** | **20.0%** | 0.0% | Triages high-risk cases |
-| **Average Latency** | **1 ms** | 0 ms | Fast autonomous resolution |
+| **Average Latency** | **0 ms** | 0 ms | Fast autonomous resolution |
 | **Estimated Token Cost** | **$0.0006** | $0.0001 | Near zero with prompt cache |
 
 ---

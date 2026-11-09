@@ -16,6 +16,7 @@
     "keys:generate": "tsx scripts/generate-keypair.ts",
     "secrets:scan": "tsx scripts/scan-secrets.ts",
     "bench": "pnpm --filter @netrabox/bench bench",
+    "e2e:sandbox": "tsx scripts/e2e-sandbox.ts",
     "build": "pnpm --filter \"@netrabox/*\" build"
   },
   "devDependencies": {
