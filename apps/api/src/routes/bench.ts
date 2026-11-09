@@ -25,7 +25,8 @@ export const benchRoutes: FastifyPluginAsync = async (fastify) => {
       }
     }
 
-    const summary = await runner.runBenchmark({ split: "test" });
+    const isTest = process.env.NODE_ENV === "test";
+    const summary = await runner.runBenchmark({ split: "test", saveReport: !isTest });
     return reply.send(summary);
   });
 
@@ -36,8 +37,9 @@ export const benchRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post("/bench/run", async (request, reply) => {
     const body = (request.body as { split?: "test" | "dev" | "all" }) || {};
     const split = body.split || "test";
+    const isTest = process.env.NODE_ENV === "test";
 
-    const summary = await runner.runBenchmark({ split });
+    const summary = await runner.runBenchmark({ split, saveReport: !isTest });
     return reply.send({
       message: `DisputeBench execution completed for ${summary.totalEvaluatedCases} cases (${split.toUpperCase()} set)`,
       metrics: summary,

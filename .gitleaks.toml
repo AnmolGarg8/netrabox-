@@ -2,9 +2,8 @@
 useDefault = true
 
 [allowlist]
-description = "Allowlist false positives in test cases and security scanner"
+description = "Allowlist false positives in test cases and documentation"
 paths = [
-  '''scripts/scan-secrets\.ts''',
   '''\.env\.example''',
   '''packages/bench/src/datasets/cases\.jsonl''',
 ]

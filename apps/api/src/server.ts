@@ -1,3 +1,16 @@
+import dotenv from "dotenv";
+import { fileURLToPath } from "url";
+import { dirname, resolve } from "path";
+
+// Load environment variables from process cwd or monorepo root .env
+dotenv.config();
+try {
+  const currentDir = dirname(fileURLToPath(import.meta.url));
+  dotenv.config({ path: resolve(currentDir, "../../../.env") });
+} catch {
+  // Ignore in environments where fileURLToPath is unavailable
+}
+
 import Fastify, { type FastifyInstance, type FastifyRequest, type FastifyReply } from "fastify";
 import cors from "@fastify/cors";
 import sensible from "@fastify/sensible";

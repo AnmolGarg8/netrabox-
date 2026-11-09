@@ -127,7 +127,7 @@ describe("DisputeBench Suite", () => {
   describe("End-to-End DisputeBench Execution", () => {
     it("executes bench suite and produces results.json & results.md matching target criteria", async () => {
       const runner = new DisputeBenchRunner({ useCache: false });
-      const summary = await runner.runBenchmark({ split: "test" });
+      const summary = await runner.runBenchmark({ split: "test", saveReport: false });
 
       expect(summary.totalEvaluatedCases).toBe(55);
       expect(summary.splitReported).toBe("test");

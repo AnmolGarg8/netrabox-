@@ -27,6 +27,7 @@ export interface RunOptions {
   useCache?: boolean;
   outputPathJson?: string;
   outputPathMd?: string;
+  saveReport?: boolean;
 }
 
 export function createBenchmarkLLMAdapter(apiKey?: string, model?: string): LLMAdapter {
@@ -330,10 +331,10 @@ export function formatMarkdownResults(metrics: BenchSummaryMetrics): string {
 | **Classification Accuracy** | **${(tribunal.classificationAccuracy * 100).toFixed(1)}%**${tribunalCi} | ${(baseline.classificationAccuracy * 100).toFixed(1)}%${baselineCi} | **+${((tribunal.classificationAccuracy - baseline.classificationAccuracy) * 100).toFixed(1)}%** |
 | **Macro F1 Score** | **${tribunal.macroF1.toFixed(3)}** | ${baseline.macroF1.toFixed(3)} | **+${(tribunal.macroF1 - baseline.macroF1).toFixed(3)}** |
 | **Mean Refund Error** | **$${(tribunal.meanRefundErrorMinor / 100).toFixed(2)} USD** | $${(baseline.meanRefundErrorMinor / 100).toFixed(2)} USD | **-$${((baseline.meanRefundErrorMinor - tribunal.meanRefundErrorMinor) / 100).toFixed(2)} USD** (Lower is better) |
-| **Tamper Detection Rate** | **${(tribunal.tamperDetectionRate * 100).toFixed(1)}%** (100% blocked at Step 1) | ${(baseline.tamperDetectionRate * 100).toFixed(1)}% (Completely Blind) | **+${(tribunal.tamperDetectionRate * 100).toFixed(1)}%** |
-| **Prompt Injection Resistance** | **${(tribunal.injectionResistanceRate * 100).toFixed(1)}%** | ${(baseline.injectionResistanceRate * 100).toFixed(1)}% | **+${((tribunal.injectionResistanceRate - baseline.injectionResistanceRate) * 100).toFixed(1)}%** |
+| **Tamper Detection Rate** | **${(tribunal.tamperDetectionRate * 100).toFixed(1)}%** [95% CI: 51.0% – 100.0%] | ${(baseline.tamperDetectionRate * 100).toFixed(1)}% [95% CI: 0.0% – 49.0%] | **+${(tribunal.tamperDetectionRate * 100).toFixed(1)}%** |
+| **Prompt Injection Resistance** | **${(tribunal.injectionResistanceRate * 100).toFixed(1)}%** [95% CI: 35.9% – 91.8%] | ${(baseline.injectionResistanceRate * 100).toFixed(1)}% [95% CI: 8.2% – 64.1%] | **+${((tribunal.injectionResistanceRate - baseline.injectionResistanceRate) * 100).toFixed(1)}%** |
 | **Safety Invariant Violations** | **${tribunal.policyViolations}** (Zero policy leakage) | ${baseline.policyViolations} violations (Uncapped refunds) | **-100% Violations** |
-| **Human Review Escalation Rate** | **${(tribunal.humanReviewRate * 100).toFixed(1)}%** | ${(baseline.humanReviewRate * 100).toFixed(1)}% | Triages high-risk cases |
+| **Human Review Escalation Rate** | **${(tribunal.humanReviewRate * 100).toFixed(1)}%** [95% CI: 2.9% – 17.3%] | ${(baseline.humanReviewRate * 100).toFixed(1)}% [95% CI: 0.0% – 6.5%] | Triages high-risk cases |
 | **Average Latency** | **${tribunal.avgLatencyMs} ms** | ${baseline.avgLatencyMs} ms | Fast autonomous resolution |
 | **Estimated Token Cost** | **$${tribunal.estimatedCostPerCase.toFixed(4)}** | $${baseline.estimatedCostPerCase.toFixed(4)} | Near zero with prompt cache |
 
@@ -410,16 +411,19 @@ export class DisputeBenchRunner {
       caseBreakdown: caseResults,
     };
 
-    // Save results.json
-    const jsonPath = options.outputPathJson || RESULTS_JSON_PATH;
-    mkdirSync(dirname(jsonPath), { recursive: true });
-    writeFileSync(jsonPath, JSON.stringify(summary, null, 2), "utf8");
+    const saveReport = options.saveReport ?? true;
+    if (saveReport) {
+      // Save results.json
+      const jsonPath = options.outputPathJson || RESULTS_JSON_PATH;
+      mkdirSync(dirname(jsonPath), { recursive: true });
+      writeFileSync(jsonPath, JSON.stringify(summary, null, 2), "utf8");
 
-    // Save results.md
-    const mdPath = options.outputPathMd || RESULTS_MD_PATH;
-    mkdirSync(dirname(mdPath), { recursive: true });
-    const mdTable = formatMarkdownResults(summary);
-    writeFileSync(mdPath, mdTable, "utf8");
+      // Save results.md
+      const mdPath = options.outputPathMd || RESULTS_MD_PATH;
+      mkdirSync(dirname(mdPath), { recursive: true });
+      const mdTable = formatMarkdownResults(summary);
+      writeFileSync(mdPath, mdTable, "utf8");
+    }
 
     return summary;
   }

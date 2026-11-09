@@ -1,18 +1,20 @@
 /**
  * NetraBox End-to-End Real PayPal Sandbox & Cryptographic Flight Recorder Runner
  *
- * Runs the 5 canonical monetary & tribunal flows against PayPal Sandbox:
+ * Runs the 5 canonical monetary & tribunal flows against REAL PayPal Sandbox:
  *   (a) Authorize then Full Capture
  *   (b) Authorize then Void
  *   (c) Authorize, Capture, then Partial Refund
  *   (d) Autonomous Tribunal-driven Refund through SettlementService
  *   (e) Human-Review Override triggering a real refund
  *
- * Validates:
- *   - Live PayPal IDs & state transitions
- *   - Pause for buyer sandbox approval step with clickable Approval URL
- *   - Ed25519-signed, SHA-256 hash-chained immutable evidence verification
- *   - Exports redacted replay seed fixtures to data/sandbox-replay-data.json
+ * Strict Guardrails:
+ *   - Refuses to run unless PAYPAL_ENV=sandbox, base URL is sandbox host, and --live is passed
+ *   - Transparently logs every real HTTP call: Status, PayPal-Debug-Id, and resource ID
+ *   - Pauses for manual sandbox buyer approval for every flow and retries gracefully if pending
+ *   - Asserts that zero returned IDs match AUTH_SAND, CAP_SAND, REF_SAND, or placeholders
+ *   - Verifies Ed25519-signed, SHA-256 hash-chained immutable evidence
+ *   - Exports real recorded seed fixtures to data/sandbox-replay-data.json
  */
 
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
@@ -38,7 +40,7 @@ import { TribunalRunner } from "../apps/api/src/services/tribunal/runner.js";
 import { PayPalClient, type CustomFetch } from "../apps/api/src/services/paypal/client.js";
 import type { PurchaseRecord } from "../apps/api/src/services/state-machine/types.js";
 
-// Load .env
+// 1. Load .env
 if (existsSync(".env") && typeof process.loadEnvFile === "function") {
   try {
     process.loadEnvFile(".env");
@@ -46,6 +48,218 @@ if (existsSync(".env") && typeof process.loadEnvFile === "function") {
     // Ignore load errors
   }
 }
+
+// =========================================================================
+// STRICT PRECONDITION VERIFICATION
+// =========================================================================
+
+function verifyPreconditions(): {
+  clientId: string;
+  clientSecret: string;
+  baseUrl: string;
+} {
+  console.log("==================================================================");
+  console.log("  NetraBox REAL PayPal Sandbox E2E Verification Suite");
+  console.log("==================================================================");
+
+  // 1. Must pass --live flag
+  const hasLiveFlag = process.argv.includes("--live");
+  if (!hasLiveFlag) {
+    console.error("\n❌ [REFUSED TO RUN] Missing '--live' CLI flag.");
+    console.error("   To execute real monetary calls against PayPal Sandbox, run:");
+    console.error("   pnpm e2e:sandbox -- --live\n");
+    process.exit(1);
+  }
+
+  // 2. PAYPAL_ENV must be strictly 'sandbox'
+  const paypalEnv = process.env.PAYPAL_ENV;
+  if (paypalEnv !== "sandbox") {
+    console.error(`\n❌ [REFUSED TO RUN] PAYPAL_ENV must be set to 'sandbox'.`);
+    console.error(`   Current value: '${paypalEnv || "(undefined)"}'\n`);
+    process.exit(1);
+  }
+
+  // 3. Base URL must strictly be the PayPal Sandbox API host
+  const expectedSandboxHost = "https://api-m.sandbox.paypal.com";
+  const baseUrl = process.env.PAYPAL_API_BASE_URL || expectedSandboxHost;
+  if (baseUrl !== expectedSandboxHost && baseUrl !== "https://api.sandbox.paypal.com") {
+    console.error(`\n❌ [REFUSED TO RUN] PayPal API base URL is not the sandbox API host.`);
+    console.error(`   Expected: '${expectedSandboxHost}'`);
+    console.error(`   Current:  '${baseUrl}'\n`);
+    process.exit(1);
+  }
+
+  // 4. Client credentials must be present and not placeholders
+  const clientId = process.env.PAYPAL_CLIENT_ID;
+  const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
+
+  if (
+    !clientId ||
+    !clientSecret ||
+    clientId.includes("your_paypal_sandbox") ||
+    clientSecret.includes("your_paypal_sandbox") ||
+    clientId.trim().length === 0 ||
+    clientSecret.trim().length === 0
+  ) {
+    console.error("\n❌ [REFUSED TO RUN] Real PayPal Sandbox credentials missing in .env.");
+    console.error("   PAYPAL_CLIENT_ID or PAYPAL_CLIENT_SECRET is currently placeholder or empty.");
+    console.error(
+      "   Please set your real Sandbox App credentials from developer.paypal.com in .env:\n",
+    );
+    console.error("   PAYPAL_ENV=sandbox");
+    console.error("   PAYPAL_CLIENT_ID=<your-sandbox-client-id>");
+    console.error("   PAYPAL_CLIENT_SECRET=<your-sandbox-client-secret>\n");
+    process.exit(1);
+  }
+
+  console.log("🔒 Preconditions Verified:");
+  console.log(`   - Environment:       ${paypalEnv} (Live Sandbox Rail)`);
+  console.log(`   - Base URL:          ${baseUrl}`);
+  console.log(`   - Client ID:         ${clientId.slice(0, 8)}...${clientId.slice(-4)}`);
+  console.log(`   - Client Secret:     [Configured - Protected]`);
+  console.log(`   - CLI Flag:          --live`);
+  console.log("==================================================================\n");
+
+  return { clientId, clientSecret, baseUrl };
+}
+
+// =========================================================================
+// REAL ID ASSERTION (DISALLOWS ALL MOCKS & STUBS)
+// =========================================================================
+
+export function assertRealPayPalId(id: unknown, fieldName: string): string {
+  if (!id || typeof id !== "string" || id.trim().length === 0) {
+    throw new Error(`[Assertion Failure] ${fieldName} is null, undefined, or empty.`);
+  }
+
+  const trimmed = id.trim();
+  const disallowedPatterns: Array<{ name: string; pattern: RegExp }> = [
+    { name: "AUTH_SAND placeholder", pattern: /AUTH_SAND/i },
+    { name: "CAP_SAND placeholder", pattern: /CAP_SAND/i },
+    { name: "REF_SAND placeholder", pattern: /REF_SAND/i },
+    { name: "ORD_ placeholder", pattern: /ORD_/i },
+    { name: "mock prefix", pattern: /mock/i },
+    { name: "placeholder string", pattern: /placeholder/i },
+    { name: "stub indicator", pattern: /stub/i },
+    { name: "fake indicator", pattern: /fake/i },
+    { name: "REF_EXECUTED fallback", pattern: /REF_EXECUTED/i },
+    { name: "sim_ prefix", pattern: /^sim_/i },
+    { name: "test_ prefix", pattern: /^test_/i },
+  ];
+
+  for (const { name, pattern } of disallowedPatterns) {
+    if (pattern.test(trimmed)) {
+      throw new Error(
+        `[FATAL INVARIANT VIOLATION] ${fieldName} '${trimmed}' matches disallowed pattern (${name}). A real PayPal Sandbox ID is strictly required!`,
+      );
+    }
+  }
+
+  if (trimmed.length < 8) {
+    throw new Error(
+      `[FATAL INVARIANT VIOLATION] ${fieldName} '${trimmed}' is too short (${trimmed.length} chars) to be an authentic PayPal Sandbox ID.`,
+    );
+  }
+
+  return trimmed;
+}
+
+// =========================================================================
+// TRANSPARENT REAL-HTTP LOGGING INTERCEPTOR
+// =========================================================================
+
+function createLiveLoggingFetch(): CustomFetch {
+  return async (inputUri: string | URL | Request, init?: RequestInit): Promise<Response> => {
+    const url = inputUri.toString();
+    const method = init?.method || "GET";
+    const headers = (init?.headers as Record<string, string>) || {};
+    const idempotencyKey = headers["PayPal-Request-Id"];
+
+    // Execute real network fetch directly to PayPal's API servers
+    const response = await fetch(inputUri, init);
+
+    const debugId =
+      response.headers.get("paypal-debug-id") ||
+      response.headers.get("PayPal-Debug-Id") ||
+      response.headers.get("paypal-debug_id") ||
+      "(none)";
+
+    console.log(`📡 [PayPal Live HTTP Call]`);
+    console.log(`   Method:          ${method}`);
+    console.log(`   Endpoint:        ${url}`);
+    if (idempotencyKey) {
+      console.log(`   Idempotency Key: ${idempotencyKey}`);
+    }
+    console.log(
+      `   HTTP Status:     ${response.status >= 200 && response.status < 300 ? "\x1b[32m" : "\x1b[31m"}${response.status} ${response.statusText}\x1b[0m`,
+    );
+    console.log(`   PayPal-Debug-Id: \x1b[33m${debugId}\x1b[0m`);
+
+    return response;
+  };
+}
+
+// =========================================================================
+// BUYER APPROVAL STEP WITH RETRY
+// =========================================================================
+
+async function waitForBuyerApproval(
+  flowName: string,
+  orderId: string,
+  approvalUrl: string,
+): Promise<void> {
+  console.log("\n==================================================================");
+  console.log(`⏸️  STEP: BUYER APPROVAL REQUIRED FOR ${flowName.toUpperCase()}`);
+  console.log("------------------------------------------------------------------");
+  console.log(`Order ID:     \x1b[33m${orderId}\x1b[0m`);
+  console.log(`Approval URL: \x1b[36m${approvalUrl}\x1b[0m`);
+  console.log("------------------------------------------------------------------");
+  console.log("👉 ACTION REQUIRED IN YOUR BROWSER:");
+  console.log("   1. Open the Approval URL above.");
+  console.log("   2. Log in with your PayPal Sandbox Personal Buyer account.");
+  console.log("   3. Click 'Continue' / 'Approve' to authorize payment.");
+  console.log("==================================================================");
+
+  const rl = readline.createInterface({ input, output });
+  await rl.question("👉 Press [ENTER] once you have approved the payment in PayPal Sandbox...");
+  rl.close();
+}
+
+async function authorizeWithApprovalRetry(
+  paypalClient: PayPalClient,
+  orderId: string,
+  purchaseId: string,
+  approvalUrl: string,
+  flowName: string,
+): Promise<string> {
+  while (true) {
+    await waitForBuyerApproval(flowName, orderId, approvalUrl);
+    try {
+      console.log(`\n⏳ Attempting authorization for Order ${orderId}...`);
+      const authRes = await paypalClient.authorizeOrder(orderId, purchaseId);
+      const authId = assertRealPayPalId(authRes.authorizationId, `${flowName} Authorization ID`);
+      console.log(`✅ [PayPal] Authorization Succeeded: ${authId}`);
+      return authId;
+    } catch (err) {
+      console.error(
+        `\n⚠️  Authorization rejected by PayPal: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      console.log("   The order may not have been approved yet in the sandbox browser window.");
+      const rl = readline.createInterface({ input, output });
+      const answer = await rl.question(
+        "   Press [ENTER] to retry approval check, or type 'abort' to stop: ",
+      );
+      rl.close();
+      if (answer.trim().toLowerCase() === "abort") {
+        throw err;
+      }
+    }
+  }
+}
+
+// =========================================================================
+// RUN SUMMARY TRACKER
+// =========================================================================
 
 interface RunSummary {
   flow: string;
@@ -68,174 +282,12 @@ const replaySeedData: Array<{
   transcript?: Record<string, unknown>;
 }> = [];
 
-/**
- * Pauses execution for the manual buyer approval step on real sandbox runs
- */
-async function waitForBuyerApproval(approvalUrl: string, autoAdvance = false): Promise<void> {
-  console.log("\n==================================================================");
-  console.log("⏸️  STEP: BUYER APPROVAL REQUIRED");
-  console.log("------------------------------------------------------------------");
-  console.log(`🔗 Approval URL: \x1b[36m${approvalUrl}\x1b[0m`);
-  console.log("👉 Please open the URL above in a browser logged into your PayPal");
-  console.log("   Sandbox Personal Buyer account, and click 'Continue' / 'Approve'.");
-  console.log("==================================================================");
-
-  if (autoAdvance || !process.stdin.isTTY) {
-    console.log("ℹ️ Auto-advance active. Proceeding to authorize check in 3 seconds...");
-    await new Promise((r) => setTimeout(r, 3000));
-    return;
-  }
-
-  const rl = readline.createInterface({ input, output });
-  await rl.question("Press [ENTER] once you have approved the payment in PayPal Sandbox...");
-  rl.close();
-}
-
-/**
- * Creates an authentic mock fetch for simulated sandbox testing when real credentials are absent
- */
-function createSandboxMockFetch(): CustomFetch {
-  let orderCounter = 1000;
-  let authCounter = 2000;
-  let capCounter = 3000;
-  let refCounter = 4000;
-
-  return async (url: string | URL | Request, init?: RequestInit): Promise<Response> => {
-    const urlStr = url.toString();
-    const bodyStr = init?.body ? String(init.body) : "";
-
-    // OAuth2 Token
-    if (urlStr.includes("/v1/oauth2/token")) {
-      return new Response(
-        JSON.stringify({
-          access_token: `mock_sand_token_${Date.now()}`,
-          token_type: "Bearer",
-          app_id: "APP-80W284485P519543T",
-          expires_in: 32400,
-        }),
-        { status: 200, headers: { "Content-Type": "application/json" } },
-      );
-    }
-
-    // Create Order
-    if (urlStr.endsWith("/v2/checkout/orders") && init?.method === "POST") {
-      const orderId = `5O${++orderCounter}TN${Math.floor(Math.random() * 900000 + 100000)}T`;
-      return new Response(
-        JSON.stringify({
-          id: orderId,
-          status: "CREATED",
-          links: [
-            {
-              href: `https://www.sandbox.paypal.com/checkoutnow?token=${orderId}`,
-              rel: "approve",
-              method: "GET",
-            },
-          ],
-        }),
-        { status: 201, headers: { "Content-Type": "application/json" } },
-      );
-    }
-
-    // Authorize Order
-    if (urlStr.includes("/v2/checkout/orders/") && urlStr.endsWith("/authorize")) {
-      const authId = `AUTH_SAND_${++authCounter}`;
-      return new Response(
-        JSON.stringify({
-          id: `ORD_${authCounter}`,
-          status: "COMPLETED",
-          purchase_units: [
-            {
-              payments: {
-                authorizations: [
-                  {
-                    id: authId,
-                    status: "CREATED",
-                    amount: { currency_code: "USD", value: "349.99" },
-                  },
-                ],
-              },
-            },
-          ],
-        }),
-        { status: 201, headers: { "Content-Type": "application/json" } },
-      );
-    }
-
-    // Capture Authorization
-    if (urlStr.includes("/v2/payments/authorizations/") && urlStr.endsWith("/capture")) {
-      const parsedBody = bodyStr ? JSON.parse(bodyStr) : {};
-      const capId = `CAP_SAND_${++capCounter}`;
-      return new Response(
-        JSON.stringify({
-          id: capId,
-          status: "COMPLETED",
-          amount: {
-            currency_code: parsedBody.amount?.currency_code || "USD",
-            value: parsedBody.amount?.value || "349.99",
-          },
-          final_capture: parsedBody.final_capture ?? true,
-          create_time: new Date().toISOString(),
-          update_time: new Date().toISOString(),
-        }),
-        { status: 201, headers: { "Content-Type": "application/json" } },
-      );
-    }
-
-    // Void Authorization
-    if (urlStr.includes("/v2/payments/authorizations/") && urlStr.endsWith("/void")) {
-      return new Response(null, { status: 204 });
-    }
-
-    // Refund Capture
-    if (urlStr.includes("/v2/payments/captures/") && urlStr.endsWith("/refund")) {
-      const parsedBody = bodyStr ? JSON.parse(bodyStr) : {};
-      const refId = `REF_SAND_${++refCounter}`;
-      return new Response(
-        JSON.stringify({
-          id: refId,
-          status: "COMPLETED",
-          amount: {
-            currency_code: parsedBody.amount?.currency_code || "USD",
-            value: parsedBody.amount?.value || "25.00",
-          },
-          create_time: new Date().toISOString(),
-          update_time: new Date().toISOString(),
-        }),
-        { status: 201, headers: { "Content-Type": "application/json" } },
-      );
-    }
-
-    return new Response(JSON.stringify({ error: "Not found" }), { status: 404 });
-  };
-}
+// =========================================================================
+// MAIN RUNNER
+// =========================================================================
 
 async function main() {
-  console.log("==================================================================");
-  console.log("  NetraBox PayPal Sandbox E2E Real-Rail & Flight Recorder Test");
-  console.log("==================================================================");
-
-  const autoAdvance = process.argv.includes("--auto") || process.env.AUTO_APPROVE === "true";
-  const forceMock = process.argv.includes("--mock");
-
-  // Check PayPal Sandbox credentials
-  const envClientId = process.env.PAYPAL_CLIENT_ID;
-  const envClientSecret = process.env.PAYPAL_CLIENT_SECRET;
-  const hasRealCredentials =
-    Boolean(envClientId) &&
-    Boolean(envClientSecret) &&
-    envClientId !== "your_paypal_sandbox_client_id" &&
-    envClientSecret !== "your_paypal_sandbox_client_secret" &&
-    !forceMock;
-
-  if (hasRealCredentials) {
-    console.log("✅ REAL PAYPAL SANDBOX MODE DETECTED");
-    console.log(`   Client ID: ${envClientId?.slice(0, 8)}... (Environment: sandbox)`);
-    console.log("   Connecting directly to: https://api-m.sandbox.paypal.com");
-  } else {
-    console.log("⚠️  NOTICE: PAYPAL_CLIENT_ID or PAYPAL_CLIENT_SECRET in .env is placeholder.");
-    console.log("   Using realistic PayPal Sandbox transport to prove all 5 flows.");
-    console.log("   (To run against live sandbox, update .env with real developer keys).");
-  }
+  const { clientId, clientSecret, baseUrl } = verifyPreconditions();
 
   // Cryptographic Keys
   let privateKeyHex = process.env.SIGNING_PRIVATE_KEY;
@@ -249,14 +301,16 @@ async function main() {
     publicKeyHex = getPublicKeyFromPrivate(privateKeyHex);
   }
 
-  const customFetch = hasRealCredentials ? undefined : createSandboxMockFetch();
+  // Instantiate PayPalClient with real live logging fetch
+  const liveLoggingFetch = createLiveLoggingFetch();
   const paypalClient = new PayPalClient(
     {
-      clientId: envClientId || "sandbox_mock_client",
-      clientSecret: envClientSecret || "sandbox_mock_secret",
+      clientId,
+      clientSecret,
       environment: "sandbox",
+      baseUrl,
     },
-    customFetch,
+    liveLoggingFetch,
   );
 
   const store = new InMemoryStateStore();
@@ -264,6 +318,7 @@ async function main() {
   const evidenceService = new EvidenceService(store, privateKeyHex, publicKeyHex);
   const policyEngine = new PolicyEngine();
   const settlementService = new SettlementService(store, paypalClient, policyEngine, privateKeyHex);
+
   const geminiApiKey = process.env.LLM_API_KEY || process.env.GOOGLE_AI_API_KEY;
   const llm: LLMAdapter =
     process.env.LLM_PROVIDER === "google" && geminiApiKey && geminiApiKey !== "your_gemini_api_key"
@@ -282,7 +337,6 @@ async function main() {
 
   const now = Date.now();
 
-  // Helper to initialize and step a purchase
   async function setupPurchase(params: {
     id: string;
     title: string;
@@ -345,7 +399,6 @@ async function main() {
   const purIdA = `pur_e2e_full_${now}`;
   await setupPurchase({ id: purIdA, title: "Sony WH-1000XM5 Headphones", amountMinor: 5000 });
 
-  // Create Order in PayPal Sandbox
   const orderA = await paypalClient.createOrder({
     purchaseId: purIdA,
     amountMinor: 5000,
@@ -354,29 +407,30 @@ async function main() {
     cancelUrl: "https://example.com/checkout/cancel",
     description: "Flow (a): Full Capture Test",
   });
-  console.log(`[PayPal] Order Created: ${orderA.order.id}`);
+  const orderIdA = assertRealPayPalId(orderA.order.id, "Flow (a) PayPal Order ID");
+  console.log(`✅ [PayPal] Real Order Created: ${orderIdA}`);
 
-  // Pause for Buyer Approval
-  await waitForBuyerApproval(
-    orderA.approvalUrl || `https://www.sandbox.paypal.com/checkoutnow?token=${orderA.order.id}`,
-    autoAdvance,
+  const approvalUrlA =
+    orderA.approvalUrl || `https://www.sandbox.paypal.com/checkoutnow?token=${orderIdA}`;
+
+  const authIdA = await authorizeWithApprovalRetry(
+    paypalClient,
+    orderIdA,
+    purIdA,
+    approvalUrlA,
+    "Flow (a)",
   );
-
-  // Authorize Order
-  const authResA = await paypalClient.authorizeOrder(orderA.order.id, purIdA);
-  const authIdA = authResA.authorizationId;
-  console.log(`[PayPal] Authorization Succeeded: ${authIdA}`);
 
   await stateMachine.transition({
     purchaseId: purIdA,
     action: "APPROVE_AND_AUTHORIZE",
     actor: "user",
-    payload: { paypalOrderId: orderA.order.id, paypalAuthorizationId: authIdA },
+    payload: { paypalOrderId: orderIdA, paypalAuthorizationId: authIdA },
     signingPrivateKeyHex: privateKeyHex!,
   });
   const curA = (await store.getPurchase(purIdA))!;
   curA.paypalAuthorizationId = authIdA;
-  curA.paypalOrderId = orderA.order.id;
+  curA.paypalOrderId = orderIdA;
   store.purchases.set(purIdA, curA);
 
   // Merchant Delivery
@@ -396,8 +450,11 @@ async function main() {
     currency: "USD",
     requestedBy: "merchant",
   });
-  const capIdA = capResA.settlementAction.paypalCaptureId;
-  console.log(`[PayPal] Full Capture Succeeded: ${capIdA}`);
+  const capIdA = assertRealPayPalId(
+    capResA.settlementAction.paypalCaptureId,
+    "Flow (a) PayPal Capture ID",
+  );
+  console.log(`✅ [PayPal] Real Full Capture Succeeded: ${capIdA}`);
 
   const purA = (await store.getPurchase(purIdA))!;
   const verifyA = await evidenceService.verifyChain(purIdA);
@@ -405,9 +462,9 @@ async function main() {
   summaries.push({
     flow: "(a) Authorize -> Full Capture",
     purchaseId: purIdA,
-    paypalOrderId: orderA.order.id,
+    paypalOrderId: orderIdA,
     paypalAuthId: authIdA,
-    paypalCaptureId: capIdA || undefined,
+    paypalCaptureId: capIdA,
     finalState: purA.state,
     evidenceEventsCount: verifyA.totalEvents,
     chainIntegrityValid: verifyA.valid,
@@ -432,30 +489,33 @@ async function main() {
     cancelUrl: "https://example.com/checkout/cancel",
     description: "Flow (b): Void Test",
   });
-  console.log(`[PayPal] Order Created: ${orderB.order.id}`);
+  const orderIdB = assertRealPayPalId(orderB.order.id, "Flow (b) PayPal Order ID");
+  console.log(`✅ [PayPal] Real Order Created: ${orderIdB}`);
 
-  await waitForBuyerApproval(
-    orderB.approvalUrl || `https://www.sandbox.paypal.com/checkoutnow?token=${orderB.order.id}`,
-    autoAdvance,
+  const approvalUrlB =
+    orderB.approvalUrl || `https://www.sandbox.paypal.com/checkoutnow?token=${orderIdB}`;
+
+  const authIdB = await authorizeWithApprovalRetry(
+    paypalClient,
+    orderIdB,
+    purIdB,
+    approvalUrlB,
+    "Flow (b)",
   );
-
-  const authResB = await paypalClient.authorizeOrder(orderB.order.id, purIdB);
-  const authIdB = authResB.authorizationId;
-  console.log(`[PayPal] Authorization Succeeded: ${authIdB}`);
 
   await stateMachine.transition({
     purchaseId: purIdB,
     action: "APPROVE_AND_AUTHORIZE",
     actor: "user",
-    payload: { paypalOrderId: orderB.order.id, paypalAuthorizationId: authIdB },
+    payload: { paypalOrderId: orderIdB, paypalAuthorizationId: authIdB },
     signingPrivateKeyHex: privateKeyHex!,
   });
   const curB = (await store.getPurchase(purIdB))!;
   curB.paypalAuthorizationId = authIdB;
-  curB.paypalOrderId = orderB.order.id;
+  curB.paypalOrderId = orderIdB;
   store.purchases.set(purIdB, curB);
 
-  // Buyer cancels before fulfillment -> Void via SettlementService
+  // Buyer cancels before delivery -> Void via SettlementService
   const voidResB = await settlementService.execute({
     purchaseId: purIdB,
     kind: "VOID",
@@ -463,7 +523,7 @@ async function main() {
     currency: "USD",
     requestedBy: "merchant",
   });
-  console.log(`[PayPal] Void Executed: Status ${voidResB.status}`);
+  console.log(`✅ [PayPal] Real Void Executed: Status ${voidResB.status}`);
 
   const purB = (await store.getPurchase(purIdB))!;
   const verifyB = await evidenceService.verifyChain(purIdB);
@@ -471,12 +531,12 @@ async function main() {
   summaries.push({
     flow: "(b) Authorize -> Void",
     purchaseId: purIdB,
-    paypalOrderId: orderB.order.id,
+    paypalOrderId: orderIdB,
     paypalAuthId: authIdB,
     finalState: purB.state,
     evidenceEventsCount: verifyB.totalEvents,
     chainIntegrityValid: verifyB.valid,
-    notes: `Authorization voided prior to delivery. Final state: ${purB.state}.`,
+    notes: `Authorization voided prior to fulfillment. Final state: ${purB.state}.`,
   });
   replaySeedData.push({ purchase: purB, events: eventsB });
 
@@ -497,27 +557,30 @@ async function main() {
     cancelUrl: "https://example.com/checkout/cancel",
     description: "Flow (c): Partial Refund Test",
   });
-  console.log(`[PayPal] Order Created: ${orderC.order.id}`);
+  const orderIdC = assertRealPayPalId(orderC.order.id, "Flow (c) PayPal Order ID");
+  console.log(`✅ [PayPal] Real Order Created: ${orderIdC}`);
 
-  await waitForBuyerApproval(
-    orderC.approvalUrl || `https://www.sandbox.paypal.com/checkoutnow?token=${orderC.order.id}`,
-    autoAdvance,
+  const approvalUrlC =
+    orderC.approvalUrl || `https://www.sandbox.paypal.com/checkoutnow?token=${orderIdC}`;
+
+  const authIdC = await authorizeWithApprovalRetry(
+    paypalClient,
+    orderIdC,
+    purIdC,
+    approvalUrlC,
+    "Flow (c)",
   );
-
-  const authResC = await paypalClient.authorizeOrder(orderC.order.id, purIdC);
-  const authIdC = authResC.authorizationId;
-  console.log(`[PayPal] Authorization Succeeded: ${authIdC}`);
 
   await stateMachine.transition({
     purchaseId: purIdC,
     action: "APPROVE_AND_AUTHORIZE",
     actor: "user",
-    payload: { paypalOrderId: orderC.order.id, paypalAuthorizationId: authIdC },
+    payload: { paypalOrderId: orderIdC, paypalAuthorizationId: authIdC },
     signingPrivateKeyHex: privateKeyHex!,
   });
   const curC = (await store.getPurchase(purIdC))!;
   curC.paypalAuthorizationId = authIdC;
-  curC.paypalOrderId = orderC.order.id;
+  curC.paypalOrderId = orderIdC;
   store.purchases.set(purIdC, curC);
 
   await stateMachine.transition({
@@ -535,8 +598,11 @@ async function main() {
     currency: "USD",
     requestedBy: "merchant",
   });
-  const capIdC = capResC.settlementAction.paypalCaptureId;
-  console.log(`[PayPal] Full Capture Succeeded: ${capIdC}`);
+  const capIdC = assertRealPayPalId(
+    capResC.settlementAction.paypalCaptureId,
+    "Flow (c) PayPal Capture ID",
+  );
+  console.log(`✅ [PayPal] Real Full Capture Succeeded: ${capIdC}`);
 
   // Merchant executes partial refund of $25.00
   const refResC = await settlementService.execute({
@@ -547,8 +613,11 @@ async function main() {
     requestedBy: "merchant",
     reason: "Customer returned stylus accessory",
   });
-  const refIdC = refResC.settlementAction.paypalRefundId;
-  console.log(`[PayPal] Partial Refund Succeeded: ${refIdC}`);
+  const refIdC = assertRealPayPalId(
+    refResC.settlementAction.paypalRefundId,
+    "Flow (c) PayPal Partial Refund ID",
+  );
+  console.log(`✅ [PayPal] Real Partial Refund Succeeded: ${refIdC}`);
 
   const purC = (await store.getPurchase(purIdC))!;
   const verifyC = await evidenceService.verifyChain(purIdC);
@@ -556,10 +625,10 @@ async function main() {
   summaries.push({
     flow: "(c) Authorize -> Capture -> Partial Refund",
     purchaseId: purIdC,
-    paypalOrderId: orderC.order.id,
+    paypalOrderId: orderIdC,
     paypalAuthId: authIdC,
-    paypalCaptureId: capIdC || undefined,
-    paypalRefundId: refIdC || undefined,
+    paypalCaptureId: capIdC,
+    paypalRefundId: refIdC,
     finalState: purC.state,
     evidenceEventsCount: verifyC.totalEvents,
     chainIntegrityValid: verifyC.valid,
@@ -590,25 +659,30 @@ async function main() {
     cancelUrl: "https://example.com/checkout/cancel",
     description: "Flow (d): Tribunal Refund Test",
   });
-  console.log(`[PayPal] Order Created: ${orderD.order.id}`);
+  const orderIdD = assertRealPayPalId(orderD.order.id, "Flow (d) PayPal Order ID");
+  console.log(`✅ [PayPal] Real Order Created: ${orderIdD}`);
 
-  await waitForBuyerApproval(
-    orderD.approvalUrl || `https://www.sandbox.paypal.com/checkoutnow?token=${orderD.order.id}`,
-    autoAdvance,
+  const approvalUrlD =
+    orderD.approvalUrl || `https://www.sandbox.paypal.com/checkoutnow?token=${orderIdD}`;
+
+  const authIdD = await authorizeWithApprovalRetry(
+    paypalClient,
+    orderIdD,
+    purIdD,
+    approvalUrlD,
+    "Flow (d)",
   );
 
-  const authResD = await paypalClient.authorizeOrder(orderD.order.id, purIdD);
-  const authIdD = authResD.authorizationId;
   await stateMachine.transition({
     purchaseId: purIdD,
     action: "APPROVE_AND_AUTHORIZE",
     actor: "user",
-    payload: { paypalOrderId: orderD.order.id, paypalAuthorizationId: authIdD },
+    payload: { paypalOrderId: orderIdD, paypalAuthorizationId: authIdD },
     signingPrivateKeyHex: privateKeyHex!,
   });
   const curD = (await store.getPurchase(purIdD))!;
   curD.paypalAuthorizationId = authIdD;
-  curD.paypalOrderId = orderD.order.id;
+  curD.paypalOrderId = orderIdD;
   store.purchases.set(purIdD, curD);
 
   await stateMachine.transition({
@@ -626,8 +700,11 @@ async function main() {
     currency: "USD",
     requestedBy: "merchant",
   });
-  const capIdD = capResD.settlementAction.paypalCaptureId;
-  console.log(`[PayPal] Capture Succeeded: ${capIdD}`);
+  const capIdD = assertRealPayPalId(
+    capResD.settlementAction.paypalCaptureId,
+    "Flow (d) PayPal Capture ID",
+  );
+  console.log(`✅ [PayPal] Real Capture Succeeded: ${capIdD}`);
 
   // Buyer files dispute
   const dispIdD = `disp_e2e_trib_${now}`;
@@ -651,16 +728,26 @@ async function main() {
     `[Tribunal] Executed Action: ${tribunalResD.executedAction} (Human Review: ${tribunalResD.requiresHumanReview})`,
   );
 
+  // Retrieve the settlement action recorded during tribunal execution
+  const refundActionD = Array.from(store.settlementActions.values()).find(
+    (a) => a.purchaseId === purIdD && a.kind.includes("REFUND"),
+  );
+  const refIdD = assertRealPayPalId(
+    refundActionD?.paypalRefundId || tribunalResD.tribunalRun.executedActionId,
+    "Flow (d) PayPal Refund ID",
+  );
+  console.log(`✅ [PayPal] Real Autonomous Tribunal Refund Succeeded: ${refIdD}`);
+
   const purD = (await store.getPurchase(purIdD))!;
   const verifyD = await evidenceService.verifyChain(purIdD);
   const eventsD = await evidenceService.getEvents(purIdD);
   summaries.push({
     flow: "(d) Tribunal-Driven Refund",
     purchaseId: purIdD,
-    paypalOrderId: orderD.order.id,
+    paypalOrderId: orderIdD,
     paypalAuthId: authIdD,
-    paypalCaptureId: capIdD || undefined,
-    paypalRefundId: (purD.metadata?.paypalRefundId as string) || "REF_EXECUTED",
+    paypalCaptureId: capIdD,
+    paypalRefundId: refIdD,
     finalState: purD.state,
     evidenceEventsCount: verifyD.totalEvents,
     chainIntegrityValid: verifyD.valid,
@@ -699,25 +786,30 @@ async function main() {
     cancelUrl: "https://example.com/checkout/cancel",
     description: "Flow (e): Human Override Test",
   });
-  console.log(`[PayPal] Order Created: ${orderE.order.id}`);
+  const orderIdE = assertRealPayPalId(orderE.order.id, "Flow (e) PayPal Order ID");
+  console.log(`✅ [PayPal] Real Order Created: ${orderIdE}`);
 
-  await waitForBuyerApproval(
-    orderE.approvalUrl || `https://www.sandbox.paypal.com/checkoutnow?token=${orderE.order.id}`,
-    autoAdvance,
+  const approvalUrlE =
+    orderE.approvalUrl || `https://www.sandbox.paypal.com/checkoutnow?token=${orderIdE}`;
+
+  const authIdE = await authorizeWithApprovalRetry(
+    paypalClient,
+    orderIdE,
+    purIdE,
+    approvalUrlE,
+    "Flow (e)",
   );
 
-  const authResE = await paypalClient.authorizeOrder(orderE.order.id, purIdE);
-  const authIdE = authResE.authorizationId;
   await stateMachine.transition({
     purchaseId: purIdE,
     action: "APPROVE_AND_AUTHORIZE",
     actor: "user",
-    payload: { paypalOrderId: orderE.order.id, paypalAuthorizationId: authIdE },
+    payload: { paypalOrderId: orderIdE, paypalAuthorizationId: authIdE },
     signingPrivateKeyHex: privateKeyHex!,
   });
   const curE = (await store.getPurchase(purIdE))!;
   curE.paypalAuthorizationId = authIdE;
-  curE.paypalOrderId = orderE.order.id;
+  curE.paypalOrderId = orderIdE;
   store.purchases.set(purIdE, curE);
 
   await stateMachine.transition({
@@ -735,8 +827,11 @@ async function main() {
     currency: "USD",
     requestedBy: "merchant",
   });
-  const capIdE = capResE.settlementAction.paypalCaptureId;
-  console.log(`[PayPal] Capture Succeeded: ${capIdE}`);
+  const capIdE = assertRealPayPalId(
+    capResE.settlementAction.paypalCaptureId,
+    "Flow (e) PayPal Capture ID",
+  );
+  console.log(`✅ [PayPal] Real Capture Succeeded: ${capIdE}`);
 
   // Buyer files dispute with ambiguity -> enters human review
   await stateMachine.transition({
@@ -754,7 +849,7 @@ async function main() {
     signingPrivateKeyHex: privateKeyHex!,
   });
 
-  console.log(`[Human Review] Purchase ${purIdE} is in NEEDS_HUMAN_REVIEW.`);
+  console.log(`[Human Review] Purchase ${purIdE} escalated to NEEDS_HUMAN_REVIEW.`);
   console.log(
     `[Human Review] Admin reviewer 'compliance_dan' executing authorized refund override...`,
   );
@@ -768,8 +863,11 @@ async function main() {
     reviewerId: "compliance_officer_dan",
     reason: "Courier carrier confirmed lost package; manual 100% refund approved.",
   });
-  const refIdE = humanOverrideRes.settlementAction.paypalRefundId;
-  console.log(`[PayPal] Human Override Refund Succeeded: ${refIdE}`);
+  const refIdE = assertRealPayPalId(
+    humanOverrideRes.settlementAction.paypalRefundId,
+    "Flow (e) PayPal Refund ID",
+  );
+  console.log(`✅ [PayPal] Real Human Override Refund Succeeded: ${refIdE}`);
 
   const purE = (await store.getPurchase(purIdE))!;
   const verifyE = await evidenceService.verifyChain(purIdE);
@@ -777,10 +875,10 @@ async function main() {
   summaries.push({
     flow: "(e) Human Review Override Refund",
     purchaseId: purIdE,
-    paypalOrderId: orderE.order.id,
+    paypalOrderId: orderIdE,
     paypalAuthId: authIdE,
-    paypalCaptureId: capIdE || undefined,
-    paypalRefundId: refIdE || undefined,
+    paypalCaptureId: capIdE,
+    paypalRefundId: refIdE,
     finalState: purE.state,
     evidenceEventsCount: verifyE.totalEvents,
     chainIntegrityValid: verifyE.valid,
@@ -802,7 +900,7 @@ async function main() {
   });
 
   // =========================================================================
-  // EXPORT REDACTED REPLAY SEED DATA
+  // EXPORT REAL REDACTED REPLAY SEED DATA
   // =========================================================================
   const outputDir = path.resolve(process.cwd(), "data");
   if (!existsSync(outputDir)) {
@@ -810,42 +908,50 @@ async function main() {
   }
   const outputPath = path.join(outputDir, "sandbox-replay-data.json");
   writeFileSync(outputPath, JSON.stringify(replaySeedData, null, 2), "utf8");
-  console.log(`\n💾 Saved ${replaySeedData.length} redacted replay fixtures to: ${outputPath}`);
+  console.log(
+    `\n💾 Saved ${replaySeedData.length} authentic sandbox replay fixtures to: ${outputPath}`,
+  );
 
   // =========================================================================
-  // SUMMARY REPORT
+  // REAL-RAIL ACTIVITY PAGE AUDIT TABLE
   // =========================================================================
   console.log("\n==================================================================");
-  console.log("  E2E SANDBOX EXECUTION SUMMARY REPORT");
+  console.log("  REAL PAYPAL SANDBOX ACTIVITY AUDIT TABLE");
+  console.log("  (Compare these IDs against Sandbox Business -> Activity -> All Transactions)");
   console.log("==================================================================");
   console.table(
     summaries.map((s) => ({
       Flow: s.flow,
-      "Purchase ID": s.purchaseId,
       "Order ID": s.paypalOrderId || "-",
-      "Auth ID": s.paypalAuthId || "-",
+      "Authorization ID": s.paypalAuthId || "-",
       "Capture ID": s.paypalCaptureId || "-",
       "Refund ID": s.paypalRefundId || "-",
       "Final State": s.finalState,
-      Events: s.evidenceEventsCount,
-      "Chain Valid": s.chainIntegrityValid ? "✅ YES" : "❌ NO",
+      "Events Signed": s.evidenceEventsCount,
+      "Chain Valid": s.chainIntegrityValid ? "✅ 100% VALID" : "❌ BROKEN",
     })),
   );
 
   const allValid = summaries.every((s) => s.chainIntegrityValid);
   if (allValid) {
     console.log("==================================================================");
-    console.log(
-      "🎉 ALL 5 FLOWS PASSED: Real PayPal IDs recorded & Cryptographic chains 100% valid!",
-    );
+    console.log("🎉 ALL 5 FLOWS COMPLETED AGAINST REAL PAYPAL SANDBOX RAILS!");
+    console.log("   Zero stubs or mocks used. All IDs verified authentic.");
+    console.log("   Check https://www.sandbox.paypal.com Activity tab to reconcile.");
     console.log("==================================================================");
   } else {
-    console.error("❌ Chain integrity validation failed on one or more flows!");
+    console.error("❌ Cryptographic chain integrity validation failed on one or more flows!");
     process.exit(1);
   }
 }
 
-main().catch((err) => {
-  console.error("Fatal error during E2E sandbox execution:", err);
-  process.exit(1);
-});
+const isDirectRun =
+  process.argv[1] &&
+  (process.argv[1].endsWith("e2e-sandbox.ts") || process.argv[1].endsWith("e2e-sandbox.js"));
+
+if (isDirectRun) {
+  main().catch((err) => {
+    console.error("Fatal error during real E2E sandbox execution:", err);
+    process.exit(1);
+  });
+}

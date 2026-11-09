@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { PayPalClient, type CustomFetch } from "../src/services/paypal/client.js";
 import { classifyPayPalError } from "../src/services/paypal/errors.js";
+import { assertRealPayPalId } from "../../../scripts/e2e-sandbox.js";
 
 describe("PayPalClient", () => {
   const mockConfig = {
@@ -262,5 +263,33 @@ describe("PayPalClient", () => {
       expect(errorMessage).not.toContain(secret);
       expect(errorString).not.toContain(secret);
     }
+  });
+
+  describe("assertRealPayPalId Invariant Validator", () => {
+    it("accepts authentic PayPal Sandbox alphanumeric IDs", () => {
+      expect(assertRealPayPalId("5O12345678901234T", "Order ID")).toBe("5O12345678901234T");
+      expect(assertRealPayPalId("8AB1234567890123C", "Auth ID")).toBe("8AB1234567890123C");
+      expect(assertRealPayPalId("2XY9876543210987Z", "Capture ID")).toBe("2XY9876543210987Z");
+      expect(assertRealPayPalId("9KL4567890123456M", "Refund ID")).toBe("9KL4567890123456M");
+    });
+
+    it("rejects placeholder patterns (AUTH_SAND, CAP_SAND, REF_SAND, ORD_, mock)", () => {
+      expect(() => assertRealPayPalId("AUTH_SAND_2001", "Auth ID")).toThrow(/disallowed pattern/i);
+      expect(() => assertRealPayPalId("CAP_SAND_3001", "Capture ID")).toThrow(
+        /disallowed pattern/i,
+      );
+      expect(() => assertRealPayPalId("REF_SAND_4001", "Refund ID")).toThrow(/disallowed pattern/i);
+      expect(() => assertRealPayPalId("ORD_1001", "Order ID")).toThrow(/disallowed pattern/i);
+      expect(() => assertRealPayPalId("mock_token_123", "Token ID")).toThrow(/disallowed pattern/i);
+      expect(() => assertRealPayPalId("REF_EXECUTED", "Refund ID")).toThrow(/disallowed pattern/i);
+      expect(() => assertRealPayPalId("test_order_123", "Order ID")).toThrow(/disallowed pattern/i);
+    });
+
+    it("rejects empty, null, undefined or short IDs", () => {
+      expect(() => assertRealPayPalId("", "Order ID")).toThrow(/empty/i);
+      expect(() => assertRealPayPalId(null, "Order ID")).toThrow(/null/i);
+      expect(() => assertRealPayPalId(undefined, "Order ID")).toThrow(/undefined/i);
+      expect(() => assertRealPayPalId("12345", "Order ID")).toThrow(/too short/i);
+    });
   });
 });

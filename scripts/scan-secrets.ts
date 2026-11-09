@@ -29,15 +29,19 @@ const SECRET_PATTERNS: Array<{
   filter?: (m: string, ctx: string) => boolean;
 }> = [
   {
-    name: "Compromised Ed25519 Private Key Literal",
+    name: "Compromised Ed25519 Private Key Literal (PKCS#8 DER Hex)",
     regex: new RegExp(COMPROMISED_KEY_LITERAL, "i"),
+  },
+  {
+    name: "Compromised Ed25519 Raw Key Seed Fragment (5c791a...)",
+    regex: new RegExp(COMPROMISED_KEY_FRAGMENT_B, "i"),
   },
   {
     name: "Generic Hex Ed25519 PKCS#8 Private Key",
     regex: /302e020100300506032b657004220420[a-f0-9]{64}/i,
     filter: (m, ctx) => {
       // Ignore if in test mocks or comments explicitly marked
-      if (ctx.includes(".env.example") || ctx.includes("scan-secrets.ts")) return false;
+      if (ctx.includes(".env.example")) return false;
       return true;
     },
   },
@@ -86,7 +90,7 @@ export function scanGitHistory(): Finding[] {
   const findings: Finding[] = [];
 
   try {
-    const rawLog = execSync("git log -p --full-history -n 100", {
+    const rawLog = execSync("git log -p --full-history", {
       maxBuffer: 50 * 1024 * 1024,
       encoding: "utf8",
     });
@@ -108,9 +112,6 @@ export function scanGitHistory(): Finding[] {
       for (const diff of diffFiles) {
         const fileMatch = diff.match(/^a\/(.+?)\s+b\/(.+?)$/m);
         const filePath = fileMatch ? fileMatch[2] : "unknown";
-
-        // Ignore scan-secrets script itself
-        if (filePath.includes("scan-secrets.ts")) continue;
 
         // Check added lines (starting with +)
         const addedLines = diff
@@ -169,8 +170,7 @@ export function scanWorkingTree(rootDir: string = process.cwd()): Finding[] {
           relPath.endsWith(".jpg") ||
           relPath.endsWith(".lock") ||
           relPath.endsWith(".jsonl") ||
-          relPath === ".env" || // local uncommitted .env is ignored from repo scan
-          relPath === "scripts/scan-secrets.ts"
+          relPath === ".env" // local uncommitted .env is ignored from repo scan
         ) {
           continue;
         }
