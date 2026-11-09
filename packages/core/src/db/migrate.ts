@@ -4,7 +4,7 @@ import { db, sql } from "./client.js";
 async function runMigrations() {
   console.log("Running Drizzle migrations...");
   try {
-    await migrate(db as any, { migrationsFolder: "./drizzle" });
+    await migrate(db as Parameters<typeof migrate>[0], { migrationsFolder: "./drizzle" });
     console.log("Migrations applied successfully.");
   } catch (err) {
     console.error("Migration failed:", err);

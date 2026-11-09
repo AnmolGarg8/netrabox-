@@ -11,7 +11,6 @@ import {
   computeMerkleRoot,
   generateProof,
   verifyProof,
-  generateMerkleProof,
   verifyMerkleProof,
 } from "../src/crypto/merkle.js";
 import {
@@ -19,14 +18,7 @@ import {
   canTransition,
   StateTransitionError,
 } from "../src/state-machine/index.js";
-import {
-  formatMoney,
-  parseMoneyToMinor,
-  payPalDecimalToMinor,
-  minorToPayPalDecimal,
-  allocateByPercent,
-  validateCurrency,
-} from "../src/money/index.js";
+import { formatMoney, parseMoneyToMinor, allocateByPercent } from "../src/money/index.js";
 import { TribunalVerdictSchema } from "../src/schemas/tribunal.js";
 import type { EvidenceEvent, EvidenceEventBody } from "../src/schemas/evidence.js";
 
@@ -71,7 +63,9 @@ describe("@netrabox/core", () => {
       const canonical2 = canonicalJson(complex2);
 
       expect(canonical1).toBe(canonical2);
-      expect(canonical1).toBe('{"a":[{"x":20,"y":10},3],"m":{"k1":"v1","k2":"v2"},"z":{"a":2,"b":1}}');
+      expect(canonical1).toBe(
+        '{"a":[{"x":20,"y":10},3],"m":{"k1":"v1","k2":"v2"},"z":{"a":2,"b":1}}',
+      );
       expect(sha256(canonical1)).toBe(sha256(canonical2));
     });
 
@@ -311,7 +305,10 @@ describe("@netrabox/core", () => {
 
       // Tampered proof step position
       const flippedPositionSteps = [
-        { ...proof.proof[0], position: proof.proof[0].position === "left" ? "right" : "left" } as any,
+        {
+          ...proof.proof[0],
+          position: (proof.proof[0].position === "left" ? "right" : "left") as "left" | "right",
+        },
         ...proof.proof.slice(1),
       ];
       expect(verifyProof(leaves[1], flippedPositionSteps, root)).toBe(false);
@@ -332,7 +329,10 @@ describe("@netrabox/core", () => {
     });
 
     it("allocates amounts using largest-remainder method", () => {
-      const split = allocateByPercent(10001, [33.333333333333336, 33.333333333333336, 33.333333333333336]);
+      const split = allocateByPercent(
+        10001,
+        [33.333333333333336, 33.333333333333336, 33.333333333333336],
+      );
       expect(split).toEqual([3334, 3334, 3333]);
       expect(split.reduce((a, b) => a + b, 0)).toBe(10001);
     });

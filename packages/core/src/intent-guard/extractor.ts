@@ -1,4 +1,3 @@
-import { z } from "zod";
 import type { LLMAdapter } from "../llm/adapter.js";
 import { wrapUntrusted } from "../tribunal/sanitizer.js";
 import { StructuredConstraintsSchema, type StructuredConstraints } from "./schemas.js";
@@ -47,11 +46,17 @@ export function extractConstraintsHeuristic(rawUserText: string): StructuredCons
   let budgetMinor: number | undefined = undefined;
   // Match currency amounts e.g. $360, €250, 100 USD, 360 dollars
   const priceMatches = Array.from(
-    text.matchAll(/(?:[\$€£]\s*(\d+(?:\.\d{1,2})?)|\b(\d+(?:\.\d{1,2})?)\s*(?:USD|EUR|GBP|dollars|bucks|euros)\b)/gi),
+    text.matchAll(
+      /(?:[\$€£]\s*(\d+(?:\.\d{1,2})?)|\b(\d+(?:\.\d{1,2})?)\s*(?:USD|EUR|GBP|dollars|bucks|euros)\b)/gi,
+    ),
   );
 
   // Also check for multiple explicit budget statements like "under $100 but my budget is $350"
-  const budgetKeywords = Array.from(text.matchAll(/\b(?:budget|under|ceiling|max)\s*(?:is|of|:)?\s*[\$€£]?\s*(\d+(?:\.\d{1,2})?)/gi));
+  const budgetKeywords = Array.from(
+    text.matchAll(
+      /\b(?:budget|under|ceiling|max)\s*(?:is|of|:)?\s*[\$€£]?\s*(\d+(?:\.\d{1,2})?)/gi,
+    ),
+  );
 
   if (priceMatches.length > 1 || budgetKeywords.length > 1) {
     // If different numbers are extracted, it's conflicting
@@ -104,7 +109,9 @@ export function extractConstraintsHeuristic(rawUserText: string): StructuredCons
 
   // 5. Size
   let size: string | undefined = undefined;
-  const sizeMatch = text.match(/\bsize\s*([a-zA-Z0-9]+)\b|\b(small|medium|large|XL|XXL|XS|S|M|L)\b/i);
+  const sizeMatch = text.match(
+    /\bsize\s*([a-zA-Z0-9]+)\b|\b(small|medium|large|XL|XXL|XS|S|M|L)\b/i,
+  );
   if (sizeMatch) {
     size = sizeMatch[1] || sizeMatch[2];
   }
@@ -123,7 +130,9 @@ export function extractConstraintsHeuristic(rawUserText: string): StructuredCons
 
   // 8. Deadline
   let deadline: string | undefined = undefined;
-  const deadlineMatch = text.match(/\b(?:by|for|before)\s+(friday|monday|tuesday|wednesday|thursday|saturday|sunday|\d{4}-\d{2}-\d{2})\b/i);
+  const deadlineMatch = text.match(
+    /\b(?:by|for|before)\s+(friday|monday|tuesday|wednesday|thursday|saturday|sunday|\d{4}-\d{2}-\d{2})\b/i,
+  );
   if (deadlineMatch) {
     deadline = deadlineMatch[1];
   }
@@ -183,7 +192,7 @@ export async function extractConstraints(
       INTENT_GUARD_EXTRACTOR_SYSTEM_PROMPT,
     );
     return StructuredConstraintsSchema.parse(rawResult);
-  } catch (err) {
+  } catch {
     // If LLM fails or throws, fall back to heuristic extraction
     return extractConstraintsHeuristic(rawUserText);
   }

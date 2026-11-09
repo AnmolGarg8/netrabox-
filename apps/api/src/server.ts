@@ -1,9 +1,8 @@
-import Fastify, { type FastifyInstance } from "fastify";
+import Fastify, { type FastifyInstance, type FastifyRequest, type FastifyReply } from "fastify";
 import cors from "@fastify/cors";
 import sensible from "@fastify/sensible";
 import { PayPalClient } from "./services/paypal/client.js";
 import { PurchaseStateMachineService, type IStateStore } from "./services/state-machine/machine.js";
-import { InMemoryStateStore } from "./services/state-machine/in-memory-store.js";
 import { DrizzleStateStore } from "./services/state-machine/drizzle-store.js";
 import { webhookRoutes } from "./routes/webhooks.js";
 import { purchaseRoutes } from "./routes/purchases.js";
@@ -17,6 +16,7 @@ import {
   MockLLMAdapter,
   GeminiLLMAdapter,
   type LLMAdapter,
+  type DbType,
   generateEd25519Keypair,
   validateEd25519PrivateKey,
   getPublicKeyFromPrivate,
@@ -174,7 +174,7 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
       llm,
       signingPrivateKeyHex,
       settlementService,
-      db: (store as any)?.getDb?.(),
+      db: store.getDb?.() as DbType | undefined,
     });
 
   const authExpiryJob =
@@ -192,7 +192,11 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
   // Wire AuthExpiryMonitorJob into server background tick on configurable interval
   const authExpiryIntervalMs =
     options.authExpiryIntervalMs ??
-    (process.env.AUTH_EXPIRY_INTERVAL_MS ? Number(process.env.AUTH_EXPIRY_INTERVAL_MS) : (isTest ? 0 : 60000));
+    (process.env.AUTH_EXPIRY_INTERVAL_MS
+      ? Number(process.env.AUTH_EXPIRY_INTERVAL_MS)
+      : isTest
+        ? 0
+        : 60000);
 
   if (authExpiryIntervalMs > 0) {
     const timer = setInterval(async () => {
@@ -209,7 +213,7 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
     });
   }
 
-  const handleAuthExpiryEndpoint = async (_request: any, reply: any) => {
+  const handleAuthExpiryEndpoint = async (_request: FastifyRequest, reply: FastifyReply) => {
     if (!demoMode && !isTest) {
       return reply.status(403).send({ error: "Endpoint only available in demo mode" });
     }
@@ -265,7 +269,7 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
         signingPrivateKeyHex,
         store,
         settlementService,
-        db: (store as any)?.getDb?.(),
+        db: store.getDb?.() as DbType | undefined,
       });
 
       // Webhooks
@@ -273,7 +277,7 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
         paypalClient,
         stateMachine,
         signingPrivateKeyHex,
-        db: (store as any)?.getDb?.(),
+        db: store.getDb?.() as DbType | undefined,
       });
 
       // DisputeBench routes

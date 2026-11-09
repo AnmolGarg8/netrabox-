@@ -4,12 +4,8 @@ import { resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { rmSync, existsSync } from "node:fs";
 import { eq } from "drizzle-orm";
-import {
-  generateEd25519Keypair,
-  type EvidenceEvent,
-  type DisputePhase,
-} from "@netrabox/core";
-import { webhookLogs, disputes, tribunalRuns, purchases } from "@netrabox/core/schemas";
+import { generateEd25519Keypair, type EvidenceEvent } from "@netrabox/core";
+import { webhookLogs, purchases } from "@netrabox/core/schemas";
 import { initPgliteDatabase } from "@netrabox/core/db";
 import { buildServer } from "../src/server.js";
 import { DrizzleStateStore } from "../src/services/state-machine/drizzle-store.js";
@@ -88,8 +84,9 @@ describe("PostgreSQL State Persistence & Concurrency Guards", () => {
 
         // Close app 1 and flush database connection
         await app1.close();
-        if ((db1 as any).pgClient) {
-          await (db1 as any).pgClient.close();
+        const client1 = (db1 as unknown as { pgClient?: { close(): Promise<void> } }).pgClient;
+        if (client1) {
+          await client1.close();
         }
 
         // --- PHASE 2: Application Restart (Fresh Server, Fresh Store, Same Postgres Storage) ---
@@ -137,8 +134,9 @@ describe("PostgreSQL State Persistence & Concurrency Guards", () => {
         expect(getData.tribunalRun.purchaseId).toBe(purchaseId);
 
         await app2.close();
-        if ((db2 as any).pgClient) {
-          await (db2 as any).pgClient.close();
+        const client2 = (db2 as unknown as { pgClient?: { close(): Promise<void> } }).pgClient;
+        if (client2) {
+          await client2.close();
         }
       } finally {
         if (existsSync(dataDir)) {
@@ -252,7 +250,7 @@ describe("PostgreSQL State Persistence & Concurrency Guards", () => {
       const job = new AuthExpiryMonitorJob(settlementService);
 
       // Mock scanAuthorizations to simulate an async delay
-      let resolveSlowScan: (val: any) => void;
+      let resolveSlowScan: (val: unknown) => void;
       const slowScanPromise = new Promise((resolve) => {
         resolveSlowScan = resolve;
       });
@@ -396,11 +394,13 @@ describe("PostgreSQL State Persistence & Concurrency Guards", () => {
       const phaseEvents = events.filter(
         (e: EvidenceEvent) =>
           e.type === "TRIBUNAL_STEP" &&
-          (e.payload as any)?.step === "DISPUTE_PHASE_CHANGED",
+          (e.payload as Record<string, unknown>)?.step === "DISPUTE_PHASE_CHANGED",
       );
       expect(phaseEvents.length).toBeGreaterThanOrEqual(1);
 
-      const recordedPhases = phaseEvents.map((e: any) => e.payload.phase);
+      const recordedPhases = phaseEvents.map(
+        (e: EvidenceEvent) => (e.payload as Record<string, unknown>).phase,
+      );
       expect(recordedPhases).toContain("EVIDENCE_LOCKED");
       expect(recordedPhases).toContain("TRIBUNAL_ACTIVE");
       expect(recordedPhases).toContain("POLICY_VALIDATION");

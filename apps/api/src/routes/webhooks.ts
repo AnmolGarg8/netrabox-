@@ -84,10 +84,7 @@ export const webhookRoutes: FastifyPluginAsync<WebhookRouteOptions> = async (fas
       });
     }
 
-    await db
-      .update(webhookLogs)
-      .set({ verified: true })
-      .where(eq(webhookLogs.id, logRecord.id));
+    await db.update(webhookLogs).set({ verified: true }).where(eq(webhookLogs.id, logRecord.id));
 
     // 3. Map event to state machine transitions
     // Attempt to extract purchaseId from custom_id, invoice_id, or purchase unit reference_id
@@ -180,10 +177,7 @@ export const webhookRoutes: FastifyPluginAsync<WebhookRouteOptions> = async (fas
       }
     }
 
-    await db
-      .update(webhookLogs)
-      .set({ processed: true })
-      .where(eq(webhookLogs.id, logRecord.id));
+    await db.update(webhookLogs).set({ processed: true }).where(eq(webhookLogs.id, logRecord.id));
 
     return reply.status(200).send({
       status: "processed",

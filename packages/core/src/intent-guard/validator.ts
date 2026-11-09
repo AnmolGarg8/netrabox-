@@ -33,9 +33,7 @@ export function validateCartAgainstConstraints(
     constraints.budgetMinor <= 0
   ) {
     isBlocked = true;
-    reasons.push(
-      "Missing budget constraint: Budget ceiling must be specified and positive.",
-    );
+    reasons.push("Missing budget constraint: Budget ceiling must be specified and positive.");
   } else if (totalMinor > constraints.budgetMinor) {
     isBlocked = true;
     const overage = (totalMinor - constraints.budgetMinor) / 100;
@@ -48,7 +46,10 @@ export function validateCartAgainstConstraints(
 
   // 2. Ambiguous or Conflicting Constraints Check
   if (constraints.ambiguousFields && constraints.ambiguousFields.length > 0) {
-    if (constraints.ambiguousFields.includes("budget") || constraints.ambiguousFields.includes("budgetMinor")) {
+    if (
+      constraints.ambiguousFields.includes("budget") ||
+      constraints.ambiguousFields.includes("budgetMinor")
+    ) {
       isBlocked = true;
       reasons.push(
         "Ambiguous budget: Budget ceiling is ambiguous or conflicting and must be confirmed by the buyer.",
@@ -56,9 +57,7 @@ export function validateCartAgainstConstraints(
     }
     if (constraints.ambiguousFields.includes("size") && !constraints.size) {
       isBlocked = true;
-      reasons.push(
-        "Ambiguous size: Item size is ambiguous and must be confirmed by the buyer.",
-      );
+      reasons.push("Ambiguous size: Item size is ambiguous and must be confirmed by the buyer.");
     }
   }
 

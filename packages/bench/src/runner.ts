@@ -30,8 +30,13 @@ export interface RunOptions {
 }
 
 export function createBenchmarkLLMAdapter(apiKey?: string, model?: string): LLMAdapter {
-  if (apiKey) {
-    return new GeminiLLMAdapter(apiKey, model);
+  const key =
+    apiKey ||
+    process.env.GEMINI_API_KEY ||
+    process.env.GOOGLE_AI_API_KEY ||
+    process.env.LLM_API_KEY;
+  if (key && key !== "your_gemini_api_key" && key.trim().length > 0) {
+    return new GeminiLLMAdapter(key, model || process.env.LLM_MODEL || "gemini-1.5-flash");
   }
 
   // High-fidelity seeded mock LLM handler simulating judicial intelligence
@@ -276,6 +281,42 @@ export function createBenchmarkLLMAdapter(apiKey?: string, model?: string): LLMA
 
 export function formatMarkdownResults(metrics: BenchSummaryMetrics): string {
   const { tribunal, baseline } = metrics;
+  const tribunalCi = tribunal.wilsonInterval
+    ? ` [95% CI: ${(tribunal.wilsonInterval.lower * 100).toFixed(1)}% – ${(tribunal.wilsonInterval.upper * 100).toFixed(1)}%]`
+    : "";
+  const baselineCi = baseline.wilsonInterval
+    ? ` [95% CI: ${(baseline.wilsonInterval.lower * 100).toFixed(1)}% – ${(baseline.wilsonInterval.upper * 100).toFixed(1)}%]`
+    : "";
+
+  const failures = metrics.caseBreakdown.filter(
+    (c) => !c.tribunal.classificationMatch || c.tribunal.refundErrorMinor > 0,
+  );
+
+  let failureTable =
+    "\n## Failure Analysis Table (Tribunal Misclassifications & Discrepancies)\n\n";
+  if (failures.length === 0) {
+    failureTable +=
+      "_No classification or refund discrepancies observed on this evaluation split._\n";
+  } else {
+    failureTable +=
+      "| Case ID | Case Title | Expected Class | Awarded Class | Expected Refund | Awarded Refund | Failure Reason / Root Cause |\n";
+    failureTable += "| :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n";
+    for (const f of failures) {
+      const expRefund = `$${(f.groundTruth.correctRefundAmountMinor / 100).toFixed(2)}`;
+      const awdRefund = `$${(f.tribunal.refundAmountMinor / 100).toFixed(2)}`;
+      let reason = "";
+      if (!f.tribunal.classificationMatch) {
+        reason += `Classification mismatch (expected ${f.groundTruth.classification}, got ${f.tribunal.classification}). `;
+      }
+      if (f.tribunal.refundErrorMinor > 0) {
+        reason += `Refund error of $${(f.tribunal.refundErrorMinor / 100).toFixed(2)}. `;
+      }
+      if (!f.tribunal.passedPolicyEngine) {
+        reason += "Failed PolicyEngine invariant validation. ";
+      }
+      failureTable += `| \`${f.caseId}\` | ${f.title} | \`${f.groundTruth.classification}\` | \`${f.tribunal.classification}\` | ${expRefund} | ${awdRefund} | ${reason.trim()} |\n`;
+    }
+  }
 
   return `# DisputeBench Benchmark Evaluation Results
 
@@ -286,7 +327,7 @@ export function formatMarkdownResults(metrics: BenchSummaryMetrics): string {
 
 | Evaluation Metric | NetraBox Tribunal (Multi-Agent + Crypto + Policy Engine) | Baseline (Single-LLM Support Arbiter) | Delta / Improvement |
 | :--- | :--- | :--- | :--- |
-| **Classification Accuracy** | **${(tribunal.classificationAccuracy * 100).toFixed(1)}%** | ${(baseline.classificationAccuracy * 100).toFixed(1)}% | **+${((tribunal.classificationAccuracy - baseline.classificationAccuracy) * 100).toFixed(1)}%** |
+| **Classification Accuracy** | **${(tribunal.classificationAccuracy * 100).toFixed(1)}%**${tribunalCi} | ${(baseline.classificationAccuracy * 100).toFixed(1)}%${baselineCi} | **+${((tribunal.classificationAccuracy - baseline.classificationAccuracy) * 100).toFixed(1)}%** |
 | **Macro F1 Score** | **${tribunal.macroF1.toFixed(3)}** | ${baseline.macroF1.toFixed(3)} | **+${(tribunal.macroF1 - baseline.macroF1).toFixed(3)}** |
 | **Mean Refund Error** | **$${(tribunal.meanRefundErrorMinor / 100).toFixed(2)} USD** | $${(baseline.meanRefundErrorMinor / 100).toFixed(2)} USD | **-$${((baseline.meanRefundErrorMinor - tribunal.meanRefundErrorMinor) / 100).toFixed(2)} USD** (Lower is better) |
 | **Tamper Detection Rate** | **${(tribunal.tamperDetectionRate * 100).toFixed(1)}%** (100% blocked at Step 1) | ${(baseline.tamperDetectionRate * 100).toFixed(1)}% (Completely Blind) | **+${(tribunal.tamperDetectionRate * 100).toFixed(1)}%** |
@@ -308,7 +349,7 @@ export function formatMarkdownResults(metrics: BenchSummaryMetrics): string {
    - The baseline emitted an uncapped $10,000 award.
 3. **Multi-Agent Grounding with Citation Auditing**:
    - The Buyer and Merchant advocates grounded all arguments in verifiable cryptographic event IDs, eliminating hallucinated claims.
-`;
+${failureTable}`;
 }
 
 export class DisputeBenchRunner {
@@ -317,10 +358,9 @@ export class DisputeBenchRunner {
   private baselineEvaluator: BaselineEvaluator;
 
   constructor(options: RunOptions = {}) {
-    const apiKey = process.env.LLM_API_KEY || process.env.GOOGLE_AI_API_KEY;
-    const baseLLM =
-      options.llmAdapter ||
-      createBenchmarkLLMAdapter(apiKey, process.env.LLM_MODEL);
+    const apiKey =
+      process.env.LLM_API_KEY || process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY;
+    const baseLLM = options.llmAdapter || createBenchmarkLLMAdapter(apiKey, process.env.LLM_MODEL);
 
     this.llm =
       options.useCache !== false

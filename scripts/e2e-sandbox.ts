@@ -19,12 +19,10 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import readline from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
-import { randomUUID } from "node:crypto";
 
 import {
   generateEd25519Keypair,
   getPublicKeyFromPrivate,
-  type EvidenceActor,
   type DisputeRecord,
   type EvidenceEvent,
 } from "../packages/core/src/index.js";
@@ -265,17 +263,10 @@ async function main() {
   const stateMachine = new PurchaseStateMachineService(store);
   const evidenceService = new EvidenceService(store, privateKeyHex, publicKeyHex);
   const policyEngine = new PolicyEngine();
-  const settlementService = new SettlementService(
-    store,
-    paypalClient,
-    policyEngine,
-    privateKeyHex,
-  );
+  const settlementService = new SettlementService(store, paypalClient, policyEngine, privateKeyHex);
   const geminiApiKey = process.env.LLM_API_KEY || process.env.GOOGLE_AI_API_KEY;
   const llm: LLMAdapter =
-    process.env.LLM_PROVIDER === "google" &&
-    geminiApiKey &&
-    geminiApiKey !== "your_gemini_api_key"
+    process.env.LLM_PROVIDER === "google" && geminiApiKey && geminiApiKey !== "your_gemini_api_key"
       ? new GeminiLLMAdapter(geminiApiKey, process.env.LLM_MODEL || "gemini-1.5-flash")
       : new MockLLMAdapter();
 
@@ -366,7 +357,10 @@ async function main() {
   console.log(`[PayPal] Order Created: ${orderA.order.id}`);
 
   // Pause for Buyer Approval
-  await waitForBuyerApproval(orderA.approvalUrl || `https://www.sandbox.paypal.com/checkoutnow?token=${orderA.order.id}`, autoAdvance);
+  await waitForBuyerApproval(
+    orderA.approvalUrl || `https://www.sandbox.paypal.com/checkoutnow?token=${orderA.order.id}`,
+    autoAdvance,
+  );
 
   // Authorize Order
   const authResA = await paypalClient.authorizeOrder(orderA.order.id, purIdA);
@@ -440,7 +434,10 @@ async function main() {
   });
   console.log(`[PayPal] Order Created: ${orderB.order.id}`);
 
-  await waitForBuyerApproval(orderB.approvalUrl || `https://www.sandbox.paypal.com/checkoutnow?token=${orderB.order.id}`, autoAdvance);
+  await waitForBuyerApproval(
+    orderB.approvalUrl || `https://www.sandbox.paypal.com/checkoutnow?token=${orderB.order.id}`,
+    autoAdvance,
+  );
 
   const authResB = await paypalClient.authorizeOrder(orderB.order.id, purIdB);
   const authIdB = authResB.authorizationId;
@@ -502,7 +499,10 @@ async function main() {
   });
   console.log(`[PayPal] Order Created: ${orderC.order.id}`);
 
-  await waitForBuyerApproval(orderC.approvalUrl || `https://www.sandbox.paypal.com/checkoutnow?token=${orderC.order.id}`, autoAdvance);
+  await waitForBuyerApproval(
+    orderC.approvalUrl || `https://www.sandbox.paypal.com/checkoutnow?token=${orderC.order.id}`,
+    autoAdvance,
+  );
 
   const authResC = await paypalClient.authorizeOrder(orderC.order.id, purIdC);
   const authIdC = authResC.authorizationId;
@@ -571,10 +571,16 @@ async function main() {
   // FLOW (d): Autonomous Tribunal-driven Refund through SettlementService
   // =========================================================================
   console.log("\n------------------------------------------------------------------");
-  console.log("▶️  FLOW (d): Tribunal-driven Refund via PolicyEngine & SettlementService ($349.99)");
+  console.log(
+    "▶️  FLOW (d): Tribunal-driven Refund via PolicyEngine & SettlementService ($349.99)",
+  );
   console.log("------------------------------------------------------------------");
   const purIdD = `pur_e2e_tribunal_${now}`;
-  await setupPurchase({ id: purIdD, title: "Bose QuietComfort 45 Headphones (Brand New)", amountMinor: 34999 });
+  await setupPurchase({
+    id: purIdD,
+    title: "Bose QuietComfort 45 Headphones (Brand New)",
+    amountMinor: 34999,
+  });
 
   const orderD = await paypalClient.createOrder({
     purchaseId: purIdD,
@@ -586,7 +592,10 @@ async function main() {
   });
   console.log(`[PayPal] Order Created: ${orderD.order.id}`);
 
-  await waitForBuyerApproval(orderD.approvalUrl || `https://www.sandbox.paypal.com/checkoutnow?token=${orderD.order.id}`, autoAdvance);
+  await waitForBuyerApproval(
+    orderD.approvalUrl || `https://www.sandbox.paypal.com/checkoutnow?token=${orderD.order.id}`,
+    autoAdvance,
+  );
 
   const authResD = await paypalClient.authorizeOrder(orderD.order.id, purIdD);
   const authIdD = authResD.authorizationId;
@@ -692,7 +701,10 @@ async function main() {
   });
   console.log(`[PayPal] Order Created: ${orderE.order.id}`);
 
-  await waitForBuyerApproval(orderE.approvalUrl || `https://www.sandbox.paypal.com/checkoutnow?token=${orderE.order.id}`, autoAdvance);
+  await waitForBuyerApproval(
+    orderE.approvalUrl || `https://www.sandbox.paypal.com/checkoutnow?token=${orderE.order.id}`,
+    autoAdvance,
+  );
 
   const authResE = await paypalClient.authorizeOrder(orderE.order.id, purIdE);
   const authIdE = authResE.authorizationId;
@@ -743,7 +755,9 @@ async function main() {
   });
 
   console.log(`[Human Review] Purchase ${purIdE} is in NEEDS_HUMAN_REVIEW.`);
-  console.log(`[Human Review] Admin reviewer 'compliance_dan' executing authorized refund override...`);
+  console.log(
+    `[Human Review] Admin reviewer 'compliance_dan' executing authorized refund override...`,
+  );
 
   const humanOverrideRes = await settlementService.execute({
     purchaseId: purIdE,
@@ -821,7 +835,9 @@ async function main() {
   const allValid = summaries.every((s) => s.chainIntegrityValid);
   if (allValid) {
     console.log("==================================================================");
-    console.log("🎉 ALL 5 FLOWS PASSED: Real PayPal IDs recorded & Cryptographic chains 100% valid!");
+    console.log(
+      "🎉 ALL 5 FLOWS PASSED: Real PayPal IDs recorded & Cryptographic chains 100% valid!",
+    );
     console.log("==================================================================");
   } else {
     console.error("❌ Chain integrity validation failed on one or more flows!");

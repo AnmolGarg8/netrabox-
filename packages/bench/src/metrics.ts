@@ -42,6 +42,24 @@ export function computeMacroF1(predictions: string[], groundTruths: string[]): n
   return f1Scores.reduce((a, b) => a + b, 0) / f1Scores.length;
 }
 
+export function computeWilsonInterval(
+  successes: number,
+  total: number,
+  z = 1.96,
+): { lower: number; upper: number; point: number } {
+  if (total === 0) return { lower: 0, upper: 0, point: 0 };
+  const p = successes / total;
+  const denominator = 1 + (z * z) / total;
+  const center = (p + (z * z) / (2 * total)) / denominator;
+  const margin =
+    (z * Math.sqrt((p * (1 - p)) / total + (z * z) / (4 * total * total))) / denominator;
+  return {
+    point: Math.round(p * 1000) / 1000,
+    lower: Math.max(0, Math.round((center - margin) * 1000) / 1000),
+    upper: Math.min(1, Math.round((center + margin) * 1000) / 1000),
+  };
+}
+
 export function computeEvaluationMetrics(
   results: CaseEvaluationResult[],
   target: "tribunal" | "baseline",
@@ -135,6 +153,7 @@ export function computeEvaluationMetrics(
   }
 
   const classificationAccuracy = correctClassifications / n;
+  const wilsonInterval = computeWilsonInterval(correctClassifications, n);
   const macroF1 = computeMacroF1(predictions, groundTruths);
   const meanRefundErrorMinor = Math.round(totalRefundError / n);
   const avgLatencyMs = Math.round(totalLatency / n);
@@ -147,6 +166,7 @@ export function computeEvaluationMetrics(
 
   return {
     classificationAccuracy: Math.round(classificationAccuracy * 1000) / 1000,
+    wilsonInterval,
     macroF1: Math.round(macroF1 * 1000) / 1000,
     meanRefundErrorMinor,
     tamperDetectionRate: Math.round(tamperDetectionRate * 1000) / 1000,

@@ -143,7 +143,10 @@ export function getInitialSchemaSql(): string {
   `;
 }
 
-export type DbType = any;
+export type DbType =
+  | ReturnType<typeof drizzlePglite<typeof schema>>
+  | ReturnType<typeof drizzlePostgres<typeof schema>>
+  | (ReturnType<typeof drizzlePglite<typeof schema>> & { pgClient: PGlite });
 
 export function initPgliteDatabase(dataDir?: string): DbType {
   const pg = dataDir ? new PGlite(dataDir) : new PGlite();
@@ -154,7 +157,7 @@ export function initPgliteDatabase(dataDir?: string): DbType {
 }
 
 let activeDb: DbType | null = null;
-let activeSql: any = null;
+let activeSql: ReturnType<typeof postgres> | null = null;
 
 const dbUrl = process.env.DATABASE_URL;
 

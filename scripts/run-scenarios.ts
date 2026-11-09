@@ -49,7 +49,12 @@ export async function runScenario(
   console.log(`  RUNNING SCENARIO: ${scenarioName.toUpperCase()}`);
   console.log(`==================================================================`);
 
-  const knownScenarios = ["honest-purchase", "wrongsize-delivered", "injection-attempt", "false-claim"];
+  const knownScenarios = [
+    "honest-purchase",
+    "wrongsize-delivered",
+    "injection-attempt",
+    "false-claim",
+  ];
   if (!knownScenarios.includes(scenarioName) || scenarioName === "plain-sentence") {
     const rawUserPrompt =
       scenarioName === "plain-sentence"
@@ -104,9 +109,13 @@ export async function runScenario(
     const isAmbiguous =
       (constraints.ambiguousFields && constraints.ambiguousFields.length > 0) || isBudgetMissing;
     if (isAmbiguous) {
-      console.log(`[Step 1b] Ambiguous fields detected: ${constraints.ambiguousFields.join(", ") || "budget"}`);
+      console.log(
+        `[Step 1b] Ambiguous fields detected: ${constraints.ambiguousFields.join(", ") || "budget"}`,
+      );
       if (mockApproval) {
-        console.log(`[Step 1b] Buyer confirms extracted constraints with budget fallback ($360.00)`);
+        console.log(
+          `[Step 1b] Buyer confirms extracted constraints with budget fallback ($360.00)`,
+        );
         constraints = {
           ...constraints,
           budgetMinor: constraints.budgetMinor || 36000,
@@ -160,7 +169,9 @@ export async function runScenario(
       merchantQuoteId: `quote_${matchedProduct.id}_${Date.now()}`,
     };
 
-    console.log(`[Step 2] Assembled proposed cart: ${cart.items[0].name} ($${(cart.totalMinor! / 100).toFixed(2)})`);
+    console.log(
+      `[Step 2] Assembled proposed cart: ${cart.items[0].name} ($${(cart.totalMinor! / 100).toFixed(2)})`,
+    );
     console.log(`[Step 3] Running Intent Guard deterministic verification...`);
     const intentCheck = validateCartAgainstConstraints(cart, constraints);
     console.log(`[Intent Guard] Status: ${intentCheck.status} (Score: ${intentCheck.score})`);

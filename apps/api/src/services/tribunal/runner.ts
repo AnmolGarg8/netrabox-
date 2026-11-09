@@ -1,5 +1,10 @@
 import { randomUUID } from "node:crypto";
-import { type LLMAdapter, canTransition, type EvidenceActor, type DisputePhase } from "@netrabox/core";
+import {
+  type LLMAdapter,
+  canTransition,
+  type EvidenceActor,
+  type DisputePhase,
+} from "@netrabox/core";
 import { purchases, disputes, tribunalRuns } from "@netrabox/core/schemas";
 import { db as defaultDb, type DbType } from "@netrabox/core/db";
 import { eq } from "drizzle-orm";
@@ -44,7 +49,7 @@ export class TribunalRunner {
     this.paypalClient = options.paypalClient;
     this.policyEngine = new PolicyEngine(options.confidenceThreshold ?? 0.7);
     this.signingPrivateKeyHex = options.signingPrivateKeyHex;
-    this.db = options.db || (options.store as any)?.getDb?.() || defaultDb;
+    this.db = options.db || (options.store.getDb?.() as DbType | undefined) || defaultDb;
     this.settlementService =
       options.settlementService ||
       new SettlementService(

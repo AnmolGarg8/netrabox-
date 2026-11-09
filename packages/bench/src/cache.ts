@@ -110,9 +110,10 @@ export class CachedLLMAdapter implements LLMAdapter {
     schema: z.ZodType<T, z.ZodTypeDef, unknown>,
     systemPrompt?: string,
   ): Promise<T> {
+    const schemaWithMeta = schema as { description?: string; _def?: { description?: string } };
     const schemaName =
-      (schema as any)?.description ||
-      (schema as any)?._def?.description ||
+      schemaWithMeta.description ||
+      schemaWithMeta._def?.description ||
       schema.constructor?.name ||
       "structured";
     const combinedPrompt = `${systemPrompt || ""}\n${prompt}`;

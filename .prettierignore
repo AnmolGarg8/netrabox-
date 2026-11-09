@@ -11,3 +11,5 @@ results.sarif
 .gitleaksignore
 packages/bench/results.json
 packages/bench/results.md
+data/
+data/**

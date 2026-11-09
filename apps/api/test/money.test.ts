@@ -45,12 +45,8 @@ describe("Harden Money Utilities (String & Integer Arithmetic)", () => {
       expect(payPalDecimalToMinor("125000", "JPY")).toBe(125000);
 
       // Decimals must be rejected for JPY
-      expect(() => payPalDecimalToMinor("500.00", "JPY")).toThrow(
-        /Decimals are not supported/,
-      );
-      expect(() => payPalDecimalToMinor("500.5", "JPY")).toThrow(
-        /Decimals are not supported/,
-      );
+      expect(() => payPalDecimalToMinor("500.00", "JPY")).toThrow(/Decimals are not supported/);
+      expect(() => payPalDecimalToMinor("500.5", "JPY")).toThrow(/Decimals are not supported/);
     });
 
     it("handles two-decimal currency EUR correctly", () => {
@@ -82,9 +78,9 @@ describe("Harden Money Utilities (String & Integer Arithmetic)", () => {
       expect(payPalDecimalToMinor(Number.MAX_SAFE_INTEGER.toString(), "JPY")).toBe(
         Number.MAX_SAFE_INTEGER,
       );
-      expect(() =>
-        payPalDecimalToMinor("9007199254740992", "JPY"),
-      ).toThrow(/exceeds Number\.MAX_SAFE_INTEGER/);
+      expect(() => payPalDecimalToMinor("9007199254740992", "JPY")).toThrow(
+        /exceeds Number\.MAX_SAFE_INTEGER/,
+      );
     });
   });
 

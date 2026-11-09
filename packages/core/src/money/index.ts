@@ -17,9 +17,24 @@ export const ZERO_DECIMAL_CURRENCIES: ReadonlySet<string> = new Set([
  * Standard two-decimal currencies supported by PayPal.
  */
 export const TWO_DECIMAL_CURRENCIES: ReadonlySet<string> = new Set([
-  "USD", "EUR", "GBP", "AUD", "CAD", "CHF", "CZK", "DKK",
-  "HKD", "ILS", "MXN", "NOK", "NZD", "PHP", "PLN", "SEK",
-  "SGD", "THB",
+  "USD",
+  "EUR",
+  "GBP",
+  "AUD",
+  "CAD",
+  "CHF",
+  "CZK",
+  "DKK",
+  "HKD",
+  "ILS",
+  "MXN",
+  "NOK",
+  "NZD",
+  "PHP",
+  "PLN",
+  "SEK",
+  "SGD",
+  "THB",
 ]);
 
 /**
@@ -86,9 +101,7 @@ export function payPalDecimalToMinor(amountDecimal: string, currency = "USD"): n
   // Two-decimal currency: must match digits with at most 2 decimal places (e.g. "19.99", "10", "0.5")
   // Rejects 3 or more decimal places (e.g. "1.005")
   if (!/^\d+(\.\d{1,2})?$/.test(str)) {
-    throw new Error(
-      `Invalid PayPal decimal amount format for ${curr}: '${amountDecimal}'`,
-    );
+    throw new Error(`Invalid PayPal decimal amount format for ${curr}: '${amountDecimal}'`);
   }
 
   const parts = str.split(".");
@@ -108,9 +121,7 @@ export function payPalDecimalToMinor(amountDecimal: string, currency = "USD"): n
   }
 
   if (minorBi > BigInt(Number.MAX_SAFE_INTEGER)) {
-    throw new Error(
-      `Amount ${amountDecimal} ${curr} exceeds Number.MAX_SAFE_INTEGER minor units`,
-    );
+    throw new Error(`Amount ${amountDecimal} ${curr} exceeds Number.MAX_SAFE_INTEGER minor units`);
   }
 
   return Number(minorBi);

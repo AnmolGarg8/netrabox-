@@ -104,6 +104,7 @@ export interface CaseEvaluationResult {
 
 export interface EvaluationMetricsGroup {
   classificationAccuracy: number;
+  wilsonInterval?: { lower: number; upper: number; point: number };
   macroF1: number;
   meanRefundErrorMinor: number;
   tamperDetectionRate: number;

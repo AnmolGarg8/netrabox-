@@ -16,6 +16,8 @@ import { mapActionToEvidenceType } from "./mapper.js";
 
 export interface IStateStore {
   getPurchase(purchaseId: string): Promise<PurchaseRecord | null>;
+  listPurchases?(query?: { state?: string }): Promise<PurchaseRecord[]>;
+  getDb?(): unknown;
   getLastEvidenceEvent(purchaseId: string): Promise<EvidenceEvent | null>;
   getEvidenceEvents(purchaseId: string): Promise<EvidenceEvent[]>;
   applyAtomicTransition(

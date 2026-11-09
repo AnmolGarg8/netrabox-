@@ -165,8 +165,7 @@ export class BuyerAgent {
     );
 
     // 3. Ambiguity Check: If any key field is ambiguous (e.g. budget or size), confirm before proceeding
-    const isBudgetMissing =
-      constraints.budgetMinor === undefined || constraints.budgetMinor <= 0;
+    const isBudgetMissing = constraints.budgetMinor === undefined || constraints.budgetMinor <= 0;
     const isAmbiguous =
       (constraints.ambiguousFields && constraints.ambiguousFields.length > 0) || isBudgetMissing;
 

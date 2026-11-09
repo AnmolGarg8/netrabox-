@@ -49,8 +49,8 @@ export class AuthExpiryMonitorJob {
     }
     this.isRunning = true;
     try {
-      const authorizedPurchases = (store as any).listPurchases
-        ? await (store as any).listPurchases({ state: "AUTHORIZED" })
+      const authorizedPurchases = store.listPurchases
+        ? await store.listPurchases({ state: "AUTHORIZED" })
         : [];
       const result = await this.scanAuthorizations(authorizedPurchases);
       return { status: "ok", result };

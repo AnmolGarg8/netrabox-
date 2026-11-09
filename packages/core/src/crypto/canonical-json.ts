@@ -51,9 +51,7 @@ export function canonicalJson(obj: unknown): string {
       })
       .sort();
 
-    const pairs = sortedKeys.map(
-      (key) => `${JSON.stringify(key)}:${canonicalJson(record[key])}`,
-    );
+    const pairs = sortedKeys.map((key) => `${JSON.stringify(key)}:${canonicalJson(record[key])}`);
     return `{${pairs.join(",")}}`;
   }
 

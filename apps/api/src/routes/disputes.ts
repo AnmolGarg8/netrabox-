@@ -24,7 +24,7 @@ export interface DisputeRouteOptions {
 
 export const disputeRoutes: FastifyPluginAsync<DisputeRouteOptions> = async (fastify, opts) => {
   const { tribunalRunner, stateMachine, signingPrivateKeyHex, store, settlementService } = opts;
-  const db = opts.db || (store as any)?.getDb?.() || defaultDb;
+  const db = opts.db || (store?.getDb?.() as DbType | undefined) || defaultDb;
 
   /**
    * 1. POST /disputes
@@ -131,11 +131,7 @@ export const disputeRoutes: FastifyPluginAsync<DisputeRouteOptions> = async (fas
     const outcome = await tribunalRunner.runTribunal(dispute);
 
     // Read back latest dispute state from Postgres to reflect tribunal updates
-    const disputeRows = await db
-      .select()
-      .from(disputes)
-      .where(eq(disputes.id, disputeId))
-      .limit(1);
+    const disputeRows = await db.select().from(disputes).where(eq(disputes.id, disputeId)).limit(1);
 
     const disputeToReturn = disputeRows[0] || outcome.dispute;
 
@@ -155,11 +151,7 @@ export const disputeRoutes: FastifyPluginAsync<DisputeRouteOptions> = async (fas
   fastify.get("/disputes/:id", async (request, reply) => {
     const { id } = request.params as { id: string };
 
-    const disputeRows = await db
-      .select()
-      .from(disputes)
-      .where(eq(disputes.id, id))
-      .limit(1);
+    const disputeRows = await db.select().from(disputes).where(eq(disputes.id, id)).limit(1);
 
     if (!disputeRows || disputeRows.length === 0) {
       return reply.status(404).send({ error: "Dispute not found" });
@@ -183,10 +175,7 @@ export const disputeRoutes: FastifyPluginAsync<DisputeRouteOptions> = async (fas
    * Lists all disputes requiring human review / escalation from Postgres
    */
   fastify.get("/disputes/human-review", async (_request, reply) => {
-    const list = await db
-      .select()
-      .from(disputes)
-      .where(eq(disputes.status, "NEEDS_HUMAN_REVIEW"));
+    const list = await db.select().from(disputes).where(eq(disputes.status, "NEEDS_HUMAN_REVIEW"));
 
     return reply.send({
       count: list.length,
@@ -201,11 +190,7 @@ export const disputeRoutes: FastifyPluginAsync<DisputeRouteOptions> = async (fas
   fastify.post("/disputes/:id/human-review", async (request, reply) => {
     const { id } = request.params as { id: string };
 
-    const disputeRows = await db
-      .select()
-      .from(disputes)
-      .where(eq(disputes.id, id))
-      .limit(1);
+    const disputeRows = await db.select().from(disputes).where(eq(disputes.id, id)).limit(1);
 
     if (!disputeRows || disputeRows.length === 0) {
       return reply.status(404).send({ error: "Dispute not found" });

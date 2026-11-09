@@ -79,7 +79,7 @@ export class TribunalDryRunEvaluator {
         events: testCase.evidenceChain,
         validEvidenceIds,
       });
-    } catch (err) {
+    } catch {
       const latencyMs = Math.round(performance.now() - startTime);
       return {
         classification: "BLOCKED",
