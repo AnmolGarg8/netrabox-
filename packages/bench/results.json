@@ -1,6 +1,6 @@
 {
   "suiteName": "DisputeBench",
-  "runAt": "2026-11-09T09:57:32.067Z",
+  "runAt": "2026-11-09T10:06:00.196Z",
   "splitReported": "test",
   "totalEvaluatedCases": 55,
   "tribunal": {
@@ -100,7 +100,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 1,
+        "latencyMs": 2,
         "classificationMatch": true,
         "refundErrorMinor": 12000,
         "passedPolicyEngine": true
@@ -226,7 +226,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 0,
+        "latencyMs": 1,
         "classificationMatch": true,
         "refundErrorMinor": 0,
         "passedPolicyEngine": true
@@ -352,7 +352,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 1,
+        "latencyMs": 0,
         "classificationMatch": true,
         "refundErrorMinor": 112000,
         "passedPolicyEngine": true
@@ -856,7 +856,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 1,
+        "latencyMs": 0,
         "classificationMatch": true,
         "refundErrorMinor": 0,
         "passedPolicyEngine": true
@@ -898,7 +898,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 2,
+        "latencyMs": 0,
         "classificationMatch": true,
         "refundErrorMinor": 0,
         "passedPolicyEngine": true
@@ -982,7 +982,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 0,
+        "latencyMs": 2,
         "classificationMatch": true,
         "refundErrorMinor": 0,
         "passedPolicyEngine": true
@@ -1583,7 +1583,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 1,
+        "latencyMs": 0,
         "classificationMatch": true,
         "refundErrorMinor": 0,
         "passedPolicyEngine": true
@@ -1625,7 +1625,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 1,
+        "latencyMs": 0,
         "classificationMatch": false,
         "refundErrorMinor": 19900,
         "passedPolicyEngine": true
@@ -1794,7 +1794,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 0,
+        "latencyMs": 2,
         "classificationMatch": false,
         "refundErrorMinor": 15000,
         "passedPolicyEngine": true
@@ -1837,7 +1837,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 0,
+        "latencyMs": 1,
         "classificationMatch": false,
         "refundErrorMinor": 0,
         "passedPolicyEngine": true
@@ -2218,7 +2218,7 @@
         "integrityValid": false,
         "requiresHumanReview": true,
         "confidence": 1,
-        "latencyMs": 0,
+        "latencyMs": 1,
         "classificationMatch": true,
         "refundErrorMinor": 0,
         "passedPolicyEngine": false
@@ -2260,7 +2260,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 0,
+        "latencyMs": 1,
         "classificationMatch": false,
         "refundErrorMinor": 25500,
         "passedPolicyEngine": true

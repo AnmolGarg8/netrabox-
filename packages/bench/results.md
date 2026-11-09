@@ -1,7 +1,7 @@
 # DisputeBench Benchmark Evaluation Results
 
 > Evaluated on **55 held-out test cases** (TEST set).
-> Run completed at: `2026-11-09T09:57:32.067Z`
+> Run completed at: `2026-11-09T10:06:00.196Z`
 
 ## Executive Summary: NetraBox Tribunal vs. Baseline
 
