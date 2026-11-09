@@ -2833,7 +2833,7 @@ export function generateBenchmarkCases(): BenchTestCase[] {
           payload: { quotedTotalMinor: 15000 },
         },
         {
-          type: "SETTLEMENT_CAPTURED",
+          type: "PAYPAL_CAPTURED",
           actor: "merchant",
           payload: { capturedTotalMinor: 16500, unauthorizedSurchargeMinor: 1500 },
         },

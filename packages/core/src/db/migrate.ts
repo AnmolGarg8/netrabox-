@@ -10,7 +10,9 @@ async function runMigrations() {
     console.error("Migration failed:", err);
     process.exit(1);
   } finally {
-    await sql.end();
+    if (sql) {
+      await sql.end();
+    }
   }
 }
 

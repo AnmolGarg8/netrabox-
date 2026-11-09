@@ -12,3 +12,4 @@ export * from "./llm/gemini.js";
 export * from "./intent-guard/index.js";
 export * from "./shop/merchants.js";
 export * from "./tribunal/index.js";
+export type { DbType } from "./db/client.js";
