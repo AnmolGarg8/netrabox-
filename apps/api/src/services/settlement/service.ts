@@ -471,10 +471,30 @@ export class SettlementService {
         const purchase = await this.store.getPurchase(action.purchaseId);
         if (!purchase) continue;
 
-        // If the action already succeeded in PayPal (or was pending with an idempotency key),
-        // query PayPal by re-executing with the exact same idempotency key or fetching status.
+        // If the action already succeeded in PayPal prior to a DB failure, reuse the recorded transaction ID.
+        // Otherwise (e.g. network timeout/in-flight crash), re-execute against PayPal with the exact same idempotency key.
+        const existingTxId =
+          action.kind === "CAPTURE" || action.kind === "PARTIAL_CAPTURE"
+            ? action.paypalCaptureId
+            : action.kind === "REFUND_FULL" || action.kind === "REFUND_PARTIAL"
+              ? action.paypalRefundId
+              : undefined;
+
         let paypalResponse: MutatingPayPalResponse | null = null;
-        if (action.kind === "CAPTURE" || action.kind === "PARTIAL_CAPTURE") {
+        if (existingTxId) {
+          paypalResponse = {
+            id: existingTxId,
+            status: "COMPLETED",
+          } as unknown as MutatingPayPalResponse;
+        } else if (
+          action.kind === "VOID" &&
+          action.errorMessage?.includes("DB transition failed after PayPal success")
+        ) {
+          paypalResponse = {
+            id: purchase.paypalAuthorizationId || "VOIDED",
+            status: "VOIDED",
+          } as unknown as MutatingPayPalResponse;
+        } else if (action.kind === "CAPTURE" || action.kind === "PARTIAL_CAPTURE") {
           paypalResponse = await this.paypalClient.captureAuthorization(
             purchase.paypalAuthorizationId!,
             action.purchaseId,

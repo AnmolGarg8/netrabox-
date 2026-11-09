@@ -59,6 +59,14 @@ export const evidenceEvents = pgTable(
   ],
 );
 
+export type DisputePhase =
+  | "TRIAGE"
+  | "EVIDENCE_LOCKED"
+  | "TRIBUNAL_ACTIVE"
+  | "POLICY_VALIDATION"
+  | "NEEDS_HUMAN_REVIEW"
+  | "RESOLVED";
+
 export const disputes = pgTable("disputes", {
   id: text("id").primaryKey(),
   purchaseId: text("purchase_id")
@@ -66,6 +74,7 @@ export const disputes = pgTable("disputes", {
     .references(() => purchases.id, { onDelete: "cascade" }),
   reason: text("reason").notNull(),
   status: text("status").notNull().default("OPEN"),
+  disputePhase: text("dispute_phase").$type<DisputePhase>().notNull().default("TRIAGE"),
   resolutionState: text("resolution_state"),
   disputedAmountMinor: integer("disputed_amount_minor").notNull(),
   claimantActor: text("claimant_actor").notNull(),

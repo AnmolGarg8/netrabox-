@@ -317,9 +317,10 @@ export class DisputeBenchRunner {
   private baselineEvaluator: BaselineEvaluator;
 
   constructor(options: RunOptions = {}) {
+    const apiKey = process.env.LLM_API_KEY || process.env.GOOGLE_AI_API_KEY;
     const baseLLM =
       options.llmAdapter ||
-      createBenchmarkLLMAdapter(process.env.LLM_API_KEY, process.env.LLM_MODEL);
+      createBenchmarkLLMAdapter(apiKey, process.env.LLM_MODEL);
 
     this.llm =
       options.useCache !== false

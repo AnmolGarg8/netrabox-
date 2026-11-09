@@ -1,5 +1,8 @@
 import { randomUUID } from "node:crypto";
-import { type LLMAdapter, canTransition, type EvidenceActor } from "@netrabox/core";
+import { type LLMAdapter, canTransition, type EvidenceActor, type DisputePhase } from "@netrabox/core";
+import { purchases, disputes, tribunalRuns } from "@netrabox/core/schemas";
+import { db as defaultDb, type DbType } from "@netrabox/core/db";
+import { eq } from "drizzle-orm";
 import type { IStateStore, PurchaseStateMachineService } from "../state-machine/machine.js";
 import type { EvidenceService } from "../evidence/service.js";
 import type { PayPalClient } from "../paypal/client.js";
@@ -18,6 +21,7 @@ export interface TribunalRunnerOptions {
   signingPrivateKeyHex: string;
   confidenceThreshold?: number;
   settlementService?: SettlementService;
+  db?: DbType;
 }
 
 export class TribunalRunner {
@@ -31,6 +35,7 @@ export class TribunalRunner {
   private merchantAdvocate: MerchantAdvocateAgent;
   private chiefJudge: ChiefJudgeAgent;
   private signingPrivateKeyHex: string;
+  private db: DbType;
 
   constructor(options: TribunalRunnerOptions) {
     this.store = options.store;
@@ -39,6 +44,7 @@ export class TribunalRunner {
     this.paypalClient = options.paypalClient;
     this.policyEngine = new PolicyEngine(options.confidenceThreshold ?? 0.7);
     this.signingPrivateKeyHex = options.signingPrivateKeyHex;
+    this.db = options.db || (options.store as any)?.getDb?.() || defaultDb;
     this.settlementService =
       options.settlementService ||
       new SettlementService(
@@ -50,6 +56,42 @@ export class TribunalRunner {
     this.buyerAdvocate = new BuyerAdvocateAgent(options.llm);
     this.merchantAdvocate = new MerchantAdvocateAgent(options.llm);
     this.chiefJudge = new ChiefJudgeAgent(options.llm);
+  }
+
+  /**
+   * Helper to persist dispute phase transition in Postgres and evidence log
+   */
+  private async transitionDisputePhase(
+    dispute: DisputeRecord,
+    newPhase: DisputePhase,
+    details?: string,
+  ): Promise<void> {
+    dispute.disputePhase = newPhase;
+    try {
+      await this.db
+        .update(disputes)
+        .set({ disputePhase: newPhase })
+        .where(eq(disputes.id, dispute.id));
+    } catch (err) {
+      console.warn(`Failed to update disputePhase in db:`, err);
+    }
+
+    try {
+      await this.evidenceService.appendEvent({
+        purchaseId: dispute.purchaseId,
+        type: "TRIBUNAL_STEP",
+        actor: "tribunal",
+        payload: {
+          step: "DISPUTE_PHASE_CHANGED",
+          phase: newPhase,
+          details: details || `Dispute progressed to ${newPhase}`,
+        },
+        signerKeyId: "netrabox_tribunal_orchestrator",
+        signingPrivateKeyHex: this.signingPrivateKeyHex,
+      });
+    } catch (err) {
+      console.warn(`Failed to append TRIBUNAL_STEP evidence for phase ${newPhase}:`, err);
+    }
   }
 
   /**
@@ -82,6 +124,63 @@ export class TribunalRunner {
 
     const runId = `tr_${randomUUID()}`;
 
+    // Ensure parent purchase and dispute exist in DB for foreign key constraints
+    try {
+      const existingPurchase = await this.db
+        .select()
+        .from(purchases)
+        .where(eq(purchases.id, dispute.purchaseId))
+        .limit(1);
+
+      if (!existingPurchase || existingPurchase.length === 0) {
+        await this.db
+          .insert(purchases)
+          .values({
+            id: purchase.id,
+            buyerId: purchase.buyerId || "usr_unknown",
+            agentId: purchase.agentId || "agent_unknown",
+            merchantId: purchase.merchantId || "merch_unknown",
+            title: purchase.title || `Purchase ${purchase.id}`,
+            state: purchase.state || "DRAFT",
+            currency: purchase.currency || "USD",
+            amountMinor: purchase.amountMinor || 0,
+            capturedAmountMinor: purchase.capturedAmountMinor || 0,
+            refundedAmountMinor: purchase.refundedAmountMinor || 0,
+            paypalOrderId: purchase.paypalOrderId || null,
+            paypalAuthorizationId: purchase.paypalAuthorizationId || null,
+            paypalCaptureId: purchase.paypalCaptureId || null,
+            metadata: purchase.metadata || {},
+            createdAt: new Date(purchase.createdAt || Date.now()),
+            updatedAt: new Date(purchase.updatedAt || Date.now()),
+          })
+          .onConflictDoNothing();
+      }
+
+      const existingDispute = await this.db
+        .select()
+        .from(disputes)
+        .where(eq(disputes.id, dispute.id))
+        .limit(1);
+
+      if (!existingDispute || existingDispute.length === 0) {
+        await this.db
+          .insert(disputes)
+          .values({
+            id: dispute.id,
+            purchaseId: dispute.purchaseId,
+            reason: dispute.reason,
+            status: dispute.status,
+            disputePhase: dispute.disputePhase || "TRIAGE",
+            disputedAmountMinor: dispute.disputedAmountMinor,
+            claimantActor: dispute.claimantActor,
+            createdAt: new Date(dispute.createdAt || Date.now()),
+          })
+          .onConflictDoNothing();
+      }
+    } catch (syncErr) {
+      console.warn("DB purchase/dispute sync error:", syncErr);
+    }
+
     // =========================================================================
     // STEP 1: DETERMINISTIC INTEGRITY CHECK (ZERO LLM)
     // =========================================================================
@@ -111,6 +210,18 @@ export class TribunalRunner {
       };
 
       dispute.status = "NEEDS_HUMAN_REVIEW";
+      await this.transitionDisputePhase(dispute, "NEEDS_HUMAN_REVIEW", failureReason);
+
+      try {
+        await this.db
+          .update(disputes)
+          .set({ status: "NEEDS_HUMAN_REVIEW", disputePhase: "NEEDS_HUMAN_REVIEW" })
+          .where(eq(disputes.id, dispute.id));
+        await this.db.insert(tribunalRuns).values(blockedRun);
+      } catch (dbErr) {
+        console.warn(`Failed to persist blocked tribunal run to db:`, dbErr);
+      }
+
       if (disputesMap) disputesMap.set(dispute.id, dispute);
       if (tribunalRunsMap) tribunalRunsMap.set(runId, blockedRun);
 
@@ -138,10 +249,31 @@ export class TribunalRunner {
       };
     }
 
+    // Step 1 passed -> Transition to EVIDENCE_LOCKED
+    await this.transitionDisputePhase(
+      dispute,
+      "EVIDENCE_LOCKED",
+      "Cryptographic evidence chain verified intact",
+    );
+
     // =========================================================================
     // STEP 2: MULTI-AGENT ADVOCATES (Grounding against verified IDs)
     // =========================================================================
     dispute.status = "IN_TRIBUNAL";
+    await this.transitionDisputePhase(
+      dispute,
+      "TRIBUNAL_ACTIVE",
+      "Advocate debate and judge evaluation initiated",
+    );
+
+    try {
+      await this.db
+        .update(disputes)
+        .set({ status: "IN_TRIBUNAL", disputePhase: "TRIBUNAL_ACTIVE" })
+        .where(eq(disputes.id, dispute.id));
+    } catch (err) {
+      console.warn(`Failed to update dispute status in db:`, err);
+    }
     if (disputesMap) disputesMap.set(dispute.id, dispute);
 
     const events = await this.evidenceService.getEvents(dispute.purchaseId);
@@ -235,6 +367,12 @@ export class TribunalRunner {
     // =========================================================================
     // STEP 4: DETERMINISTIC POLICY ENGINE ENFORCEMENT & SETTLEMENT
     // =========================================================================
+    await this.transitionDisputePhase(
+      dispute,
+      "POLICY_VALIDATION",
+      "Deterministic policy engine validating verdict invariants",
+    );
+
     const maxAllowedRefund =
       purchase.capturedAmountMinor > 0 ? purchase.capturedAmountMinor : purchase.amountMinor;
 
@@ -311,18 +449,54 @@ export class TribunalRunner {
         }
 
         dispute.status = "RESOLVED";
+        dispute.disputePhase = "RESOLVED";
         dispute.resolutionState = validation.resolvedAction;
         dispute.resolvedAt = new Date();
+
+        try {
+          await this.db
+            .update(disputes)
+            .set({
+              status: "RESOLVED",
+              disputePhase: "RESOLVED",
+              resolutionState: validation.resolvedAction,
+              resolvedAt: dispute.resolvedAt,
+            })
+            .where(eq(disputes.id, dispute.id));
+        } catch (dbErr) {
+          console.warn(`Failed to update dispute to RESOLVED in db:`, dbErr);
+        }
       } catch (execErr) {
         console.error("PayPal execution failed during settlement:", execErr);
         dispute.status = "NEEDS_HUMAN_REVIEW";
+        dispute.disputePhase = "NEEDS_HUMAN_REVIEW";
         validation.requiresHumanReview = true;
         validation.errors.push(
           `PayPal execution failed: ${execErr instanceof Error ? execErr.message : String(execErr)}`,
         );
+
+        try {
+          await this.db
+            .update(disputes)
+            .set({ status: "NEEDS_HUMAN_REVIEW", disputePhase: "NEEDS_HUMAN_REVIEW" })
+            .where(eq(disputes.id, dispute.id));
+        } catch (dbErr) {
+          console.warn(`Failed to update dispute to NEEDS_HUMAN_REVIEW in db:`, dbErr);
+        }
       }
     } else {
       dispute.status = "NEEDS_HUMAN_REVIEW";
+      dispute.disputePhase = "NEEDS_HUMAN_REVIEW";
+
+      try {
+        await this.db
+          .update(disputes)
+          .set({ status: "NEEDS_HUMAN_REVIEW", disputePhase: "NEEDS_HUMAN_REVIEW" })
+          .where(eq(disputes.id, dispute.id));
+      } catch (dbErr) {
+        console.warn(`Failed to update dispute to NEEDS_HUMAN_REVIEW in db:`, dbErr);
+      }
+
       try {
         await this.stateMachine.transition({
           purchaseId: dispute.purchaseId,
@@ -362,6 +536,12 @@ export class TribunalRunner {
       policyEngineErrors: validation.errors,
       createdAt: new Date(),
     };
+
+    try {
+      await this.db.insert(tribunalRuns).values(tribunalRun);
+    } catch (dbErr) {
+      console.warn(`Failed to insert tribunalRun to db:`, dbErr);
+    }
 
     if (disputesMap) disputesMap.set(dispute.id, dispute);
     if (tribunalRunsMap) tribunalRunsMap.set(runId, tribunalRun);
@@ -405,6 +585,18 @@ export class TribunalRunner {
     };
 
     dispute.status = "NEEDS_HUMAN_REVIEW";
+    dispute.disputePhase = "NEEDS_HUMAN_REVIEW";
+
+    try {
+      await this.db
+        .update(disputes)
+        .set({ status: "NEEDS_HUMAN_REVIEW", disputePhase: "NEEDS_HUMAN_REVIEW" })
+        .where(eq(disputes.id, dispute.id));
+      await this.db.insert(tribunalRuns).values(rejectedRun);
+    } catch (dbErr) {
+      console.warn(`Failed to persist rejected tribunal run to db:`, dbErr);
+    }
+
     if (disputesMap) disputesMap.set(dispute.id, dispute);
     if (tribunalRunsMap) tribunalRunsMap.set(runId, rejectedRun);
 

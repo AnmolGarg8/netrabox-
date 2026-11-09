@@ -77,6 +77,47 @@ export class NetraBoxRecorder {
   }
 
   /**
+   * 1b. Helper: Record Structured Constraints Extracted from Instruction
+   */
+  public async recordConstraints(
+    purchaseId: string,
+    hardConstraints: Record<string, unknown>,
+    options?: { softPreferences?: Record<string, unknown>; ambiguousFields?: string[] },
+  ) {
+    return await this.recordEvent(
+      purchaseId,
+      "CONSTRAINTS_EXTRACTED",
+      {
+        hardConstraints,
+        softPreferences: options?.softPreferences,
+        ambiguousFields: options?.ambiguousFields,
+      },
+      "system",
+    );
+  }
+
+  /**
+   * 1c. Helper: Record User Confirmation / Approval
+   */
+  public async recordApproval(
+    purchaseId: string,
+    approved: boolean,
+    options?: { userNotes?: string; reason?: string },
+  ) {
+    return await this.recordEvent(
+      purchaseId,
+      "USER_APPROVAL",
+      {
+        approved,
+        approvedAt: new Date().toISOString(),
+        userNotes: options?.userNotes,
+        reason: options?.reason,
+      },
+      "user",
+    );
+  }
+
+  /**
    * 2. Helper: Record Observed Product Offers
    */
   public async recordOffers(

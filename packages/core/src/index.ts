@@ -9,7 +9,6 @@ export * from "./state-machine/index.js";
 export * from "./llm/adapter.js";
 export * from "./llm/mock.js";
 export * from "./llm/gemini.js";
-export * from "./intent-guard/schemas.js";
-export * from "./intent-guard/validator.js";
+export * from "./intent-guard/index.js";
 export * from "./shop/merchants.js";
 export * from "./tribunal/index.js";

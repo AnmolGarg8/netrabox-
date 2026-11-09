@@ -5,6 +5,7 @@ import {
   type IntentGuardResult,
   validateCartAgainstConstraints,
   sanitizeUntrustedMerchantText,
+  extractConstraints,
   DEMO_MERCHANTS,
   type ShopProduct,
 } from "@netrabox/core";
@@ -19,9 +20,13 @@ export interface BuyerAgentOptions {
 export interface ShoppingWorkflowInput {
   purchaseId: string;
   userPrompt: string;
-  constraints: StructuredConstraints;
+  constraints?: StructuredConstraints;
   preferredMerchantId?: string;
   mockApproval?: boolean;
+  onAmbiguity?: (
+    constraints: StructuredConstraints,
+  ) => Promise<{ confirmed: boolean; correctedConstraints?: StructuredConstraints }>;
+  userConfirmation?: { confirmed: boolean; correctedConstraints?: StructuredConstraints };
 }
 
 export interface ShoppingWorkflowOutput {
@@ -141,19 +146,109 @@ export class BuyerAgent {
   public async executeShoppingWorkflow(
     input: ShoppingWorkflowInput,
   ): Promise<ShoppingWorkflowOutput> {
-    const { purchaseId, userPrompt, constraints, preferredMerchantId } = input;
+    const { purchaseId, userPrompt, preferredMerchantId } = input;
 
-    // 1. Record User Shopping Instruction
-    await this.recorder.recordInstruction(purchaseId, userPrompt, {
-      constraints: constraints as unknown as Record<string, unknown>,
-    });
+    // 1. Record User Shopping Instruction (raw prompt)
+    await this.recorder.recordInstruction(purchaseId, userPrompt);
 
-    // 2. Search for offers using tool
+    // 2. Extract structured constraints if not already provided
+    let constraints: StructuredConstraints =
+      input.constraints ?? (await extractConstraints(userPrompt, this.llm));
+
+    // Record extracted constraints as evidence before searching
+    await this.recorder.recordConstraints(
+      purchaseId,
+      constraints as unknown as Record<string, unknown>,
+      {
+        ambiguousFields: constraints.ambiguousFields,
+      },
+    );
+
+    // 3. Ambiguity Check: If any key field is ambiguous (e.g. budget or size), confirm before proceeding
+    const isBudgetMissing =
+      constraints.budgetMinor === undefined || constraints.budgetMinor <= 0;
+    const isAmbiguous =
+      (constraints.ambiguousFields && constraints.ambiguousFields.length > 0) || isBudgetMissing;
+
+    if (isAmbiguous) {
+      if (input.userConfirmation) {
+        if (input.userConfirmation.confirmed) {
+          if (input.userConfirmation.correctedConstraints) {
+            constraints = input.userConfirmation.correctedConstraints;
+          }
+          await this.recorder.recordApproval(purchaseId, true, {
+            userNotes: "User confirmed/corrected ambiguous constraints",
+          });
+        } else {
+          await this.recorder.recordApproval(purchaseId, false, {
+            reason: "User rejected ambiguous constraints",
+          });
+          const guardResult: IntentGuardResult = {
+            status: "BLOCK",
+            score: 0.0,
+            reasons: ["User rejected ambiguous constraints"],
+            understoodSummary: "Purchase halted: ambiguous constraints rejected by user.",
+            constraints,
+          };
+          return {
+            purchaseId,
+            intentGuardResult: guardResult,
+            workflowStatus: "BLOCKED_BY_INTENT_GUARD",
+            reason: "User rejected ambiguous constraints",
+          };
+        }
+      } else if (input.onAmbiguity) {
+        const confirmation = await input.onAmbiguity(constraints);
+        if (confirmation.confirmed) {
+          if (confirmation.correctedConstraints) {
+            constraints = confirmation.correctedConstraints;
+          }
+          await this.recorder.recordApproval(purchaseId, true, {
+            userNotes: "User confirmed/corrected ambiguous constraints via interactive callback",
+          });
+        } else {
+          await this.recorder.recordApproval(purchaseId, false, {
+            reason: "User rejected ambiguous constraints via callback",
+          });
+          const guardResult: IntentGuardResult = {
+            status: "BLOCK",
+            score: 0.0,
+            reasons: ["User rejected ambiguous constraints"],
+            understoodSummary: "Purchase halted: ambiguous constraints rejected by user.",
+            constraints,
+          };
+          return {
+            purchaseId,
+            intentGuardResult: guardResult,
+            workflowStatus: "BLOCKED_BY_INTENT_GUARD",
+            reason: "User rejected ambiguous constraints",
+          };
+        }
+      } else {
+        // Neither userConfirmation nor onAmbiguity provided: halt and require confirmation
+        const reason = `Ambiguous fields detected (${constraints.ambiguousFields.join(", ") || "budget"}). Confirmation required before agent proceeds.`;
+        const guardResult: IntentGuardResult = {
+          status: "BLOCK",
+          score: 0.0,
+          reasons: [reason],
+          understoodSummary: "Awaiting user confirmation on ambiguous constraints.",
+          constraints,
+        };
+        return {
+          purchaseId,
+          intentGuardResult: guardResult,
+          workflowStatus: "BLOCKED_BY_INTENT_GUARD",
+          reason,
+        };
+      }
+    }
+
+    // 4. Search for offers using tool
     const searchTool = this.getSearchOffersTool(purchaseId);
-    const searchKeyword = constraints.brand || "headphones";
+    const searchKeyword = constraints.brand || constraints.itemDescription || "headphones";
     const rawOffers: ShopProduct[] = await searchTool(searchKeyword);
 
-    // 3. Format and record observed offers with PROMPT-INJECTION HARDENING:
+    // 5. Format and record observed offers with PROMPT-INJECTION HARDENING:
     // Untrusted merchant descriptions are wrapped in XML-like delimited blocks
     const safeOffers: ShopProduct[] = rawOffers.map((offer: ShopProduct) => ({
       ...offer,
@@ -172,12 +267,12 @@ export class BuyerAgent {
       })),
     );
 
-    // 4. Decision Selection Logic (Heuristic / LLM with hard grounding)
+    // 6. Decision Selection Logic (Heuristic / LLM with hard grounding)
     // Filter offers matching brand & budget constraints
     let selected: ShopProduct | undefined = safeOffers.find(
       (o: ShopProduct) =>
         (!preferredMerchantId || o.merchantId === preferredMerchantId) &&
-        o.priceMinor <= constraints.budgetMinor &&
+        (constraints.budgetMinor === undefined || o.priceMinor <= constraints.budgetMinor) &&
         (!constraints.brand || o.brand.toLowerCase() === constraints.brand.toLowerCase()) &&
         (!constraints.color || o.color?.toLowerCase() === constraints.color.toLowerCase()),
     );
@@ -206,7 +301,7 @@ export class BuyerAgent {
       };
     }
 
-    // 5. Record Agent Reasoning Scratchpad
+    // 7. Record Agent Reasoning Scratchpad
     await this.recorder.recordReasoning(
       purchaseId,
       `Selected ${selected.name} from ${selected.merchantId} at $${(
@@ -216,7 +311,7 @@ export class BuyerAgent {
       selected.id,
     );
 
-    // 6. Assemble proposed cart
+    // 8. Assemble proposed cart
     const proposedCart: ProposedCart = {
       items: [
         {
@@ -226,11 +321,12 @@ export class BuyerAgent {
           quantity: constraints.quantity,
         },
       ],
+      currency: constraints.currency || "USD",
       totalMinor: selected.priceMinor * constraints.quantity,
       merchantQuoteId: `quote_${selected.id}_${Date.now()}`,
     };
 
-    // 7. Run Intent Guard DETERMINISTICALLY
+    // 9. Run Intent Guard DETERMINISTICALLY
     const intentGuardResult = validateCartAgainstConstraints(proposedCart, constraints);
 
     // Log Intent Guard Result as an Evidence Event
@@ -253,11 +349,11 @@ export class BuyerAgent {
       };
     }
 
-    // 8. Propose cart to NetraBox API
+    // 10. Propose cart to NetraBox API
     const proposeCartTool = this.getProposeCartTool(purchaseId);
     await proposeCartTool(proposedCart);
 
-    // 9. Request Buyer Approval / PayPal Order creation
+    // 11. Request Buyer Approval / PayPal Order creation
     const requestApprovalTool = this.getRequestApprovalTool(purchaseId);
     const { approvalUrl } = await requestApprovalTool();
 

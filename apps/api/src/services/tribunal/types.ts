@@ -1,10 +1,11 @@
-import type { TribunalVerdict, AdvocateBrief, EvidenceActor } from "@netrabox/core";
+import type { TribunalVerdict, AdvocateBrief, EvidenceActor, DisputePhase } from "@netrabox/core";
 
 export interface DisputeRecord {
   id: string;
   purchaseId: string;
   reason: string;
   status: "OPEN" | "TRIAGE" | "IN_TRIBUNAL" | "RESOLVED" | "NEEDS_HUMAN_REVIEW";
+  disputePhase: DisputePhase;
   resolutionState?: string | null;
   disputedAmountMinor: number;
   claimantActor: EvidenceActor;

@@ -26,8 +26,17 @@ export function validateCartAgainstConstraints(
   const totalMinor =
     cart.totalMinor ?? cart.items.reduce((sum, item) => sum + item.priceMinor * item.quantity, 0);
 
-  // 1. Hard Budget Invariant
-  if (totalMinor > constraints.budgetMinor) {
+  // 1. Hard Budget Invariant & Missing Budget Check
+  if (
+    constraints.budgetMinor === undefined ||
+    constraints.budgetMinor === null ||
+    constraints.budgetMinor <= 0
+  ) {
+    isBlocked = true;
+    reasons.push(
+      "Missing budget constraint: Budget ceiling must be specified and positive.",
+    );
+  } else if (totalMinor > constraints.budgetMinor) {
     isBlocked = true;
     const overage = (totalMinor - constraints.budgetMinor) / 100;
     reasons.push(
@@ -37,7 +46,35 @@ export function validateCartAgainstConstraints(
     );
   }
 
-  // 2. Quantity Invariant
+  // 2. Ambiguous or Conflicting Constraints Check
+  if (constraints.ambiguousFields && constraints.ambiguousFields.length > 0) {
+    if (constraints.ambiguousFields.includes("budget") || constraints.ambiguousFields.includes("budgetMinor")) {
+      isBlocked = true;
+      reasons.push(
+        "Ambiguous budget: Budget ceiling is ambiguous or conflicting and must be confirmed by the buyer.",
+      );
+    }
+    if (constraints.ambiguousFields.includes("size") && !constraints.size) {
+      isBlocked = true;
+      reasons.push(
+        "Ambiguous size: Item size is ambiguous and must be confirmed by the buyer.",
+      );
+    }
+  }
+
+  // 3. Currency Invariant
+  if (
+    constraints.currency &&
+    cart.currency &&
+    constraints.currency.toUpperCase() !== cart.currency.toUpperCase()
+  ) {
+    isBlocked = true;
+    reasons.push(
+      `Currency mismatch: Requested currency '${constraints.currency}' does not match cart currency '${cart.currency}'`,
+    );
+  }
+
+  // 4. Quantity Invariant
   const totalQuantity = cart.items.reduce((sum, item) => sum + item.quantity, 0);
   if (totalQuantity !== constraints.quantity) {
     isBlocked = true;
@@ -46,7 +83,7 @@ export function validateCartAgainstConstraints(
     );
   }
 
-  // 3. Brand Invariant
+  // 5. Brand Invariant
   if (constraints.brand) {
     const brandLower = constraints.brand.toLowerCase();
     for (const item of cart.items) {
@@ -60,7 +97,7 @@ export function validateCartAgainstConstraints(
     }
   }
 
-  // 4. Size Invariant
+  // 6. Size Invariant
   if (constraints.size) {
     const sizeRegex = new RegExp(`\\b${constraints.size}\\b`, "i");
     for (const item of cart.items) {
@@ -73,7 +110,7 @@ export function validateCartAgainstConstraints(
     }
   }
 
-  // 5. Forbidden Keywords Invariant (e.g. refurbished, renewed)
+  // 7. Forbidden Keywords Invariant (e.g. refurbished, renewed)
   if (constraints.forbidden && constraints.forbidden.length > 0) {
     for (const forbiddenWord of constraints.forbidden) {
       const forbiddenRegex = new RegExp(`\\b${forbiddenWord}\\b`, "i");
@@ -88,7 +125,24 @@ export function validateCartAgainstConstraints(
     }
   }
 
-  // 6. Color Check
+  // 8. Must-Haves Check
+  if (constraints.mustHaves && constraints.mustHaves.length > 0) {
+    for (const mustHave of constraints.mustHaves) {
+      const pattern = mustHave.replace(/[\s-]+/g, "[\\s-]+");
+      const mustRegex = new RegExp(`\\b${pattern}\\b`, "i");
+      const matched = cart.items.some(
+        (item) => mustRegex.test(item.name) || (item.sku && mustRegex.test(item.sku)),
+      );
+      if (!matched) {
+        isWarned = true;
+        reasons.push(
+          `Missing required feature warning: Cart item did not explicitly state '${mustHave}'`,
+        );
+      }
+    }
+  }
+
+  // 9. Color Check
   if (constraints.color) {
     const colorLower = constraints.color.toLowerCase();
     for (const item of cart.items) {
@@ -112,11 +166,14 @@ export function validateCartAgainstConstraints(
     score = 0.75;
   }
 
+  const budgetDisplay =
+    typeof constraints.budgetMinor === "number"
+      ? `$${(constraints.budgetMinor / 100).toFixed(2)}`
+      : "unspecified budget";
+
   const defaultSummary = isBlocked
     ? `Intent Guard blocked checkout: ${reasons[0]}`
-    : `Understood purchase of ${constraints.quantity}x ${constraints.brand || "item"} within budget $${(
-        constraints.budgetMinor / 100
-      ).toFixed(2)}`;
+    : `Understood purchase of ${constraints.quantity}x ${constraints.brand || "item"} within budget ${budgetDisplay}`;
 
   return {
     status,

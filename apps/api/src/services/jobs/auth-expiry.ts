@@ -1,5 +1,6 @@
 import type { SettlementService } from "../settlement/service.js";
 import type { PurchaseRecord } from "../state-machine/types.js";
+import type { IStateStore } from "../state-machine/machine.js";
 
 export interface AuthExpiryJobOptions {
   warningThresholdHours?: number; // e.g. flag if within 48h of 29 days
@@ -20,6 +21,7 @@ export interface AuthExpiryScanResult {
 export class AuthExpiryMonitorJob {
   private settlementService: SettlementService;
   private options: Required<AuthExpiryJobOptions>;
+  private isRunning = false;
 
   constructor(settlementService: SettlementService, options: AuthExpiryJobOptions = {}) {
     this.settlementService = settlementService;
@@ -30,6 +32,31 @@ export class AuthExpiryMonitorJob {
       maxValidityDays: options.maxValidityDays ?? 29,
       signingPrivateKeyHex: options.signingPrivateKeyHex || "",
     };
+  }
+
+  public get running(): boolean {
+    return this.isRunning;
+  }
+
+  /**
+   * Runs the scan against active AUTHORIZED purchases in store with guard against overlapping runs
+   */
+  public async runScan(
+    store: IStateStore,
+  ): Promise<{ status: "ok" | "skipped_in_progress"; result?: AuthExpiryScanResult }> {
+    if (this.isRunning) {
+      return { status: "skipped_in_progress" };
+    }
+    this.isRunning = true;
+    try {
+      const authorizedPurchases = (store as any).listPurchases
+        ? await (store as any).listPurchases({ state: "AUTHORIZED" })
+        : [];
+      const result = await this.scanAuthorizations(authorizedPurchases);
+      return { status: "ok", result };
+    } finally {
+      this.isRunning = false;
+    }
   }
 
   /**

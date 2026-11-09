@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync, mkdirSync, unlinkSync } from "node:fs";
 import { dirname } from "node:path";
 import type { LLMAdapter, LLMMessage, LLMResponse, LLMToolDefinition } from "@netrabox/core";
 import { z } from "zod";
@@ -11,18 +11,36 @@ export interface CacheEntry {
   createdAt: string;
 }
 
+export function computeCacheKey(
+  model: string,
+  prompt: string,
+  temperature: number | string = 0.1,
+  responseSchemaName: string = "default",
+): string {
+  return createHash("sha256")
+    .update(`${model}${prompt}${temperature}${responseSchemaName}`, "utf8")
+    .digest("hex");
+}
+
 export class CachedLLMAdapter implements LLMAdapter {
   private baseAdapter: LLMAdapter;
   private modelName: string;
   private cacheFilePath?: string;
+  public temperature: number;
   private cache: Map<string, string> = new Map();
   public cacheHits = 0;
   public cacheMisses = 0;
 
-  constructor(baseAdapter: LLMAdapter, modelName = "default", cacheFilePath?: string) {
+  constructor(
+    baseAdapter: LLMAdapter,
+    modelName = "default",
+    cacheFilePath?: string,
+    temperature = 0.1,
+  ) {
     this.baseAdapter = baseAdapter;
     this.modelName = modelName;
     this.cacheFilePath = cacheFilePath;
+    this.temperature = temperature;
     this.loadCache();
   }
 
@@ -54,13 +72,26 @@ export class CachedLLMAdapter implements LLMAdapter {
     }
   }
 
-  private computeKey(prompt: string): string {
-    return createHash("sha256").update(`${this.modelName}:${prompt}`).digest("hex");
+  public computeKey(prompt: string, responseSchemaName = "default"): string {
+    return computeCacheKey(this.modelName, prompt, this.temperature, responseSchemaName);
+  }
+
+  public clearCache(): void {
+    this.cache.clear();
+    this.cacheHits = 0;
+    this.cacheMisses = 0;
+    if (this.cacheFilePath && existsSync(this.cacheFilePath)) {
+      try {
+        unlinkSync(this.cacheFilePath);
+      } catch {
+        // ignore
+      }
+    }
   }
 
   async chat(messages: LLMMessage[], tools?: LLMToolDefinition[]): Promise<LLMResponse> {
     const prompt = messages.map((m) => `${m.role}:${m.content}`).join("\n");
-    const key = this.computeKey(prompt);
+    const key = this.computeKey(prompt, "chat");
 
     if (this.cache.has(key)) {
       this.cacheHits++;
@@ -79,8 +110,13 @@ export class CachedLLMAdapter implements LLMAdapter {
     schema: z.ZodType<T, z.ZodTypeDef, unknown>,
     systemPrompt?: string,
   ): Promise<T> {
+    const schemaName =
+      (schema as any)?.description ||
+      (schema as any)?._def?.description ||
+      schema.constructor?.name ||
+      "structured";
     const combinedPrompt = `${systemPrompt || ""}\n${prompt}`;
-    const key = this.computeKey(combinedPrompt);
+    const key = this.computeKey(combinedPrompt, schemaName);
 
     if (this.cache.has(key)) {
       this.cacheHits++;

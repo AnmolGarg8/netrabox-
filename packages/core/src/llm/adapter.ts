@@ -35,14 +35,30 @@ export interface LLMAdapter {
   ): Promise<T>;
 }
 
+export function computeLLMCacheKey(
+  model: string,
+  prompt: string,
+  temperature: number | string = 0.1,
+  responseSchemaName: string = "default",
+): string {
+  return createHash("sha256")
+    .update(`${model}${prompt}${temperature}${responseSchemaName}`, "utf8")
+    .digest("hex");
+}
+
 /**
- * In-memory response cache keyed by sha256(model + prompt + canonicalTools)
+ * In-memory response cache keyed by sha256(model + prompt + temperature + response schema name)
  */
 export class LLMResponseCache {
   private cache = new Map<string, string>();
 
-  public getCacheKey(model: string, input: string): string {
-    return createHash("sha256").update(`${model}:${input}`, "utf8").digest("hex");
+  public getCacheKey(
+    model: string,
+    input: string,
+    temperature: number | string = 0.1,
+    responseSchemaName: string = "default",
+  ): string {
+    return computeLLMCacheKey(model, input, temperature, responseSchemaName);
   }
 
   public get<T>(key: string): T | null {

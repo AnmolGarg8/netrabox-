@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import { generateKeyPairSync } from "node:crypto";
 import {
   validateCartAgainstConstraints,
+  extractConstraints,
   HONEST_MERCHANT,
   MALICIOUS_MERCHANT,
   type ProposedCart,
@@ -47,6 +48,216 @@ export async function runScenario(
   console.log(`\n==================================================================`);
   console.log(`  RUNNING SCENARIO: ${scenarioName.toUpperCase()}`);
   console.log(`==================================================================`);
+
+  const knownScenarios = ["honest-purchase", "wrongsize-delivered", "injection-attempt", "false-claim"];
+  if (!knownScenarios.includes(scenarioName) || scenarioName === "plain-sentence") {
+    const rawUserPrompt =
+      scenarioName === "plain-sentence"
+        ? "Buy Sony XM5 wireless headphones under $360"
+        : scenarioName;
+
+    console.log(`[Natural Language Prompt]: "${rawUserPrompt}"`);
+    console.log(`[Step 1] Extracting structured constraints via Intent Guard extractor...`);
+    let constraints = await extractConstraints(rawUserPrompt);
+    console.log(`[Extracted Constraints]:`, JSON.stringify(constraints, null, 2));
+
+    // 1. Initialize Purchase in DRAFT
+    const purchase: PurchaseRecord = {
+      id: purchaseId,
+      buyerId: "user_shopper",
+      agentId: "agent_gemini_shopper",
+      merchantId: HONEST_MERCHANT.id,
+      title: constraints.itemDescription || "Online Purchase",
+      state: "DRAFT",
+      currency: constraints.currency || "USD",
+      amountMinor: constraints.budgetMinor || 34999,
+      capturedAmountMinor: 0,
+      refundedAmountMinor: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    store.purchases.set(purchaseId, purchase);
+
+    // 2. Record INSTRUCTION_RECEIVED evidence before search
+    await evidenceService.appendEvent({
+      purchaseId,
+      type: "INSTRUCTION_RECEIVED",
+      actor: "user",
+      payload: { prompt: rawUserPrompt, buyerId: "user_shopper" },
+      signingPrivateKeyHex: privKeyHex,
+    });
+
+    // 3. Record CONSTRAINTS_EXTRACTED evidence before search
+    await evidenceService.appendEvent({
+      purchaseId,
+      type: "CONSTRAINTS_EXTRACTED",
+      actor: "system",
+      payload: {
+        hardConstraints: constraints as unknown as Record<string, unknown>,
+        ambiguousFields: constraints.ambiguousFields,
+      },
+      signingPrivateKeyHex: privKeyHex,
+    });
+
+    // 4. Check Ambiguity: if any key field is ambiguous, confirm or correct
+    const isBudgetMissing = constraints.budgetMinor === undefined || constraints.budgetMinor <= 0;
+    const isAmbiguous =
+      (constraints.ambiguousFields && constraints.ambiguousFields.length > 0) || isBudgetMissing;
+    if (isAmbiguous) {
+      console.log(`[Step 1b] Ambiguous fields detected: ${constraints.ambiguousFields.join(", ") || "budget"}`);
+      if (mockApproval) {
+        console.log(`[Step 1b] Buyer confirms extracted constraints with budget fallback ($360.00)`);
+        constraints = {
+          ...constraints,
+          budgetMinor: constraints.budgetMinor || 36000,
+          ambiguousFields: [],
+        };
+        await evidenceService.appendEvent({
+          purchaseId,
+          type: "USER_APPROVAL",
+          actor: "user",
+          payload: { approved: true, userNotes: "User confirmed constraints with budget ceiling" },
+          signingPrivateKeyHex: privKeyHex,
+        });
+      } else {
+        await evidenceService.appendEvent({
+          purchaseId,
+          type: "USER_APPROVAL",
+          actor: "user",
+          payload: { approved: false, reason: "Ambiguous constraints rejected" },
+          signingPrivateKeyHex: privKeyHex,
+        });
+        return {
+          scenarioName,
+          success: false,
+          purchaseId,
+          finalState: "DRAFT",
+          intentGuardStatus: "BLOCK",
+          details: "Execution halted: Ambiguous constraints not confirmed by user.",
+        };
+      }
+    }
+
+    // 5. Select product from shop & assemble cart
+    const matchedProduct =
+      HONEST_MERCHANT.products.find(
+        (p) =>
+          (!constraints.brand || p.brand.toLowerCase() === constraints.brand.toLowerCase()) &&
+          (!constraints.color || p.color?.toLowerCase() === constraints.color.toLowerCase()),
+      ) || HONEST_MERCHANT.products[0];
+
+    const cart: ProposedCart = {
+      items: [
+        {
+          sku: matchedProduct.sku,
+          name: matchedProduct.name,
+          priceMinor: matchedProduct.priceMinor,
+          quantity: constraints.quantity || 1,
+        },
+      ],
+      currency: constraints.currency || "USD",
+      totalMinor: matchedProduct.priceMinor * (constraints.quantity || 1),
+      merchantQuoteId: `quote_${matchedProduct.id}_${Date.now()}`,
+    };
+
+    console.log(`[Step 2] Assembled proposed cart: ${cart.items[0].name} ($${(cart.totalMinor! / 100).toFixed(2)})`);
+    console.log(`[Step 3] Running Intent Guard deterministic verification...`);
+    const intentCheck = validateCartAgainstConstraints(cart, constraints);
+    console.log(`[Intent Guard] Status: ${intentCheck.status} (Score: ${intentCheck.score})`);
+
+    await evidenceService.appendEvent({
+      purchaseId,
+      type: "INTENT_CHECK_RESULT",
+      actor: "system",
+      payload: {
+        passed: intentCheck.status !== "BLOCK",
+        score: intentCheck.score,
+        reason: intentCheck.reasons.join("; "),
+        extractedConstraints: constraints as unknown as Record<string, unknown>,
+      },
+      signingPrivateKeyHex: privKeyHex,
+    });
+
+    if (intentCheck.status === "BLOCK") {
+      await stateMachine.transition({
+        purchaseId,
+        action: "FAIL_INTENT_CHECK",
+        actor: "system",
+        payload: { intentCheck },
+        signingPrivateKeyHex: privKeyHex,
+      });
+
+      return {
+        scenarioName,
+        success: false,
+        purchaseId,
+        finalState: store.purchases.get(purchaseId)!.state,
+        intentGuardStatus: "BLOCK",
+        details: `Intent Guard blocked purchase: ${intentCheck.reasons.join(", ")}`,
+      };
+    }
+
+    await stateMachine.transition({
+      purchaseId,
+      action: "PASS_INTENT_CHECK",
+      actor: "system",
+      payload: { intentCheck },
+      signingPrivateKeyHex: privKeyHex,
+    });
+
+    await stateMachine.transition({
+      purchaseId,
+      action: "REQUEST_APPROVAL",
+      actor: "agent",
+      payload: { cart },
+      signingPrivateKeyHex: privKeyHex,
+    });
+
+    if (mockApproval) {
+      console.log(`[Step 4] MOCK_APPROVAL: Simulating PayPal sandbox buyer authorization`);
+      await stateMachine.transition({
+        purchaseId,
+        action: "APPROVE_AND_AUTHORIZE",
+        actor: "user",
+        payload: { authorizationId: `AUTH_${Date.now()}` },
+        signingPrivateKeyHex: privKeyHex,
+        patch: { paypalAuthorizationId: `AUTH_${Date.now()}` },
+      });
+
+      console.log(`[Step 5] Merchant fulfillment: On-time delivery recorded`);
+      await stateMachine.transition({
+        purchaseId,
+        action: "RECORD_DELIVERY",
+        actor: "merchant",
+        payload: { trackingNumber: `TRK_${Date.now()}`, carrier: "UPS" },
+        signingPrivateKeyHex: privKeyHex,
+      });
+
+      console.log(`[Step 6] PayPal settlement: Full capture executed`);
+      await stateMachine.transition({
+        purchaseId,
+        action: "CAPTURE_PAYMENT",
+        actor: "system",
+        payload: { captureId: `CAP_${Date.now()}` },
+        signingPrivateKeyHex: privKeyHex,
+        patch: { capturedAmountMinor: cart.totalMinor },
+      });
+    }
+
+    const verify = await evidenceService.verifyChain(purchaseId, pubKeyHex);
+    console.log(
+      `[Audit] Cryptographic Chain Verification: ${verify.valid ? "PASSED ✅" : "FAILED ❌"}`,
+    );
+
+    return {
+      scenarioName,
+      success: verify.valid && store.purchases.get(purchaseId)?.state === "CAPTURED",
+      purchaseId,
+      finalState: store.purchases.get(purchaseId)!.state,
+      intentGuardStatus: intentCheck.status,
+      details: "Completed plain sentence shopping flow with Intent Guard extractor.",
+    };
+  }
 
   if (scenarioName === "honest-purchase") {
     // 1. Initialize Purchase
@@ -395,7 +606,13 @@ export async function runScenario(
 }
 
 async function main() {
-  const scenarios = ["honest-purchase", "wrongsize-delivered", "injection-attempt", "false-claim"];
+  const scenarios = [
+    "honest-purchase",
+    "wrongsize-delivered",
+    "injection-attempt",
+    "false-claim",
+    "Buy Sony XM5 wireless headphones under $360",
+  ];
   const target = process.argv[2];
 
   const toRun = target ? [target] : scenarios;

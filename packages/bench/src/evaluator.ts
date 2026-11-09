@@ -61,20 +61,42 @@ export class TribunalDryRunEvaluator {
       validEvidenceIds,
     };
 
-    const buyerBrief = await this.buyerAdvocate.generateBrief(advocateInput);
-    const merchantBrief = await this.merchantAdvocate.generateBrief(advocateInput);
+    let buyerBrief;
+    let merchantBrief;
+    let verdict;
+    try {
+      buyerBrief = await this.buyerAdvocate.generateBrief(advocateInput);
+      merchantBrief = await this.merchantAdvocate.generateBrief(advocateInput);
 
-    // =========================================================================
-    // STEP 3: IMPARTIAL CHIEF JUDGE VERDICT
-    // =========================================================================
-    const verdict = await this.chiefJudge.evaluateDispute({
-      disputeReason: testCase.claim.reason,
-      disputedAmountMinor: testCase.claim.disputedAmountMinor,
-      buyerBrief,
-      merchantBrief,
-      events: testCase.evidenceChain,
-      validEvidenceIds,
-    });
+      // =========================================================================
+      // STEP 3: IMPARTIAL CHIEF JUDGE VERDICT
+      // =========================================================================
+      verdict = await this.chiefJudge.evaluateDispute({
+        disputeReason: testCase.claim.reason,
+        disputedAmountMinor: testCase.claim.disputedAmountMinor,
+        buyerBrief,
+        merchantBrief,
+        events: testCase.evidenceChain,
+        validEvidenceIds,
+      });
+    } catch (err) {
+      const latencyMs = Math.round(performance.now() - startTime);
+      return {
+        classification: "BLOCKED",
+        refundAmountMinor: 0,
+        executedAction: "ESCALATE",
+        liabilitySplit: { buyer: 0, agentProvider: 0, merchant: 0 },
+        integrityValid: true,
+        requiresHumanReview: true,
+        confidence: 0.0,
+        latencyMs,
+        classificationMatch:
+          testCase.groundTruth.classification === "BLOCKED" ||
+          Boolean(testCase.groundTruth.shouldEscalate),
+        refundErrorMinor: Math.abs(0 - testCase.groundTruth.correctRefundAmountMinor),
+        passedPolicyEngine: false,
+      };
+    }
 
     // =========================================================================
     // STEP 4: DETERMINISTIC POLICY ENGINE ENFORCEMENT & DRY-RUN SETTLEMENT

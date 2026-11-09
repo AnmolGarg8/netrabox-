@@ -12,6 +12,7 @@ import { disputeRoutes } from "./routes/disputes.js";
 import { benchRoutes } from "./routes/bench.js";
 import { EvidenceService } from "./services/evidence/service.js";
 import { TribunalRunner } from "./services/tribunal/runner.js";
+import { AuthExpiryMonitorJob } from "./services/jobs/auth-expiry.js";
 import {
   MockLLMAdapter,
   GeminiLLMAdapter,
@@ -20,6 +21,8 @@ import {
   validateEd25519PrivateKey,
   getPublicKeyFromPrivate,
 } from "@netrabox/core";
+import { PolicyEngine } from "@netrabox/core";
+import { SettlementService } from "./services/settlement/service.js";
 
 export const PINO_REDACT_PATHS = [
   "req.headers.authorization",
@@ -59,15 +62,14 @@ export const PINO_REDACT_PATHS = [
   "body.signingPrivateKeyHex",
 ];
 
-import { PolicyEngine } from "@netrabox/core";
-import { SettlementService } from "./services/settlement/service.js";
-
 export interface ServerOptions {
   store?: IStateStore;
   paypalClient?: PayPalClient;
   evidenceService?: EvidenceService;
   tribunalRunner?: TribunalRunner;
   settlementService?: SettlementService;
+  authExpiryJob?: AuthExpiryMonitorJob;
+  authExpiryIntervalMs?: number;
   llm?: LLMAdapter;
   signingPrivateKeyHex?: string;
   signingPublicKeyHex?: string;
@@ -98,10 +100,8 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
 
   app.register(sensible);
 
-  // Initialize backing state store
-  const store =
-    options.store ||
-    (process.env.DATABASE_URL ? new DrizzleStateStore() : new InMemoryStateStore());
+  // Initialize backing state store (Default: DrizzleStateStore powered by Postgres)
+  const store = options.store || new DrizzleStateStore();
 
   // Initialize PayPal client
   const paypalClient =
@@ -115,8 +115,6 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
     });
 
   // Strict Ed25519 Keypair Resolution:
-  // In non-test environments, fail fast if SIGNING_PRIVATE_KEY is missing or malformed.
-  // In tests, dynamically generate a fresh ephemeral keypair if none was provided. Never use a fixed literal.
   let signingPrivateKeyHex = options.signingPrivateKeyHex || process.env.SIGNING_PRIVATE_KEY;
   let signingPublicKeyHex = options.signingPublicKeyHex || process.env.SIGNING_PUBLIC_KEY;
 
@@ -159,10 +157,11 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
     options.settlementService ||
     new SettlementService(store, paypalClient, policyEngine, signingPrivateKeyHex);
 
+  const geminiApiKey = process.env.LLM_API_KEY || process.env.GOOGLE_AI_API_KEY;
   const llm =
     options.llm ||
-    (process.env.LLM_PROVIDER === "google" && process.env.LLM_API_KEY
-      ? new GeminiLLMAdapter(process.env.LLM_API_KEY, process.env.LLM_MODEL)
+    (process.env.LLM_PROVIDER === "google" && geminiApiKey
+      ? new GeminiLLMAdapter(geminiApiKey, process.env.LLM_MODEL)
       : new MockLLMAdapter());
 
   const tribunalRunner =
@@ -175,12 +174,48 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
       llm,
       signingPrivateKeyHex,
       settlementService,
+      db: (store as any)?.getDb?.(),
+    });
+
+  const authExpiryJob =
+    options.authExpiryJob ||
+    new AuthExpiryMonitorJob(settlementService, {
+      signingPrivateKeyHex,
+      autoVoidCloseToExpiry: true,
     });
 
   const publicBaseUrl =
     options.publicBaseUrl || process.env.PUBLIC_BASE_URL || "http://localhost:4000";
   const dashboardUrl = options.dashboardUrl || process.env.DASHBOARD_URL || "http://localhost:3000";
-  const demoMode = options.demoMode ?? process.env.DEMO_MODE === "true";
+  const demoMode = options.demoMode ?? (process.env.DEMO_MODE === "true" || isTest);
+
+  // Wire AuthExpiryMonitorJob into server background tick on configurable interval
+  const authExpiryIntervalMs =
+    options.authExpiryIntervalMs ??
+    (process.env.AUTH_EXPIRY_INTERVAL_MS ? Number(process.env.AUTH_EXPIRY_INTERVAL_MS) : (isTest ? 0 : 60000));
+
+  if (authExpiryIntervalMs > 0) {
+    const timer = setInterval(async () => {
+      try {
+        await authExpiryJob.runScan(store);
+      } catch (err) {
+        app.log.error(err, "Error in AuthExpiryMonitorJob background tick");
+      }
+    }, authExpiryIntervalMs);
+    timer.unref?.();
+
+    app.addHook("onClose", async () => {
+      clearInterval(timer);
+    });
+  }
+
+  const handleAuthExpiryEndpoint = async (_request: any, reply: any) => {
+    if (!demoMode && !isTest) {
+      return reply.status(403).send({ error: "Endpoint only available in demo mode" });
+    }
+    const scanResult = await authExpiryJob.runScan(store);
+    return reply.send(scanResult);
+  };
 
   // Register API routes
   app.register(
@@ -202,6 +237,9 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
         const result = await settlementService.reconcile(body.olderThanMs ?? 30000);
         return reply.send({ status: "ok", ...result });
       });
+
+      // Jobs auth-expiry endpoint (demo only)
+      api.post("/jobs/auth-expiry", handleAuthExpiryEndpoint);
 
       // Purchase lifecycle routes
       api.register(purchaseRoutes, {
@@ -227,6 +265,7 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
         signingPrivateKeyHex,
         store,
         settlementService,
+        db: (store as any)?.getDb?.(),
       });
 
       // Webhooks
@@ -234,6 +273,7 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
         paypalClient,
         stateMachine,
         signingPrivateKeyHex,
+        db: (store as any)?.getDb?.(),
       });
 
       // DisputeBench routes
@@ -251,6 +291,9 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
     const result = await settlementService.reconcile(body.olderThanMs ?? 30000);
     return reply.send({ status: "ok", ...result });
   });
+
+  // Root /jobs/auth-expiry compatibility (demo only)
+  app.post("/jobs/auth-expiry", handleAuthExpiryEndpoint);
 
   // Root /health compatibility
   app.get("/health", async () => {

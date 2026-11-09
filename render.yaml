@@ -14,8 +14,8 @@ services:
     runtime: node
     plan: free
     region: oregon
-    buildCommand: pnpm install --frozen-lockfile && pnpm --filter @netrabox/core build && pnpm --filter @netrabox/api build
-    startCommand: pnpm --filter @netrabox/api start
+    buildCommand: pnpm install --frozen-lockfile && pnpm --filter @netrabox/core build && pnpm --filter @netrabox/sdk build && pnpm --filter @netrabox/bench build && pnpm --filter @netrabox/api build
+    startCommand: pnpm --filter @netrabox/core db:migrate && pnpm --filter @netrabox/api start
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV

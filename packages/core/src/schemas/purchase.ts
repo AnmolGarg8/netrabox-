@@ -51,6 +51,7 @@ export const CartItemSchema = z.object({
 export const ProposedCartSchema = z.object({
   items: z.array(CartItemSchema).min(1),
   merchantQuoteId: z.string().min(1),
+  currency: z.string().length(3).optional(),
   subtotalMinor: z.number().int().nonnegative().optional(),
   shippingMinor: z.number().int().nonnegative().optional(),
   taxMinor: z.number().int().nonnegative().optional(),

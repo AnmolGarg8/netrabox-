@@ -1,4 +1,8 @@
 import type { FastifyPluginAsync } from "fastify";
+import { randomUUID } from "node:crypto";
+import { eq } from "drizzle-orm";
+import { webhookLogs } from "@netrabox/core/schemas";
+import { db as defaultDb, type DbType } from "@netrabox/core/db";
 import type { PayPalClient } from "../services/paypal/client.js";
 import type { PurchaseStateMachineService } from "../services/state-machine/machine.js";
 
@@ -6,13 +10,13 @@ export interface WebhookRouteOptions {
   paypalClient: PayPalClient;
   stateMachine: PurchaseStateMachineService;
   signingPrivateKeyHex: string;
-  processedEventIds?: Set<string>;
+  db?: DbType;
   findPurchaseByPayPalId?: (paypalId: string) => Promise<string | null>;
 }
 
 export const webhookRoutes: FastifyPluginAsync<WebhookRouteOptions> = async (fastify, opts) => {
   const { paypalClient, stateMachine, signingPrivateKeyHex } = opts;
-  const processedEventIds = opts.processedEventIds || new Set<string>();
+  const db = opts.db || defaultDb;
 
   fastify.post("/webhooks/paypal", async (request, reply) => {
     const headers = request.headers;
@@ -38,13 +42,31 @@ export const webhookRoutes: FastifyPluginAsync<WebhookRouteOptions> = async (fas
       return reply.status(400).send({ error: "Malformed webhook payload" });
     }
 
-    // 1. Idempotency check: ignore duplicate processed events
-    if (processedEventIds.has(eventId)) {
+    // 1. Idempotency via database: insert with ON CONFLICT DO NOTHING
+    const inserted = await db
+      .insert(webhookLogs)
+      .values({
+        id: `wb_${randomUUID()}`,
+        eventId,
+        eventType,
+        summary: (body?.summary as string) || `Webhook event: ${eventType}`,
+        rawPayload: body,
+        verified: false,
+        processed: false,
+        createdAt: new Date(),
+      })
+      .onConflictDoNothing({ target: webhookLogs.eventId })
+      .returning();
+
+    // If nothing was inserted, it is a duplicate event
+    if (!inserted || inserted.length === 0) {
       return reply.status(200).send({
         status: "ignored_duplicate",
         eventId,
       });
     }
+
+    const logRecord = inserted[0];
 
     // 2. Verify signature with PayPal API
     const isVerified = await paypalClient.verifyWebhookSignature({
@@ -61,6 +83,11 @@ export const webhookRoutes: FastifyPluginAsync<WebhookRouteOptions> = async (fas
         error: "PayPal webhook signature verification failed",
       });
     }
+
+    await db
+      .update(webhookLogs)
+      .set({ verified: true })
+      .where(eq(webhookLogs.id, logRecord.id));
 
     // 3. Map event to state machine transitions
     // Attempt to extract purchaseId from custom_id, invoice_id, or purchase unit reference_id
@@ -153,7 +180,10 @@ export const webhookRoutes: FastifyPluginAsync<WebhookRouteOptions> = async (fas
       }
     }
 
-    processedEventIds.add(eventId);
+    await db
+      .update(webhookLogs)
+      .set({ processed: true })
+      .where(eq(webhookLogs.id, logRecord.id));
 
     return reply.status(200).send({
       status: "processed",

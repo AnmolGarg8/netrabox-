@@ -1,8 +1,11 @@
 import type { FastifyPluginAsync } from "fastify";
 import { randomUUID } from "node:crypto";
-import { OpenDisputeInputSchema, type EvidenceActor } from "@netrabox/core";
+import { eq, desc } from "drizzle-orm";
+import { OpenDisputeInputSchema, type EvidenceActor, type DisputePhase } from "@netrabox/core";
+import { purchases, disputes, tribunalRuns } from "@netrabox/core/schemas";
+import { db as defaultDb, type DbType } from "@netrabox/core/db";
 import type { TribunalRunner } from "../services/tribunal/runner.js";
-import type { DisputeRecord, TribunalRunRecord } from "../services/tribunal/types.js";
+import type { DisputeRecord } from "../services/tribunal/types.js";
 import type {
   PurchaseStateMachineService,
   IStateStore,
@@ -16,18 +19,17 @@ export interface DisputeRouteOptions {
   signingPrivateKeyHex: string;
   store?: IStateStore;
   settlementService?: SettlementService;
-  disputesMap?: Map<string, DisputeRecord>;
-  tribunalRunsMap?: Map<string, TribunalRunRecord>;
+  db?: DbType;
 }
 
 export const disputeRoutes: FastifyPluginAsync<DisputeRouteOptions> = async (fastify, opts) => {
   const { tribunalRunner, stateMachine, signingPrivateKeyHex, store, settlementService } = opts;
-  const disputes = opts.disputesMap || new Map<string, DisputeRecord>();
-  const tribunalRuns = opts.tribunalRunsMap || new Map<string, TribunalRunRecord>();
+  const db = opts.db || (store as any)?.getDb?.() || defaultDb;
 
   /**
    * 1. POST /disputes
-   * Opens a dispute, sets state to DISPUTED, and launches the autonomous tribunal
+   * Opens a dispute, records in Postgres disputes table, sets state to DISPUTED,
+   * and launches the autonomous tribunal
    */
   fastify.post("/disputes", async (request, reply) => {
     const parseResult = OpenDisputeInputSchema.safeParse(request.body);
@@ -51,11 +53,60 @@ export const disputeRoutes: FastifyPluginAsync<DisputeRouteOptions> = async (fas
       purchaseId,
       reason: input.reason,
       status: "OPEN",
+      disputePhase: "TRIAGE" as DisputePhase,
       disputedAmountMinor: input.disputedAmountMinor,
-      claimantActor: input.claimantActor,
+      claimantActor: input.claimantActor as EvidenceActor,
       createdAt: new Date(),
     };
-    disputes.set(disputeId, dispute);
+
+    // Ensure parent purchase exists in Postgres for foreign key constraint
+    const existingPurchase = await db
+      .select()
+      .from(purchases)
+      .where(eq(purchases.id, purchaseId))
+      .limit(1);
+
+    if (!existingPurchase || existingPurchase.length === 0) {
+      if (store) {
+        const memPurchase = await store.getPurchase(purchaseId);
+        if (memPurchase) {
+          await db
+            .insert(purchases)
+            .values({
+              id: memPurchase.id,
+              buyerId: memPurchase.buyerId || "usr_unknown",
+              agentId: memPurchase.agentId || "agent_unknown",
+              merchantId: memPurchase.merchantId || "merch_unknown",
+              title: memPurchase.title || "Purchase " + memPurchase.id,
+              state: memPurchase.state || "DRAFT",
+              currency: memPurchase.currency || "USD",
+              amountMinor: memPurchase.amountMinor || 0,
+              capturedAmountMinor: memPurchase.capturedAmountMinor || 0,
+              refundedAmountMinor: memPurchase.refundedAmountMinor || 0,
+              paypalOrderId: memPurchase.paypalOrderId || null,
+              paypalAuthorizationId: memPurchase.paypalAuthorizationId || null,
+              paypalCaptureId: memPurchase.paypalCaptureId || null,
+              intentCheckPassed: memPurchase.intentCheckPassed || false,
+              metadata: memPurchase.metadata || {},
+              createdAt: new Date(memPurchase.createdAt || Date.now()),
+              updatedAt: new Date(memPurchase.updatedAt || Date.now()),
+            })
+            .onConflictDoNothing();
+        }
+      }
+    }
+
+    // Insert dispute record into Postgres via Drizzle
+    await db.insert(disputes).values({
+      id: dispute.id,
+      purchaseId: dispute.purchaseId,
+      reason: dispute.reason,
+      status: dispute.status,
+      disputePhase: dispute.disputePhase,
+      disputedAmountMinor: dispute.disputedAmountMinor,
+      claimantActor: dispute.claimantActor,
+      createdAt: dispute.createdAt,
+    });
 
     // Enter DISPUTED state in state machine
     try {
@@ -76,11 +127,20 @@ export const disputeRoutes: FastifyPluginAsync<DisputeRouteOptions> = async (fas
       });
     }
 
-    // Launch Autonomous Tribunal asynchronously / synchronously
-    const outcome = await tribunalRunner.runTribunal(dispute, disputes, tribunalRuns);
+    // Launch Autonomous Tribunal
+    const outcome = await tribunalRunner.runTribunal(dispute);
+
+    // Read back latest dispute state from Postgres to reflect tribunal updates
+    const disputeRows = await db
+      .select()
+      .from(disputes)
+      .where(eq(disputes.id, disputeId))
+      .limit(1);
+
+    const disputeToReturn = disputeRows[0] || outcome.dispute;
 
     return reply.status(201).send({
-      dispute: outcome.dispute,
+      dispute: disputeToReturn,
       tribunalRun: outcome.tribunalRun,
       verdict: outcome.verdict,
       executedAction: outcome.executedAction,
@@ -90,29 +150,43 @@ export const disputeRoutes: FastifyPluginAsync<DisputeRouteOptions> = async (fas
 
   /**
    * 2. GET /disputes/:id
-   * Retrieves dispute record and tribunal transcript
+   * Retrieves dispute record and tribunal transcript from Postgres via Drizzle
    */
   fastify.get("/disputes/:id", async (request, reply) => {
     const { id } = request.params as { id: string };
-    const dispute = disputes.get(id);
-    if (!dispute) {
+
+    const disputeRows = await db
+      .select()
+      .from(disputes)
+      .where(eq(disputes.id, id))
+      .limit(1);
+
+    if (!disputeRows || disputeRows.length === 0) {
       return reply.status(404).send({ error: "Dispute not found" });
     }
 
-    const run = Array.from(tribunalRuns.values()).find((r) => r.disputeId === id);
+    const runRows = await db
+      .select()
+      .from(tribunalRuns)
+      .where(eq(tribunalRuns.disputeId, id))
+      .orderBy(desc(tribunalRuns.createdAt))
+      .limit(1);
 
     return reply.send({
-      dispute,
-      tribunalRun: run || null,
+      dispute: disputeRows[0],
+      tribunalRun: runRows[0] || null,
     });
   });
 
   /**
    * 3. GET /disputes/human-review
-   * Lists all disputes requiring human review / escalation
+   * Lists all disputes requiring human review / escalation from Postgres
    */
   fastify.get("/disputes/human-review", async (_request, reply) => {
-    const list = Array.from(disputes.values()).filter((d) => d.status === "NEEDS_HUMAN_REVIEW");
+    const list = await db
+      .select()
+      .from(disputes)
+      .where(eq(disputes.status, "NEEDS_HUMAN_REVIEW"));
 
     return reply.send({
       count: list.length,
@@ -122,14 +196,22 @@ export const disputeRoutes: FastifyPluginAsync<DisputeRouteOptions> = async (fas
 
   /**
    * 4. POST /disputes/:id/human-review
-   * Human judge overrides or approves the verdict
+   * Human judge overrides or approves the verdict; updates Postgres record
    */
   fastify.post("/disputes/:id/human-review", async (request, reply) => {
     const { id } = request.params as { id: string };
-    const dispute = disputes.get(id);
-    if (!dispute) {
+
+    const disputeRows = await db
+      .select()
+      .from(disputes)
+      .where(eq(disputes.id, id))
+      .limit(1);
+
+    if (!disputeRows || disputeRows.length === 0) {
       return reply.status(404).send({ error: "Dispute not found" });
     }
+
+    const dispute = disputeRows[0];
 
     const body = request.body as {
       overrideAction:
@@ -204,14 +286,27 @@ export const disputeRoutes: FastifyPluginAsync<DisputeRouteOptions> = async (fas
       });
     }
 
-    dispute.status = "RESOLVED";
-    dispute.resolutionState = body.overrideAction;
-    dispute.resolvedAt = new Date();
-    disputes.set(id, dispute);
+    const resolvedAt = new Date();
+    const updated = await db
+      .update(disputes)
+      .set({
+        status: "RESOLVED",
+        disputePhase: "RESOLVED",
+        resolutionState: body.overrideAction,
+        resolvedAt,
+      })
+      .where(eq(disputes.id, id))
+      .returning();
 
     return reply.send({
       status: "resolved_by_human",
-      dispute,
+      dispute: updated[0] || {
+        ...dispute,
+        status: "RESOLVED",
+        disputePhase: "RESOLVED",
+        resolutionState: body.overrideAction,
+        resolvedAt,
+      },
       overrideAction: body.overrideAction,
     });
   });

@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS "disputes" (
 	"purchase_id" text NOT NULL REFERENCES "purchases"("id") ON DELETE cascade,
 	"reason" text NOT NULL,
 	"status" text DEFAULT 'OPEN' NOT NULL,
+	"dispute_phase" text DEFAULT 'TRIAGE' NOT NULL,
 	"resolution_state" text,
 	"disputed_amount_minor" integer NOT NULL,
 	"claimant_actor" text NOT NULL,
@@ -96,3 +97,29 @@ CREATE INDEX IF NOT EXISTS "purchases_state_idx" ON "purchases" ("state");
 CREATE INDEX IF NOT EXISTS "purchases_paypal_order_idx" ON "purchases" ("paypal_order_id");
 CREATE UNIQUE INDEX IF NOT EXISTS "evidence_purchase_seq_idx" ON "evidence_events" ("purchase_id", "seq");
 CREATE INDEX IF NOT EXISTS "evidence_hash_idx" ON "evidence_events" ("hash");
+
+CREATE TABLE IF NOT EXISTS "settlement_actions" (
+	"id" text PRIMARY KEY NOT NULL,
+	"purchase_id" text NOT NULL REFERENCES "purchases"("id") ON DELETE cascade,
+	"dispute_id" text,
+	"kind" text NOT NULL,
+	"amount_minor" integer NOT NULL,
+	"currency" text DEFAULT 'USD' NOT NULL,
+	"idempotency_key" text NOT NULL UNIQUE,
+	"status" text DEFAULT 'PENDING' NOT NULL,
+	"requested_by" text NOT NULL,
+	"verdict_id" text,
+	"reviewer_id" text,
+	"reason" text,
+	"paypal_capture_id" text,
+	"paypal_refund_id" text,
+	"paypal_authorization_id" text,
+	"paypal_debug_id" text,
+	"error_message" text,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "settlement_idempotency_idx" ON "settlement_actions" ("idempotency_key");
+CREATE INDEX IF NOT EXISTS "settlement_purchase_idx" ON "settlement_actions" ("purchase_id");
+CREATE INDEX IF NOT EXISTS "settlement_status_idx" ON "settlement_actions" ("status");

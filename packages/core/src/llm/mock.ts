@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { LLMAdapter, LLMMessage, LLMResponse, LLMToolDefinition } from "./adapter.js";
+import { extractConstraintsHeuristic } from "../intent-guard/extractor.js";
 
 export type MockHandler = (
   messages: LLMMessage[],
@@ -64,21 +65,17 @@ export class MockLLMAdapter implements LLMAdapter {
     // If prompt asks to extract constraints from user prompt
     if (
       prompt.includes("extract constraints") ||
-      prompt.includes("budget") ||
-      prompt.includes("Sony")
+      prompt.includes("untrusted_user_instruction") ||
+      prompt.includes("StructuredConstraints")
     ) {
-      const mockConstraints = {
-        budgetMinor: 36000,
-        brand: "Sony",
-        color: "black",
-        mustHaves: ["noise canceling"],
-        forbidden: ["refurbished"],
-        quantity: 1,
-      };
-
-      const parsed = schema.safeParse(mockConstraints);
-      if (parsed.success) {
-        return parsed.data;
+      try {
+        const extracted = extractConstraintsHeuristic(prompt);
+        const parsed = schema.safeParse(extracted);
+        if (parsed.success) {
+          return parsed.data;
+        }
+      } catch {
+        // Fall back below
       }
     }
 

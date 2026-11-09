@@ -310,6 +310,8 @@ describe("SettlementService & Single Money-Movement Architecture", () => {
     const reconcileReport = await settlementService.reconcile(0);
     expect(reconcileReport.reconciled).toBe(1);
     expect(reconcileReport.actions[0].status).toBe("SUCCEEDED");
+    // Verify no second PayPal call was made during reconciliation
+    expect(captureCalls).toBe(1);
 
     // Purchase successfully transitioned to CAPTURED
     purchase = await store.getPurchase("pur_test_1");
@@ -319,6 +321,7 @@ describe("SettlementService & Single Money-Movement Architecture", () => {
     // Running reconcile again does nothing (already finalized)
     const secondReconcile = await settlementService.reconcile(0);
     expect(secondReconcile.reconciled).toBe(0);
+    expect(captureCalls).toBe(1);
   });
 
   it("PayPalClient.request throws when mutating POST is made without an idempotency key (exemption for webhook verification)", async () => {

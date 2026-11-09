@@ -7,6 +7,13 @@ settings:
 importers:
 
   .:
+    dependencies:
+      '@electric-sql/pglite':
+        specifier: ^0.5.15
+        version: 0.5.15
+      drizzle-orm:
+        specifier: ^0.38.4
+        version: 0.38.4(@electric-sql/pglite@0.5.15)(@types/react@18.3.31)(postgres@3.4.9)(react@18.3.1)
     devDependencies:
       '@types/node':
         specifier: ^22.10.2
@@ -32,6 +39,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@electric-sql/pglite':
+        specifier: ^0.5.15
+        version: 0.5.15
       '@fastify/cors':
         specifier: ^10.0.1
         version: 10.1.0
@@ -52,7 +62,7 @@ importers:
         version: 16.6.1
       drizzle-orm:
         specifier: ^0.38.3
-        version: 0.38.4(@types/react@18.3.31)(postgres@3.4.9)(react@18.3.1)
+        version: 0.38.4(@electric-sql/pglite@0.5.15)(@types/react@18.3.31)(postgres@3.4.9)(react@18.3.1)
       fastify:
         specifier: ^5.2.0
         version: 5.12.8
@@ -137,9 +147,12 @@ importers:
 
   packages/core:
     dependencies:
+      '@electric-sql/pglite':
+        specifier: ^0.5.15
+        version: 0.5.15
       drizzle-orm:
         specifier: ^0.38.3
-        version: 0.38.4(@types/react@18.3.31)(postgres@3.4.9)(react@18.3.1)
+        version: 0.38.4(@electric-sql/pglite@0.5.15)(@types/react@18.3.31)(postgres@3.4.9)(react@18.3.1)
       postgres:
         specifier: ^3.4.5
         version: 3.4.9
@@ -184,6 +197,9 @@ packages:
 
   '@drizzle-team/brocli@0.10.2':
     resolution: {integrity: sha512-z33Il7l5dKjUgGULTqBsQBQwckHh5AbIuxhdsIxDDiZAzBOrZO6q9ogcWC65kU382AfynTfgNumVcNIjuIua6w==}
+
+  '@electric-sql/pglite@0.5.15':
+    resolution: {integrity: sha512-ERZWgaRTxueGV4cvL1tfpAOzFCWTXoUtbCBqnf2FhHDVs/so9eAKaanvrwWF9Dntx7BYsmFQujVQ0/B4S8Mmiw==}
 
   '@esbuild-kit/core-utils@3.3.2':
     resolution: {integrity: sha512-sPRAnw9CdSsRmEtnsl2WXWdyquogVpB3yZ3dgwJfe8zrOzTsV7cJvmwrKVa+0ma5BoiGJ+BoqkMvawbayKUsqQ==}
@@ -2422,6 +2438,8 @@ snapshots:
 
   '@drizzle-team/brocli@0.10.2': {}
 
+  '@electric-sql/pglite@0.5.15': {}
+
   '@esbuild-kit/core-utils@3.3.2':
     dependencies:
       esbuild: 0.18.20
@@ -2763,7 +2781,7 @@ snapshots:
   '@fastify/ajv-compiler@4.0.7':
     dependencies:
       ajv: 8.20.0
-      ajv-formats: 3.0.1
+      ajv-formats: 3.0.1(ajv@8.20.0)
       fast-uri: 4.2.3
 
   '@fastify/cors@10.1.0':
@@ -3123,8 +3141,8 @@ snapshots:
 
   acorn@8.19.0: {}
 
-  ajv-formats@3.0.1:
-    dependencies:
+  ajv-formats@3.0.1(ajv@8.20.0):
+    optionalDependencies:
       ajv: 8.20.0
 
   ajv@6.15.0:
@@ -3302,8 +3320,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.38.4(@types/react@18.3.31)(postgres@3.4.9)(react@18.3.1):
+  drizzle-orm@0.38.4(@electric-sql/pglite@0.5.15)(@types/react@18.3.31)(postgres@3.4.9)(react@18.3.1):
     optionalDependencies:
+      '@electric-sql/pglite': 0.5.15
       '@types/react': 18.3.31
       postgres: 3.4.9
       react: 18.3.1
@@ -3527,7 +3546,7 @@ snapshots:
     dependencies:
       '@fastify/merge-json-schemas': 0.2.2
       ajv: 8.20.0
-      ajv-formats: 3.0.1
+      ajv-formats: 3.0.1(ajv@8.20.0)
       fast-uri: 4.2.3
       json-schema-ref-resolver: 3.0.1
       rfdc: 1.4.1

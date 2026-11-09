@@ -5,19 +5,38 @@ import {
   type PurchaseState,
 } from "@netrabox/core";
 import { purchases, evidenceEvents, settlementActions } from "@netrabox/core/schemas";
-import { db } from "@netrabox/core/db";
+import { db as defaultDb, type DbType } from "@netrabox/core/db";
 import type { IStateStore } from "./machine.js";
 import type { PurchaseRecord } from "./types.js";
 
 export class DrizzleStateStore implements IStateStore {
+  private db: DbType;
+
+  constructor(customDb?: DbType) {
+    this.db = customDb || defaultDb;
+  }
+
+  public getDb(): DbType {
+    return this.db;
+  }
+
+  async listPurchases(filter?: { state?: PurchaseState }): Promise<PurchaseRecord[]> {
+    if (filter?.state) {
+      const rows = await this.db.select().from(purchases).where(eq(purchases.state, filter.state));
+      return rows as unknown as PurchaseRecord[];
+    }
+    const rows = await this.db.select().from(purchases);
+    return rows as unknown as PurchaseRecord[];
+  }
+
   async getPurchase(purchaseId: string): Promise<PurchaseRecord | null> {
-    const rows = await db.select().from(purchases).where(eq(purchases.id, purchaseId)).limit(1);
+    const rows = await this.db.select().from(purchases).where(eq(purchases.id, purchaseId)).limit(1);
     if (!rows || rows.length === 0) return null;
     return rows[0] as unknown as PurchaseRecord;
   }
 
   async getLastEvidenceEvent(purchaseId: string): Promise<EvidenceEvent | null> {
-    const rows = await db
+    const rows = await this.db
       .select()
       .from(evidenceEvents)
       .where(eq(evidenceEvents.purchaseId, purchaseId))
@@ -25,17 +44,24 @@ export class DrizzleStateStore implements IStateStore {
       .limit(1);
 
     if (!rows || rows.length === 0) return null;
-    return rows[0] as unknown as EvidenceEvent;
+    const r = rows[0] as any;
+    return {
+      ...r,
+      createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt),
+    } as unknown as EvidenceEvent;
   }
 
   async getEvidenceEvents(purchaseId: string): Promise<EvidenceEvent[]> {
-    const rows = await db
+    const rows = await this.db
       .select()
       .from(evidenceEvents)
       .where(eq(evidenceEvents.purchaseId, purchaseId))
       .orderBy(asc(evidenceEvents.seq));
 
-    return rows as unknown as EvidenceEvent[];
+    return rows.map((r: any) => ({
+      ...r,
+      createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt),
+    })) as unknown as EvidenceEvent[];
   }
 
   async tamperEvidenceEvent(
@@ -43,7 +69,7 @@ export class DrizzleStateStore implements IStateStore {
     targetSeq: number,
     tamperedPayload: Record<string, unknown>,
   ): Promise<boolean> {
-    const updated = await db
+    const updated = await this.db
       .update(evidenceEvents)
       .set({ payload: tamperedPayload })
       .where(and(eq(evidenceEvents.purchaseId, purchaseId), eq(evidenceEvents.seq, targetSeq)))
@@ -58,8 +84,54 @@ export class DrizzleStateStore implements IStateStore {
     patch: Partial<PurchaseRecord>,
     event: EvidenceEvent,
   ): Promise<PurchaseRecord> {
-    return await db.transaction(async (tx) => {
-      // 1. Insert evidence event in the transaction
+    return await this.db.transaction(async (tx: any) => {
+      // 1. Ensure purchase record exists / update or insert FIRST so FK is satisfied
+      const existing = await tx
+        .select()
+        .from(purchases)
+        .where(eq(purchases.id, purchaseId))
+        .limit(1);
+
+      let resultRecord: PurchaseRecord;
+
+      if (!existing || existing.length === 0) {
+        const inserted = await tx
+          .insert(purchases)
+          .values({
+            id: purchaseId,
+            buyerId: (patch.buyerId as string) || "usr_unknown",
+            agentId: (patch.agentId as string) || "agent_unknown",
+            merchantId: (patch.merchantId as string) || "merch_unknown",
+            title: (patch.title as string) || `Purchase ${purchaseId}`,
+            state: patch.state || _nextState || "DRAFT",
+            currency: patch.currency || "USD",
+            amountMinor: patch.amountMinor ?? 0,
+            capturedAmountMinor: patch.capturedAmountMinor ?? 0,
+            refundedAmountMinor: patch.refundedAmountMinor ?? 0,
+            paypalOrderId: patch.paypalOrderId || null,
+            paypalAuthorizationId: patch.paypalAuthorizationId || null,
+            paypalCaptureId: patch.paypalCaptureId || null,
+            intentCheckPassed: patch.intentCheckPassed ?? false,
+            metadata: patch.metadata || {},
+            createdAt: patch.createdAt ? new Date(patch.createdAt) : new Date(),
+            updatedAt: new Date(),
+          })
+          .returning();
+        resultRecord = inserted[0] as unknown as PurchaseRecord;
+      } else {
+        const updatedRows = await tx
+          .update(purchases)
+          .set({
+            ...patch,
+            state: _nextState || patch.state || existing[0].state,
+            updatedAt: new Date(),
+          })
+          .where(eq(purchases.id, purchaseId))
+          .returning();
+        resultRecord = updatedRows[0] as unknown as PurchaseRecord;
+      }
+
+      // 2. Insert evidence event in the transaction
       await tx.insert(evidenceEvents).values({
         id: event.id,
         purchaseId: event.purchaseId,
@@ -74,22 +146,12 @@ export class DrizzleStateStore implements IStateStore {
         createdAt: new Date(event.createdAt),
       });
 
-      // 2. Update purchase record with next state and fields
-      const updatedRows = await tx
-        .update(purchases)
-        .set({
-          ...patch,
-          updatedAt: new Date(),
-        })
-        .where(eq(purchases.id, purchaseId))
-        .returning();
-
-      return updatedRows[0] as unknown as PurchaseRecord;
+      return resultRecord;
     });
   }
 
   async getSettlementAction(id: string): Promise<SettlementActionRecord | null> {
-    const rows = await db
+    const rows = await this.db
       .select()
       .from(settlementActions)
       .where(eq(settlementActions.id, id))
@@ -99,7 +161,7 @@ export class DrizzleStateStore implements IStateStore {
   }
 
   async getSettlementActionByIdempotencyKey(key: string): Promise<SettlementActionRecord | null> {
-    const rows = await db
+    const rows = await this.db
       .select()
       .from(settlementActions)
       .where(eq(settlementActions.idempotencyKey, key))
@@ -109,7 +171,7 @@ export class DrizzleStateStore implements IStateStore {
   }
 
   async createSettlementAction(action: SettlementActionRecord): Promise<SettlementActionRecord> {
-    const rows = await db
+    const rows = await this.db
       .insert(settlementActions)
       .values({
         ...action,
@@ -125,7 +187,7 @@ export class DrizzleStateStore implements IStateStore {
     patch: Partial<SettlementActionRecord>,
   ): Promise<SettlementActionRecord> {
     const { createdAt: _ca, updatedAt: _ua, ...cleanPatch } = patch;
-    const rows = await db
+    const rows = await this.db
       .update(settlementActions)
       .set({
         ...cleanPatch,
@@ -138,7 +200,7 @@ export class DrizzleStateStore implements IStateStore {
 
   async getUnreconciledSettlementActions(olderThanMs = 30000): Promise<SettlementActionRecord[]> {
     const cutoff = new Date(Date.now() - olderThanMs);
-    const rows = await db
+    const rows = await this.db
       .select()
       .from(settlementActions)
       .where(
@@ -157,7 +219,7 @@ export class DrizzleStateStore implements IStateStore {
     action: SettlementActionRecord;
     evidenceEvent: EvidenceEvent;
   }): Promise<{ existing: boolean; action: SettlementActionRecord }> {
-    return await db.transaction(async (tx) => {
+    return await this.db.transaction(async (tx: any) => {
       const existing = await tx
         .select()
         .from(settlementActions)
@@ -200,7 +262,7 @@ export class DrizzleStateStore implements IStateStore {
     evidenceEvents: EvidenceEvent[];
     actionPatch: Partial<SettlementActionRecord>;
   }): Promise<void> {
-    await db.transaction(async (tx) => {
+    await this.db.transaction(async (tx: any) => {
       // 1. Update settlement action to SUCCEEDED
       const {
         createdAt: _ca,
@@ -251,7 +313,7 @@ export class DrizzleStateStore implements IStateStore {
     patch: Partial<SettlementActionRecord>,
     failedEvent: EvidenceEvent,
   ): Promise<SettlementActionRecord> {
-    return await db.transaction(async (tx) => {
+    return await this.db.transaction(async (tx: any) => {
       const { createdAt: _ca, updatedAt: _ua, ...cleanPatch } = patch;
       const rows = await tx
         .update(settlementActions)

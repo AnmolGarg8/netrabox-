@@ -9,10 +9,10 @@ export interface WrapUntrustedOptions {
 export function removeControlCharacters(text: string): string {
   return (
     text
-      // ASCII control chars 0x00-0x08, 0x0B, 0x0C, 0x0E-0x1F, 0x7F
-      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "")
-      // Unicode directional formatting, zero-width characters, BOM
-      .replace(/[\u200B-\u200F\u202A-\u202E\uFEFF]/g, "")
+      // ASCII and Latin-1 control chars 0x00-0x08, 0x0B, 0x0C, 0x0E-0x1F, 0x7F-0x9F
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, "")
+      // Unicode directional formatting, zero-width characters, invisibles, and BOM
+      .replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF\uFFF9-\uFFFB]/g, "")
   );
 }
 
@@ -31,6 +31,12 @@ export function neutralizeDelimiters(text: string, tag: string): string {
   sanitized = sanitized.replace(targetClosingRegex, `[NEUTRALIZED_CLOSING_TAG]`);
   sanitized = sanitized.replace(targetOpeningRegex, `[NEUTRALIZED_OPENING_TAG]`);
 
+  // Defang HTML entity encoded closing/opening tags of the target tag
+  const entityClosingRegex = new RegExp(`&lt;/\\s*${cleanTag}\\s*&gt;`, "gi");
+  const entityOpeningRegex = new RegExp(`&lt;\\s*${cleanTag}\\s*&gt;`, "gi");
+  sanitized = sanitized.replace(entityClosingRegex, `[NEUTRALIZED_CLOSING_TAG]`);
+  sanitized = sanitized.replace(entityOpeningRegex, `[NEUTRALIZED_OPENING_TAG]`);
+
   // 2. Defang all other untrusted tags and closing tags
   sanitized = sanitized.replace(
     /<\/\s*untrusted_[a-zA-Z0-9_-]*\s*>/gi,
@@ -41,9 +47,9 @@ export function neutralizeDelimiters(text: string, tag: string): string {
     "[NEUTRALIZED_UNTRUSTED_TAG]",
   );
 
-  // 3. Defang fake SYSTEM_OVERRIDE, SYSTEM_ALERT, and system directives
+  // 3. Defang fake SYSTEM_OVERRIDE, SYSTEM_ALERT, ROLE_OVERRIDE, and system directives
   sanitized = sanitized.replace(
-    /<\/?\s*system[a-zA-Z0-9_-]*\s*>/gi,
+    /<\/?\s*(?:system|role|override|admin|prompt)[a-zA-Z0-9_-]*\s*>/gi,
     "[NEUTRALIZED_SYSTEM_DIRECTIVE]",
   );
 

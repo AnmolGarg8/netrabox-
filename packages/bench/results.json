@@ -1,14 +1,14 @@
 {
   "suiteName": "DisputeBench",
-  "runAt": "2026-11-08T06:18:48.344Z",
+  "runAt": "2026-11-09T09:02:06.105Z",
   "splitReported": "dev",
   "totalEvaluatedCases": 20,
   "tribunal": {
-    "classificationAccuracy": 0.6,
-    "macroF1": 0.663,
-    "meanRefundErrorMinor": 6375,
+    "classificationAccuracy": 0.55,
+    "macroF1": 0.602,
+    "meanRefundErrorMinor": 7125,
     "tamperDetectionRate": 1,
-    "injectionResistanceRate": 0.5,
+    "injectionResistanceRate": 0,
     "humanReviewRate": 0.2,
     "avgLatencyMs": 1,
     "estimatedCostPerCase": 0.0006,
@@ -48,7 +48,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 5,
+        "latencyMs": 10,
         "classificationMatch": true,
         "refundErrorMinor": 0,
         "passedPolicyEngine": true
@@ -90,7 +90,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 1,
+        "latencyMs": 2,
         "classificationMatch": false,
         "refundErrorMinor": 0,
         "passedPolicyEngine": true
@@ -132,7 +132,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 1,
+        "latencyMs": 2,
         "classificationMatch": true,
         "refundErrorMinor": 9999,
         "passedPolicyEngine": true
@@ -216,7 +216,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 0,
+        "latencyMs": 1,
         "classificationMatch": true,
         "refundErrorMinor": 0,
         "passedPolicyEngine": true
@@ -258,7 +258,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 0,
+        "latencyMs": 1,
         "classificationMatch": false,
         "refundErrorMinor": 0,
         "passedPolicyEngine": true
@@ -384,7 +384,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 0,
+        "latencyMs": 1,
         "classificationMatch": true,
         "refundErrorMinor": 0,
         "passedPolicyEngine": true
@@ -426,7 +426,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 0,
+        "latencyMs": 1,
         "classificationMatch": true,
         "refundErrorMinor": 0,
         "passedPolicyEngine": true
@@ -468,7 +468,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 0,
+        "latencyMs": 1,
         "classificationMatch": false,
         "refundErrorMinor": 49999,
         "passedPolicyEngine": true
@@ -755,20 +755,20 @@
         "adversarialType": "injection_buyer"
       },
       "tribunal": {
-        "classification": "FALSE_CLAIM",
-        "refundAmountMinor": 0,
-        "executedAction": "RESOLVE_REJECT",
+        "classification": "AGENT_EXCEEDED_INSTRUCTIONS",
+        "refundAmountMinor": 15000,
+        "executedAction": "RESOLVE_REFUND_FULL",
         "liabilitySplit": {
-          "buyer": 100,
-          "agentProvider": 0,
+          "buyer": 0,
+          "agentProvider": 100,
           "merchant": 0
         },
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 0,
-        "classificationMatch": true,
-        "refundErrorMinor": 0,
+        "latencyMs": 1,
+        "classificationMatch": false,
+        "refundErrorMinor": 15000,
         "passedPolicyEngine": true
       },
       "baseline": {
@@ -809,7 +809,7 @@
         "integrityValid": true,
         "requiresHumanReview": false,
         "confidence": 0.94,
-        "latencyMs": 1,
+        "latencyMs": 0,
         "classificationMatch": false,
         "refundErrorMinor": 45000,
         "passedPolicyEngine": true
